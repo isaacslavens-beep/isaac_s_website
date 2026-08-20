@@ -16,7 +16,7 @@
     body {
       font-family: 'Inter', sans-serif;
       background: #f5f6f8;
-      color: #1d1d2c;
+      color: #000000;
       line-height: 1.75;
       font-size: 16px;
     }
@@ -47,7 +47,6 @@
     }
 
     .intro-text p {
-      color: #3a3a4a;
       margin-bottom: 16px;
       font-size: 1rem;
     }
@@ -59,7 +58,6 @@
     .disclaimer {
       font-size: 0.9rem;
       font-style: italic;
-      color: #6a6a7a;
       margin-top: 20px;
     }
 
@@ -74,32 +72,12 @@
       border-radius: 4px;
     }
 
-    .divider {
-      border: none;
-      border-top: 1px solid #dcdce0;
-      margin: 48px 0;
-    }
-
-    .ai-note h2 {
-      font-family: 'Libre Baskerville', serif;
-      font-size: 1.15rem;
-      font-weight: 400;
-      margin-bottom: 12px;
-    }
-
-    .ai-note p {
-      color: #3a3a4a;
-      font-size: 0.95rem;
-    }
-
     .section-label {
       font-size: 0.8rem;
       font-weight: 500;
       text-transform: uppercase;
       letter-spacing: 1.5px;
-      color: #8a8a9a;
       margin-bottom: 20px;
-      margin-top: 56px;
     }
 
     .article-list {
@@ -130,7 +108,23 @@
 
     .article-date {
       font-size: 0.85rem;
-      color: #8a8a9a;
+    }
+
+    .divider {
+      border: none;
+      border-top: 1px solid #dcdce0;
+      margin: 48px 0;
+    }
+
+    .ai-note h2 {
+      font-family: 'Libre Baskerville', serif;
+      font-size: 1.15rem;
+      font-weight: 400;
+      margin-bottom: 12px;
+    }
+
+    .ai-note p {
+      font-size: 0.95rem;
     }
 
     footer {
@@ -138,16 +132,6 @@
       padding-top: 24px;
       border-top: 1px solid #dcdce0;
       font-size: 0.85rem;
-      color: #8a8a9a;
-    }
-
-    footer a {
-      color: #3d5a80;
-      text-decoration: none;
-    }
-
-    footer a:hover {
-      border-bottom: 1px solid #3d5a80;
     }
 
     @media (max-width: 640px) {
@@ -195,6 +179,17 @@
       </div>
     </div>
 
+    <p class="section-label">Writing</p>
+
+    <ul class="article-list">
+      <li>
+        <a href="bessent-and-warsh/">
+          <div class="article-title">Scott Bessent and Kevin Warsh</div>
+          <div class="article-date">August 2026</div>
+        </a>
+      </li>
+    </ul>
+
     <hr class="divider">
 
     <div class="ai-note">
@@ -206,17 +201,6 @@
         attempt to verify or disprove this commitment.
       </p>
     </div>
-
-    <p class="section-label">Writing</p>
-
-    <ul class="article-list">
-      <li>
-        <a href="bessent-and-warsh/index.html">
-          <div class="article-title">Scott Bessent and Kevin Warsh</div>
-          <div class="article-date">August 2026</div>
-        </a>
-      </li>
-    </ul>
 
     <footer>
       isaac.slavens@gmail.com
