@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Scott Bessent and Kevin Warsh - Isaac Slavens</title>
+  <title>Isaac Slavens</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Inter:wght@400;500&display=swap" rel="stylesheet">
   <style>
@@ -22,48 +22,115 @@
     }
 
     .container {
-      max-width: 680px;
+      max-width: 800px;
       margin: 0 auto;
       padding: 80px 24px 120px;
     }
 
-    .back {
-      font-size: 0.85rem;
-      color: #8a8a9a;
-      text-decoration: none;
-      display: inline-block;
-      margin-bottom: 48px;
-    }
-
-    .back:hover {
-      color: #3d5a80;
-    }
-
     h1 {
       font-family: 'Libre Baskerville', serif;
-      font-size: 2rem;
+      font-size: 2.6rem;
       font-weight: 700;
-      letter-spacing: -0.3px;
-      margin-bottom: 12px;
+      letter-spacing: -0.5px;
+      margin-bottom: 36px;
     }
 
-    .date {
-      font-size: 0.85rem;
-      color: #8a8a9a;
-      margin-bottom: 48px;
+    .intro {
+      display: flex;
+      gap: 40px;
+      align-items: flex-start;
+      margin-bottom: 56px;
     }
 
-    .content p {
+    .intro-text {
+      flex: 1;
+    }
+
+    .intro-text p {
       color: #3a3a4a;
-      margin-bottom: 20px;
+      margin-bottom: 16px;
       font-size: 1rem;
     }
 
-    .content img {
-      max-width: 100%;
+    .intro-text p:last-child {
+      margin-bottom: 0;
+    }
+
+    .disclaimer {
+      font-size: 0.9rem;
+      font-style: italic;
+      color: #6a6a7a;
+      margin-top: 20px;
+    }
+
+    .profile-image {
+      width: 240px;
+      flex-shrink: 0;
+    }
+
+    .profile-image img {
+      width: 100%;
       height: auto;
       border-radius: 4px;
-      margin: 32px 0;
+    }
+
+    .divider {
+      border: none;
+      border-top: 1px solid #dcdce0;
+      margin: 48px 0;
+    }
+
+    .ai-note h2 {
+      font-family: 'Libre Baskerville', serif;
+      font-size: 1.15rem;
+      font-weight: 400;
+      margin-bottom: 12px;
+    }
+
+    .ai-note p {
+      color: #3a3a4a;
+      font-size: 0.95rem;
+    }
+
+    .section-label {
+      font-size: 0.8rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: #8a8a9a;
+      margin-bottom: 20px;
+      margin-top: 56px;
+    }
+
+    .article-list {
+      list-style: none;
+    }
+
+    .article-list li {
+      margin-bottom: 28px;
+    }
+
+    .article-list a {
+      text-decoration: none;
+      color: inherit;
+      display: block;
+    }
+
+    .article-list a:hover .article-title {
+      color: #3d5a80;
+    }
+
+    .article-title {
+      font-family: 'Libre Baskerville', serif;
+      font-size: 1.1rem;
+      font-weight: 400;
+      margin-bottom: 4px;
+      transition: color 0.15s ease;
+    }
+
+    .article-date {
+      font-size: 0.85rem;
+      color: #8a8a9a;
     }
 
     footer {
@@ -73,19 +140,83 @@
       font-size: 0.85rem;
       color: #8a8a9a;
     }
+
+    footer a {
+      color: #3d5a80;
+      text-decoration: none;
+    }
+
+    footer a:hover {
+      border-bottom: 1px solid #3d5a80;
+    }
+
+    @media (max-width: 640px) {
+      .intro {
+        flex-direction: column-reverse;
+        gap: 28px;
+      }
+
+      .profile-image {
+        width: 180px;
+      }
+
+      h1 {
+        font-size: 2rem;
+      }
+    }
   </style>
 </head>
 <body>
   <div class="container">
 
-    <a href="../" class="back">&larr; Isaac Slavens</a>
+    <h1>Isaac Slavens</h1>
 
-    <h1>Scott Bessent and Kevin Warsh</h1>
-    <p class="date">August 2026</p>
-
-    <div class="content">
-      <!-- Article content will go here -->
+    <div class="intro">
+      <div class="intro-text">
+        <p>
+          This website reports on what I am interested in regarding the subject
+          of macroeconomics.
+        </p>
+        <p>
+          The topics covered include developments in fiscal policy, monetary policy,
+          technology, stocks, bonds, Bitcoin, and politics, as they all relate to the
+          relevant economic organization of the world.
+        </p>
+        <p>
+          The goal of this site is to justify the unreasonable amount of time I've
+          spent looking at charts, figuring out what they are trying to tell me.
+          To the extent that this analysis strays from objectivity, the speculation
+          and opinions are my own.
+        </p>
+        <p class="disclaimer">Nothing on this website is financial advice.</p>
+      </div>
+      <div class="profile-image">
+        <img src="profile.png" alt="Isaac Slavens">
+      </div>
     </div>
+
+    <hr class="divider">
+
+    <div class="ai-note">
+      <h2>On AI Usage and Accountability</h2>
+      <p>
+        100% of the writing and reasoning that goes into these documents is either
+        my own, or influenced by reputable sources and cited as such. I use AI
+        exclusively to code the site and to assist in research, and welcome any
+        attempt to verify or disprove this commitment.
+      </p>
+    </div>
+
+    <p class="section-label">Writing</p>
+
+    <ul class="article-list">
+      <li>
+        <a href="bessent-warsh/index.html">
+          <div class="article-title">Scott Bessent and Kevin Warsh</div>
+          <div class="article-date">August 2026</div>
+        </a>
+      </li>
+    </ul>
 
     <footer>
       isaac.slavens@gmail.com
