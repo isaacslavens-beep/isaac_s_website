@@ -37,39 +37,21 @@
     }
 
     .epigraph {
-      display: flex;
-      gap: 40px;
-      align-items: flex-start;
       margin-bottom: 40px;
     }
 
-    .epigraph-text {
-      flex: 1;
-    }
-
-    .epigraph-text blockquote {
+    .epigraph blockquote {
       font-family: 'Libre Baskerville', serif;
       font-style: italic;
       font-size: 1.05rem;
       line-height: 2;
     }
 
-    .epigraph-text .attribution {
+    .epigraph .attribution {
       margin-top: 20px;
       font-family: 'Inter', sans-serif;
       font-style: normal;
       font-size: 0.85rem;
-    }
-
-    .profile-image {
-      width: 240px;
-      flex-shrink: 0;
-    }
-
-    .profile-image img {
-      width: 100%;
-      height: auto;
-      border-radius: 4px;
     }
 
     .intro {
@@ -153,19 +135,15 @@
       font-size: 0.85rem;
     }
 
-    @media (max-width: 640px) {
-      .epigraph {
-        flex-direction: column-reverse;
-        gap: 28px;
-      }
+    .profile-image {
+      margin-top: 48px;
+      width: 240px;
+    }
 
-      .profile-image {
-        width: 180px;
-      }
-
-      h1 {
-        font-size: 2rem;
-      }
+    .profile-image img {
+      width: 100%;
+      height: auto;
+      border-radius: 4px;
     }
   </style>
 </head>
@@ -175,18 +153,13 @@
     <h1>Isaac Slavens</h1>
 
     <div class="epigraph">
-      <div class="epigraph-text">
-        <blockquote>
-          That great principle of Undulation in nature, that shows itself in the inspiring and expiring of the breath; in desire and satiety; in the ebb and flow of the sea; in day and night; in heat and cold; and as yet more deeply ingrained in every atom and every fluid, is known to us under the name of Polarity, -- these "fits of easy transmission and reflection," as Newton called them, are the law of nature because they are the law of spirit.
-        </blockquote>
-        <p class="attribution">Ralph Waldo Emerson</p>
-      </div>
-      <div class="profile-image">
-        <img src="profile.png" alt="Isaac Slavens">
-      </div>
+      <blockquote>
+        That great principle of Undulation in nature, that shows itself in the inspiring and expiring of the breath; in desire and satiety; in the ebb and flow of the sea; in day and night; in heat and cold; and as yet more deeply ingrained in every atom and every fluid, is known to us under the name of Polarity, -- these "fits of easy transmission and reflection," as Newton called them, are the law of nature because they are the law of spirit.
+      </blockquote>
+      <p class="attribution">Ralph Waldo Emerson</p>
     </div>
 
-<div class="intro">
+    <div class="intro">
       <p>
         The quote above is very insightful regarding the nature of this website's primary topic: <strong>macroeconomic cycles</strong>.
       </p>
@@ -234,6 +207,10 @@
     <footer>
       isaac.slavens@gmail.com
     </footer>
+
+    <div class="profile-image">
+      <img src="profile.png" alt="Isaac Slavens">
+    </div>
 
   </div>
 </body>
