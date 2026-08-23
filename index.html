@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌞 </text></svg>">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌞</text></svg>">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Isaac Slavens</title>
@@ -36,30 +36,29 @@
       margin-bottom: 36px;
     }
 
-    .intro {
+    .epigraph {
       display: flex;
       gap: 40px;
       align-items: flex-start;
-      margin-bottom: 56px;
+      margin-bottom: 40px;
     }
 
-    .intro-text {
+    .epigraph-text {
       flex: 1;
     }
 
-    .intro-text p {
-      margin-bottom: 16px;
-      font-size: 1rem;
-    }
-
-    .intro-text p:last-child {
-      margin-bottom: 0;
-    }
-
-    .disclaimer {
-      font-size: 0.9rem;
+    .epigraph-text blockquote {
+      font-family: 'Libre Baskerville', serif;
       font-style: italic;
-      margin-top: 20px;
+      font-size: 0.95rem;
+      line-height: 1.8;
+    }
+
+    .epigraph-text .attribution {
+      margin-top: 12px;
+      font-family: 'Inter', sans-serif;
+      font-style: normal;
+      font-size: 0.85rem;
     }
 
     .profile-image {
@@ -71,6 +70,25 @@
       width: 100%;
       height: auto;
       border-radius: 4px;
+    }
+
+    .intro {
+      margin-bottom: 56px;
+    }
+
+    .intro p {
+      margin-bottom: 16px;
+      font-size: 1rem;
+    }
+
+    .intro p:last-child {
+      margin-bottom: 0;
+    }
+
+    .disclaimer {
+      font-size: 0.9rem;
+      font-style: italic;
+      margin-top: 20px;
     }
 
     .section-label {
@@ -136,7 +154,7 @@
     }
 
     @media (max-width: 640px) {
-      .intro {
+      .epigraph {
         flex-direction: column-reverse;
         gap: 28px;
       }
@@ -156,23 +174,30 @@
 
     <h1>Isaac Slavens</h1>
 
-    <div class="intro">
-      <div class="intro-text">
-        <p>
-          This website reports on what I am interested in regarding the subject
-          of macroeconomics.
-        </p>
-        <p>
-          The topics covered include current developments in policy, markets, Bitcoin, technology, and politics.
-        </p>
-        <p>
-          Every other Sunday I publish a report on my analysis of the state of markets. Aside from that regularity, I write about whatever interests me at the time.
-        </p>
-        <p class="disclaimer">Nothing on this website is financial advice.</p>
+    <div class="epigraph">
+      <div class="epigraph-text">
+        <blockquote>
+          That great principle of Undulation in nature, that shows itself in the inspiring and expiring of the breath; in desire and satiety; in the ebb and flow of the sea; in day and night; in heat and cold; and as yet more deeply ingrained in every atom and every fluid, is known to us under the name of Polarity, -- these "fits of easy transmission and reflection," as Newton called them, are the law of nature because they are the law of spirit.
+        </blockquote>
+        <p class="attribution">Ralph Waldo Emerson</p>
       </div>
       <div class="profile-image">
         <img src="profile.png" alt="Isaac Slavens">
       </div>
+    </div>
+
+    <div class="intro">
+      <p>
+        This website reports on what I am interested in regarding the subject
+        of macroeconomics.
+      </p>
+      <p>
+        The topics covered include current developments in policy, markets, Bitcoin, technology, and politics.
+      </p>
+      <p>
+        Every other Sunday I publish a report on my analysis of the state of markets. Aside from that regularity, I write about whatever interests me at the time.
+      </p>
+      <p class="disclaimer">Nothing on this website is financial advice.</p>
     </div>
 
     <p class="section-label">Writing</p>
