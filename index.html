@@ -187,6 +187,35 @@
       font-size: 0.85rem;
     }
 
+    .home-grid {
+      display: block;
+    }
+
+    @media (min-width: 960px) {
+      .container {
+        max-width: 1120px;
+      }
+
+      .home-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+        gap: 72px;
+        align-items: start;
+      }
+
+      .intro {
+        margin-bottom: 0;
+      }
+
+      .writing .section-label {
+        margin-top: 10px;
+      }
+
+      .ai-note {
+        max-width: 680px;
+      }
+    }
+
     .profile-image {
       margin-top: 48px;
       width: 240px;
@@ -202,6 +231,9 @@
 <body>
   <img src="header.jpg" class="header-image" width="2400" height="1184" alt="">
   <div class="container">
+
+    <div class="home-grid">
+    <div class="about">
 
     <h1>Isaac Slavens</h1>
 
@@ -232,6 +264,9 @@
       </p>
     </div>
 
+    </div>
+
+    <div class="writing">
     <p class="section-label">Writing</p>
 
     <ul class="article-list">
@@ -288,6 +323,8 @@
         </a>
       </li>
     </ul>
+    </div>
+    </div>
 
     <hr class="divider">
 
