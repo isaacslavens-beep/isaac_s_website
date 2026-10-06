@@ -323,6 +323,25 @@
       font-style: italic;
     }
 
+    .method {
+      margin-top: 10px;
+      font-style: normal;
+    }
+
+    .method summary {
+      cursor: pointer;
+      font-weight: 500;
+      color: #3d5a80;
+    }
+
+    .method p {
+      margin-top: 8px;
+    }
+
+    .method sub {
+      line-height: 0;
+    }
+
     .research-note {
       grid-area: note;
       font-size: 0.95rem;
@@ -434,17 +453,39 @@
       </div>
 
       <div class="research-caption">
-        <p class="panel-era">
-          Data: FRED. Made in Python with Claude. Single regression, FY1950&ndash;2025, estimating the US primary balance's response to lagged debt separately for 1950&ndash;1974, 1975&ndash;2000 and 2001&ndash;2025, controlling for output gap; 95% confidence intervals.
-        </p>
-        <p class="panel-rolling">
-          Data: FRED. Made in Python with Claude. Rolling 30-year Bohn regressions, FY1950&ndash;2025: US primary balance's response to lagged debt with 95% CI, above annual output gap. FY2025 estimate: &minus;0.067 (p = 0.004).
-        </p>
+        <div class="panel-era">
+          <p>
+            Data: FRED. Made in Python with Claude. The response of the US primary balance to lagged debt (<i>g</i>), estimated separately for FY1950&ndash;1974, 1975&ndash;2000 and 2001&ndash;2025 in a single regression, controlling for the output gap and COVID. Following Bohn (1998), <i>g</i>&nbsp;&gt;&nbsp;0 means primary surpluses rise with debt, a sufficient condition for sustainability. Bars are 95% confidence intervals.
+          </p>
+          <details class="method">
+            <summary>Full specification</summary>
+            <p>
+              A single OLS regression over FY1950&ndash;2025: <i>PB<sub>t</sub></i> = <i>&alpha;<sub>k</sub></i> + <i>&beta;</i>&middot;<i>Gap<sub>t</sub></i> + &Sigma; <i>g<sub>k</sub></i>&middot;(<i>D<sub>t&minus;1</sub></i> &times; <i>E<sub>k,t</sub></i>) + <i>&delta;</i>&middot;<i>Covid<sub>t</sub></i> + <i>&epsilon;<sub>t</sub></i>, where <i>E<sub>k</sub></i> equals 1 in era <i>k</i> (FY1950&ndash;1974, 1975&ndash;2000, 2001&ndash;2025) and 0 otherwise.
+            </p>
+            <p>
+              <i>PB</i> is the primary balance and <i>D</i> is debt held by the public, both in % of GDP. <i>Gap</i> is the output gap against CBO potential GDP, and <i>Covid</i> is a FY2020&ndash;21 dummy. Each era has its own intercept <i>&alpha;<sub>k</sub></i>, so <i>g<sub>k</sub></i> measures the debt response within that era, while <i>&beta;</i> and <i>&delta;</i> are shared across eras. Intervals use Newey-West (HAC, 2 lags) standard errors.
+            </p>
+          </details>
+        </div>
+        <div class="panel-rolling">
+          <p>
+            Data: FRED. Made in Python with Claude. The same debt response (<i>g</i>), re-estimated over each 30-year window and plotted at the window's final fiscal year, controlling for the output gap and COVID. Below zero, primary surpluses no longer rise with debt. Shading is the 95% confidence interval; the lower panel shows the annual output gap. Latest window, FY1996&ndash;2025: <i>g</i>&nbsp;=&nbsp;&minus;0.067 (p&nbsp;=&nbsp;0.004).
+          </p>
+          <details class="method">
+            <summary>Full specification</summary>
+            <p>
+              Each point is an OLS estimate of <i>PB<sub>t</sub></i> = <i>&alpha;</i> + <i>&beta;</i>&middot;<i>Gap<sub>t</sub></i> + <i>g</i>&middot;<i>D<sub>t&minus;1</sub></i> + <i>&delta;</i>&middot;<i>Covid<sub>t</sub></i> + <i>&epsilon;<sub>t</sub></i> over the 30 fiscal years ending in that year, using data from FY1950&ndash;2025.
+            </p>
+            <p>
+              <i>PB</i> is the primary balance (federal surplus plus interest outlays, % of GDP), <i>D</i> is debt held by the public (% of GDP), <i>Gap</i> = 100 &times; (real GDP &minus; CBO potential GDP) / potential GDP, and <i>Covid</i> is a FY2020&ndash;21 dummy. Following Bohn (1998), <i>g</i>&nbsp;&gt;&nbsp;0 means primary surpluses rise with debt, a sufficient condition for sustainability. Intervals use Newey-West (HAC, 2 lags) standard errors.
+            </p>
+          </details>
+        </div>
       </div>
 
       <div class="research-note">
         <p>
-          In the 21st century, the monetary and fiscal stability of the United States, along with the global financial system, has been altered forever. These troublesome sovereign debt dynamics, charted here, accelerated in 2008 and again in 2020. This site examines their nature and consequences in further detail. They are my primary interest at the moment.
+          Throughout the 21st century, the monetary and fiscal stability of the United States, along with the global financial system, has been altered significantly. Some concerning sovereign debt dynamics, charted here, accelerated in 2008 and again in 2020. This site examines their nature and consequences in further detail. They are my primary interest at the moment.
         </p>
         <p class="research-scroll">Read the articles below &darr;</p>
       </div>
