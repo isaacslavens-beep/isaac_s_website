@@ -328,19 +328,14 @@
       font-size: 0.95rem;
     }
 
-    .research-link {
-      display: inline-block;
-      margin-top: 12px;
+    .research-note p {
+      line-height: 1.85;
+    }
+
+    .research-scroll {
+      margin-top: 20px;
       font-weight: 500;
       color: #3d5a80;
-    }
-
-    .research-link:hover {
-      color: #2c4460;
-    }
-
-    #writing {
-      scroll-margin-top: 24px;
     }
 
     @media (max-width: 640px) {
@@ -386,7 +381,7 @@
       }
 
       .research-note {
-        align-self: end;
+        align-self: center;
       }
     }
 
@@ -440,10 +435,10 @@
 
       <div class="research-caption">
         <p class="panel-era">
-          Data: FRED. Single regression, FY1950&ndash;2025, estimating the US primary balance's response to lagged debt separately for 1950&ndash;1974, 1975&ndash;2000 and 2001&ndash;2025, controlling for output gap; 95% confidence intervals.
+          Data: FRED. Made in Python with Claude. Single regression, FY1950&ndash;2025, estimating the US primary balance's response to lagged debt separately for 1950&ndash;1974, 1975&ndash;2000 and 2001&ndash;2025, controlling for output gap; 95% confidence intervals.
         </p>
         <p class="panel-rolling">
-          Data: FRED. Rolling 30-year Bohn regressions, FY1950&ndash;2025: US primary balance's response to lagged debt with 95% CI, above annual output gap. FY2025 estimate: &minus;0.067 (p = 0.004).
+          Data: FRED. Made in Python with Claude. Rolling 30-year Bohn regressions, FY1950&ndash;2025: US primary balance's response to lagged debt with 95% CI, above annual output gap. FY2025 estimate: &minus;0.067 (p = 0.004).
         </p>
       </div>
 
@@ -451,7 +446,7 @@
         <p>
           In the 21st century, the monetary and fiscal stability of the United States, along with the global financial system, has been altered forever. These troublesome sovereign debt dynamics, charted here, accelerated in 2008 and again in 2020. This site examines their nature and consequences in further detail. They are my primary interest at the moment.
         </p>
-        <a class="research-link" href="#writing">Read the articles below &darr;</a>
+        <p class="research-scroll">Read the articles below &darr;</p>
       </div>
     </section>
 
@@ -484,7 +479,7 @@
 
     </div>
 
-    <div class="writing" id="writing">
+    <div class="writing">
     <p class="section-label">Writing</p>
 
     <ul class="article-list">
