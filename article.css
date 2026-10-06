@@ -84,8 +84,6 @@ sup {
 .epigraph .attribution {
   margin-top: 16px;
   padding-left: 20px;
-  font-family: 'Inter', sans-serif;
-  font-style: normal;
   font-size: 0.9rem;
 }
 
@@ -105,7 +103,7 @@ sup {
   margin-bottom: 8px;
 }
 
-.caption {
+.content .caption {
   font-size: 0.8rem;
   line-height: 1.5;
   margin-bottom: 32px;

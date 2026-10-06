@@ -63,7 +63,6 @@
       font-style: italic;
       font-size: 0.95rem;
       line-height: 1.9;
-      color: #000000;
       border-left: 2px solid #3d5a80;
       padding-left: 20px;
     }
@@ -71,31 +70,15 @@
     .epigraph .attribution {
       margin-top: 16px;
       padding-left: 20px;
-      font-family: 'Inter', sans-serif;
-      font-style: normal;
       font-size: 0.88rem;
-      color: #000000;
     }
 
     .intro {
       margin-bottom: 56px;
     }
 
-    .intro p {
-      margin-bottom: 16px;
-      font-size: 1rem;
-    }
-
-    .intro p:last-child {
-      margin-bottom: 0;
-    }
-
     .intro .epigraph {
       margin: 28px 0;
-    }
-
-    .intro .epigraph .attribution {
-      margin-bottom: 0;
     }
 
     .section-label {
@@ -103,7 +86,6 @@
       font-weight: 500;
       text-transform: uppercase;
       letter-spacing: 1.5px;
-      color: #000000;
       margin-bottom: 20px;
     }
 
@@ -137,7 +119,6 @@
     .article-title {
       font-family: 'Libre Baskerville', serif;
       font-size: 1.1rem;
-      font-weight: 400;
     }
 
     .article-meta {
@@ -149,13 +130,10 @@
 
     .article-date {
       font-size: 0.85rem;
-      color: #000000;
     }
 
     .article-arrow {
-      display: flex;
-      align-items: center;
-      color: #000000;
+      flex-shrink: 0;
       transition: transform 0.15s ease;
     }
 
@@ -187,7 +165,7 @@
       font-size: 0.85rem;
     }
 
-    /* Research feature above the intro: chart on the right, toggle between the two charts */
+    /* Research card: intro note on the left, chart toggle on the right */
     .research {
       position: relative;
       display: grid;
@@ -357,10 +335,6 @@
       }
     }
 
-    .home-grid {
-      display: block;
-    }
-
     @media (min-width: 960px) {
       .container {
         max-width: 1120px;
@@ -388,7 +362,6 @@
         column-gap: 48px;
         align-items: start;
       }
-
     }
 
     .profile-image {
@@ -396,19 +369,24 @@
       width: 240px;
     }
 
-    .disclaimer {
-      margin-top: 32px;
-      font-size: 0.85rem;
-    }
-
     .profile-image img {
       width: 100%;
       height: auto;
       border-radius: 4px;
     }
+
+    .disclaimer {
+      margin-top: 32px;
+      font-size: 0.85rem;
+    }
   </style>
 </head>
 <body>
+  <svg width="0" height="0" style="position: absolute" aria-hidden="true">
+    <symbol id="chevron" viewBox="0 0 20 20" fill="none">
+      <path d="M7.5 5L12.5 10L7.5 15" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </symbol>
+  </svg>
   <img src="header.jpg" class="header-image" width="2400" height="1184" alt="">
   <div class="container">
 
@@ -486,88 +464,70 @@
     </section>
 
     <div class="home-grid">
-    <div class="about">
+      <div class="about">
+        <div class="epigraph">
+          <blockquote>
+            "In the long run we are all dead."
+          </blockquote>
+          <p class="attribution">John Maynard Keynes</p>
+        </div>
 
-    <div class="epigraph">
-      <blockquote>
-        "In the long run we are all dead."
-      </blockquote>
-      <p class="attribution">John Maynard Keynes</p>
-    </div>
+        <div class="intro">
+          <p>
+            In response, I would offer this from his disciple:
+          </p>
 
-    <div class="intro">
-      <p>
-        In response, I would offer this from his disciple:
-      </p>
-
-      <div class="epigraph">
-        <blockquote>
-          "Unless we think of our civilization as something that's going to stretch out into the future, we won't do the job of living well today."
-        </blockquote>
-        <p class="attribution">Hyman Minsky</p>
+          <div class="epigraph">
+            <blockquote>
+              "Unless we think of our civilization as something that's going to stretch out into the future, we won't do the job of living well today."
+            </blockquote>
+            <p class="attribution">Hyman Minsky</p>
+          </div>
+        </div>
       </div>
-    </div>
 
-    </div>
+      <div class="writing">
+        <p class="section-label">Writing</p>
 
-    <div class="writing">
-    <p class="section-label">Writing</p>
-
-    <ul class="article-list">
-         <li>
-        <a href="USD-Golden-Age/">
-          <div class="article-title">The USD Golden Age</div>
-          <div class="article-meta">
-            <span class="article-date">September 2026</span>
-            <span class="article-arrow">
-              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M7.5 5L12.5 10L7.5 15" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-            </span>
-          </div>
-        </a>
-      </li>
-      <li>
-        <a href="fed-independence/">
-          <div class="article-title">The Future of Federal Reserve Independence</div>
-          <div class="article-meta">
-            <span class="article-date">September 2026</span>
-            <span class="article-arrow">
-              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M7.5 5L12.5 10L7.5 15" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-            </span>
-          </div>
-        </a>
-      </li>
-      <li>
-        <a href="japandebt/">
-          <div class="article-title">Japan's Impossible Situation</div>
-          <div class="article-meta">
-            <span class="article-date">September 2026</span>
-            <span class="article-arrow">
-              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M7.5 5L12.5 10L7.5 15" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-            </span>
-          </div>
-        </a>
-      </li>
-      <li>
-        <a href="americandebt/">
-          <div class="article-title">U.S. Debt Trouble</div>
-          <div class="article-meta">
-            <span class="article-date">September 2026</span>
-            <span class="article-arrow">
-              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M7.5 5L12.5 10L7.5 15" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-            </span>
-          </div>
-        </a>
-      </li>
-    </ul>
-    </div>
+        <ul class="article-list">
+        <li>
+          <a href="USD-Golden-Age/">
+            <div class="article-title">The USD Golden Age</div>
+            <div class="article-meta">
+              <span class="article-date">September 2026</span>
+              <svg class="article-arrow" width="20" height="20" aria-hidden="true"><use href="#chevron"/></svg>
+            </div>
+          </a>
+        </li>
+        <li>
+          <a href="fed-independence/">
+            <div class="article-title">The Future of Federal Reserve Independence</div>
+            <div class="article-meta">
+              <span class="article-date">September 2026</span>
+              <svg class="article-arrow" width="20" height="20" aria-hidden="true"><use href="#chevron"/></svg>
+            </div>
+          </a>
+        </li>
+        <li>
+          <a href="japandebt/">
+            <div class="article-title">Japan's Impossible Situation</div>
+            <div class="article-meta">
+              <span class="article-date">September 2026</span>
+              <svg class="article-arrow" width="20" height="20" aria-hidden="true"><use href="#chevron"/></svg>
+            </div>
+          </a>
+        </li>
+        <li>
+          <a href="americandebt/">
+            <div class="article-title">U.S. Debt Trouble</div>
+            <div class="article-meta">
+              <span class="article-date">September 2026</span>
+              <svg class="article-arrow" width="20" height="20" aria-hidden="true"><use href="#chevron"/></svg>
+            </div>
+          </a>
+        </li>
+        </ul>
+      </div>
     </div>
 
     <hr class="divider">
