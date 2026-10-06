@@ -187,6 +187,157 @@
       font-size: 0.85rem;
     }
 
+    /* Research feature above the intro: chart on the right, toggle between the two charts */
+    .research {
+      position: relative;
+      display: grid;
+      gap: 20px;
+      grid-template-areas: "text" "chart" "caption" "note";
+      margin-bottom: 72px;
+      padding: 32px;
+      background: #ffffff;
+      border: 1px solid #dcdce0;
+      border-radius: 6px;
+    }
+
+    /* Visually hidden but still keyboard focusable */
+    .research > input {
+      position: absolute;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .research-text {
+      grid-area: text;
+    }
+
+    .research-title {
+      font-family: 'Libre Baskerville', serif;
+      font-size: 1.35rem;
+      font-weight: 700;
+      line-height: 1.35;
+    }
+
+    .research-chart {
+      grid-area: chart;
+    }
+
+    .research-chart img {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    .chart-switch {
+      margin-bottom: 20px;
+    }
+
+    .chart-switch-label {
+      font-size: 0.85rem;
+      margin-bottom: 8px;
+    }
+
+    .chart-tabs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .chart-tabs label {
+      position: relative;
+      display: block;
+      padding: 10px 14px 10px 38px;
+      line-height: 1.4;
+      background: #f3f6fa;
+      border: 1px solid #c9d3e0;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: border-color 0.15s ease, background 0.15s ease;
+    }
+
+    .chart-tabs label:hover {
+      border-color: #3d5a80;
+    }
+
+    /* Radio-style dot so each option reads as a choice */
+    .chart-tabs label::before {
+      content: "";
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      width: 14px;
+      height: 14px;
+      margin-top: -7px;
+      border: 1.5px solid #3d5a80;
+      border-radius: 50%;
+      background: #ffffff;
+    }
+
+    .tab-title {
+      display: block;
+      font-size: 0.92rem;
+      font-weight: 500;
+      white-space: nowrap;
+    }
+
+    .tab-detail {
+      display: block;
+      font-size: 0.78rem;
+      color: #4b5563;
+    }
+
+    #chart-era:checked ~ .research-chart label[for="chart-era"],
+    #chart-rolling:checked ~ .research-chart label[for="chart-rolling"] {
+      background: #3d5a80;
+      border-color: #3d5a80;
+      color: #ffffff;
+    }
+
+    #chart-era:checked ~ .research-chart label[for="chart-era"]::before,
+    #chart-rolling:checked ~ .research-chart label[for="chart-rolling"]::before {
+      border-color: #ffffff;
+      background: #ffffff;
+      box-shadow: inset 0 0 0 3px #3d5a80;
+    }
+
+    #chart-era:checked ~ .research-chart label[for="chart-era"] .tab-detail,
+    #chart-rolling:checked ~ .research-chart label[for="chart-rolling"] .tab-detail {
+      color: rgba(255, 255, 255, 0.85);
+    }
+
+    #chart-era:focus-visible ~ .research-chart label[for="chart-era"],
+    #chart-rolling:focus-visible ~ .research-chart label[for="chart-rolling"] {
+      outline: 2px solid #3d5a80;
+      outline-offset: 2px;
+    }
+
+    #chart-era:checked ~ * .panel-rolling,
+    #chart-rolling:checked ~ * .panel-era {
+      display: none;
+    }
+
+    .research-caption {
+      grid-area: caption;
+      font-size: 0.8rem;
+      line-height: 1.55;
+      font-style: italic;
+    }
+
+    .research-note {
+      grid-area: note;
+      font-size: 0.95rem;
+    }
+
+    @media (max-width: 640px) {
+      .research {
+        padding: 20px;
+      }
+
+      .chart-tabs {
+        grid-template-columns: 1fr;
+      }
+    }
+
     .home-grid {
       display: block;
     }
@@ -214,6 +365,18 @@
       .ai-note {
         max-width: 680px;
       }
+
+      .research {
+        grid-template-columns: 330px minmax(0, 1fr);
+        grid-template-rows: auto auto 1fr;
+        grid-template-areas: "text chart" "caption chart" "note chart";
+        column-gap: 48px;
+        align-items: start;
+      }
+
+      .research-note {
+        align-self: end;
+      }
     }
 
     .profile-image {
@@ -231,6 +394,50 @@
 <body>
   <img src="header.jpg" class="header-image" width="2400" height="1184" alt="">
   <div class="container">
+
+    <section class="research">
+      <input type="radio" name="research-chart" id="chart-era" checked>
+      <input type="radio" name="research-chart" id="chart-rolling">
+
+      <div class="research-text">
+        <h2 class="research-title">U.S. Debt Response</h2>
+      </div>
+
+      <div class="research-chart">
+        <div class="chart-switch">
+          <p class="chart-switch-label">Switch between the two charts:</p>
+          <div class="chart-tabs">
+            <label for="chart-era">
+              <span class="tab-title">By era</span>
+              <span class="tab-detail">Three periods, FY1950&ndash;2025</span>
+            </label>
+            <label for="chart-rolling">
+              <span class="tab-title">Rolling 30-year</span>
+              <span class="tab-detail">Windows ending FY1979&ndash;2025</span>
+            </label>
+          </div>
+        </div>
+        <a class="panel-era" href="debt-response-era.png">
+          <img src="debt-response-era.png" width="689" height="440" alt="Response of the US primary balance to lagged debt by era, with 95% confidence intervals: 0.029 for FY1950-1974, 0.059 for FY1975-2000, and -0.038 for FY2001-2025">
+        </a>
+        <a class="panel-rolling" href="debt-response-rolling.png">
+          <img src="debt-response-rolling.png" width="989" height="690" alt="Rolling 30-year estimate of the US primary balance's response to lagged debt with 95% confidence band, above the annual output gap; FY2025 estimate -0.067, p = 0.004">
+        </a>
+      </div>
+
+      <div class="research-caption">
+        <p class="panel-era">
+          Data: FRED. Single regression, FY1950&ndash;2025, estimating the US primary balance's response to lagged debt separately for 1950&ndash;1974, 1975&ndash;2000 and 2001&ndash;2025, controlling for output gap; 95% confidence intervals.
+        </p>
+        <p class="panel-rolling">
+          Data: FRED. Rolling 30-year Bohn regressions, FY1950&ndash;2025: US primary balance's response to lagged debt with 95% CI, above annual output gap. FY2025 estimate: &minus;0.067 (p = 0.004).
+        </p>
+      </div>
+
+      <p class="research-note">
+        This site examines the nature and consequences of these debt dynamics in further detail. They are my primary interest at the moment.
+      </p>
+    </section>
 
     <div class="home-grid">
     <div class="about">
