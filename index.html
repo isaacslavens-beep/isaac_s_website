@@ -328,6 +328,21 @@
       font-size: 0.95rem;
     }
 
+    .research-link {
+      display: inline-block;
+      margin-top: 12px;
+      font-weight: 500;
+      color: #3d5a80;
+    }
+
+    .research-link:hover {
+      color: #2c4460;
+    }
+
+    #writing {
+      scroll-margin-top: 24px;
+    }
+
     @media (max-width: 640px) {
       .research {
         padding: 20px;
@@ -356,10 +371,6 @@
 
       .intro {
         margin-bottom: 0;
-      }
-
-      .writing .section-label {
-        margin-top: 10px;
       }
 
       .ai-note {
@@ -394,6 +405,8 @@
 <body>
   <img src="header.jpg" class="header-image" width="2400" height="1184" alt="">
   <div class="container">
+
+    <h1>Isaac Slavens</h1>
 
     <section class="research">
       <input type="radio" name="research-chart" id="chart-era" checked>
@@ -434,15 +447,16 @@
         </p>
       </div>
 
-      <p class="research-note">
-        This site examines the nature and consequences of these debt dynamics in further detail. They are my primary interest at the moment.
-      </p>
+      <div class="research-note">
+        <p>
+          This site examines the nature and consequences of these debt dynamics in further detail. They are my primary interest at the moment.
+        </p>
+        <a class="research-link" href="#writing">Read the articles below &darr;</a>
+      </div>
     </section>
 
     <div class="home-grid">
     <div class="about">
-
-    <h1>Isaac Slavens</h1>
 
     <div class="epigraph">
       <blockquote>
@@ -452,9 +466,6 @@
     </div>
 
     <div class="intro">
-      <p>
-        This site examines the consequences of monetary and fiscal governance operating based on the quote above, and what a stable and prosperous future can look like for major economies.
-      </p>
       <p>
         In response, I would offer this from his disciple:
       </p>
@@ -473,7 +484,7 @@
 
     </div>
 
-    <div class="writing">
+    <div class="writing" id="writing">
     <p class="section-label">Writing</p>
 
     <ul class="article-list">
