@@ -192,7 +192,7 @@
       position: relative;
       display: grid;
       gap: 20px;
-      grid-template-areas: "text" "note" "chart" "scroll";
+      grid-template-areas: "note" "chart" "scroll";
       margin-bottom: 72px;
       padding: 32px;
       background: #ffffff;
@@ -205,17 +205,6 @@
       position: absolute;
       opacity: 0;
       pointer-events: none;
-    }
-
-    .research-text {
-      grid-area: text;
-    }
-
-    .research-title {
-      font-family: 'Libre Baskerville', serif;
-      font-size: 1.35rem;
-      font-weight: 700;
-      line-height: 1.35;
     }
 
     .research-chart {
@@ -390,8 +379,8 @@
 
       .research {
         grid-template-columns: 330px minmax(0, 1fr);
-        grid-template-rows: auto auto 1fr;
-        grid-template-areas: "text chart" "note chart" "scroll chart";
+        grid-template-rows: auto 1fr;
+        grid-template-areas: "note chart" "scroll chart";
         column-gap: 48px;
         align-items: start;
       }
@@ -425,13 +414,9 @@
       <input type="radio" name="research-chart" id="chart-era" checked>
       <input type="radio" name="research-chart" id="chart-rolling">
 
-      <div class="research-text">
-        <h2 class="research-title">U.S. Debt Response</h2>
-      </div>
-
       <div class="research-note">
         <p>
-          Throughout the 21st century, the monetary and fiscal stability of the United States, along with the global financial system, has been altered significantly. Some concerning sovereign debt dynamics, charted here, accelerated in 2008 and again in 2020. This site examines their nature and consequences in further detail. They are my primary interest at the moment.
+          Throughout the 21st century, monetary and fiscal stability across the global financial system has been altered significantly. Some concerning sovereign debt dynamics, notably in the United States (charted here), accelerated in 2008 and again in 2020. This site examines their nature and consequences in further detail. They are my primary interest right now.
         </p>
       </div>
 
