@@ -165,13 +165,17 @@
       font-size: 0.85rem;
     }
 
-    /* Research card: intro note on the left, chart toggle on the right */
+    /* Opening: site intro beside the name, chart card alongside */
+    .top {
+      margin-bottom: 72px;
+    }
+
+    .site-intro {
+      margin-bottom: 40px;
+    }
+
     .research {
       position: relative;
-      display: grid;
-      gap: 20px;
-      grid-template-areas: "note" "chart" "scroll";
-      margin-bottom: 72px;
       padding: 32px;
       background: #ffffff;
       border: 1px solid #dcdce0;
@@ -183,10 +187,6 @@
       position: absolute;
       opacity: 0;
       pointer-events: none;
-    }
-
-    .research-chart {
-      grid-area: chart;
     }
 
     .research-chart img {
@@ -310,9 +310,17 @@
     }
 
     .research-note {
-      grid-area: note;
+      font-family: 'Libre Baskerville', serif;
       font-size: 1.05rem;
-      line-height: 1.8;
+      line-height: 1.85;
+    }
+
+    /* Lead sentence set as a statement */
+    .research-note p:first-child {
+      font-size: 1.3rem;
+      font-weight: 700;
+      line-height: 1.5;
+      letter-spacing: -0.3px;
     }
 
     .research-note p + p {
@@ -320,7 +328,7 @@
     }
 
     .research-scroll {
-      grid-area: scroll;
+      margin-top: 24px;
       font-weight: 500;
       color: #3d5a80;
     }
@@ -355,12 +363,15 @@
         max-width: 680px;
       }
 
-      .research {
-        grid-template-columns: 330px minmax(0, 1fr);
-        grid-template-rows: auto 1fr;
-        grid-template-areas: "note chart" "scroll chart";
-        column-gap: 48px;
+      .top {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1.6fr);
+        gap: 56px;
         align-items: start;
+      }
+
+      .site-intro {
+        margin-bottom: 0;
       }
     }
 
@@ -390,78 +401,82 @@
   <img src="header.jpg" class="header-image" width="2400" height="1184" alt="">
   <div class="container">
 
-    <h1>Isaac Slavens</h1>
+    <div class="top">
+      <div class="site-intro">
+        <h1>Isaac Slavens</h1>
 
-    <section class="research">
-      <input type="radio" name="research-chart" id="chart-era" checked>
-      <input type="radio" name="research-chart" id="chart-rolling">
+        <div class="research-note">
+          <p>
+            Throughout the 21st century, monetary and fiscal stability across the global financial system has been altered significantly.
+          </p>
+          <p>
+            Some concerning sovereign debt dynamics, notably in the United States (charted here), accelerated in 2008 and again in 2020. These featured charts summarize why I am focused on this issue, given the clear divergence.
+          </p>
+          <p>
+            This site examines the nature and consequences of this economic environment in further detail, with a focus on sovereign debt. It is my primary interest right now.
+          </p>
+        </div>
 
-      <div class="research-note">
-        <p>
-          Throughout the 21st century, monetary and fiscal stability across the global financial system has been altered significantly.
-        </p>
-        <p>
-          Some concerning sovereign debt dynamics, notably in the United States (charted here), accelerated in 2008 and again in 2020. These featured charts summarize why I am focused on this issue, given the clear divergence.
-        </p>
-        <p>
-          This site examines the nature and consequences of this economic environment in further detail, with a focus on sovereign debt. It is my primary interest right now.
-        </p>
+        <p class="research-scroll">Read the articles below &darr;</p>
       </div>
 
-      <div class="research-chart">
-        <div class="chart-switch">
-          <p class="chart-switch-label">Switch between the two charts:</p>
-          <div class="chart-tabs">
-            <label for="chart-era">
-              <span class="tab-title">By era</span>
-              <span class="tab-detail">Three periods, FY1950&ndash;2025</span>
-            </label>
-            <label for="chart-rolling">
-              <span class="tab-title">Rolling 30-year</span>
-              <span class="tab-detail">Windows ending FY1979&ndash;2025</span>
-            </label>
-          </div>
-        </div>
-        <a class="panel-era" href="debt-response-era.png">
-          <img src="debt-response-era.png" width="689" height="440" alt="Response of the US primary balance to lagged debt by era, with 95% confidence intervals: 0.029 for FY1950-1974, 0.059 for FY1975-2000, and -0.038 for FY2001-2025">
-        </a>
-        <a class="panel-rolling" href="debt-response-rolling.png">
-          <img src="debt-response-rolling.png" width="989" height="690" alt="Rolling 30-year estimate of the US primary balance's response to lagged debt with 95% confidence band, above the annual output gap; FY2025 estimate -0.067, p = 0.004">
-        </a>
-        <div class="research-caption">
-          <div class="panel-era">
-            <p>
-              Data: FRED. Made in Python with Claude. The response of the US primary balance to lagged debt (<i>g</i>), estimated separately for FY1950&ndash;1974, 1975&ndash;2000 and 2001&ndash;2025 in a single regression, controlling for the output gap and COVID. Following Bohn (1998), <i>g</i>&nbsp;&gt;&nbsp;0 means primary surpluses rise with debt, a sufficient condition for sustainability. Bars are 95% confidence intervals.
-            </p>
-            <details class="method">
-              <summary>Full specification</summary>
-              <p>
-                A single OLS regression over FY1950&ndash;2025: <i>PB<sub>t</sub></i> = <i>&alpha;<sub>k</sub></i> + <i>&beta;</i>&middot;<i>Gap<sub>t</sub></i> + &Sigma; <i>g<sub>k</sub></i>&middot;(<i>D<sub>t&minus;1</sub></i> &times; <i>E<sub>k,t</sub></i>) + <i>&delta;</i>&middot;<i>Covid<sub>t</sub></i> + <i>&epsilon;<sub>t</sub></i>, where <i>E<sub>k</sub></i> equals 1 in era <i>k</i> (FY1950&ndash;1974, 1975&ndash;2000, 2001&ndash;2025) and 0 otherwise.
-              </p>
-              <p>
-                <i>PB</i> is the primary balance and <i>D</i> is debt held by the public, both in % of GDP. <i>Gap</i> is the output gap against CBO potential GDP, and <i>Covid</i> is a FY2020&ndash;21 dummy. Each era has its own intercept <i>&alpha;<sub>k</sub></i>, so <i>g<sub>k</sub></i> measures the debt response within that era, while <i>&beta;</i> and <i>&delta;</i> are shared across eras. Intervals use Newey-West (HAC, 2 lags) standard errors.
-              </p>
-            </details>
-          </div>
-          <div class="panel-rolling">
-            <p>
-              Data: FRED. Made in Python with Claude. The same debt response (<i>g</i>), re-estimated over each 30-year window and plotted at the window's final fiscal year, controlling for the output gap and COVID. Below zero, primary surpluses no longer rise with debt. Shading is the 95% confidence interval; the lower panel shows the annual output gap. Latest window, FY1996&ndash;2025: <i>g</i>&nbsp;=&nbsp;&minus;0.067 (p&nbsp;=&nbsp;0.004).
-            </p>
-            <details class="method">
-              <summary>Full specification</summary>
-              <p>
-                Each point is an OLS estimate of <i>PB<sub>t</sub></i> = <i>&alpha;</i> + <i>&beta;</i>&middot;<i>Gap<sub>t</sub></i> + <i>g</i>&middot;<i>D<sub>t&minus;1</sub></i> + <i>&delta;</i>&middot;<i>Covid<sub>t</sub></i> + <i>&epsilon;<sub>t</sub></i> over the 30 fiscal years ending in that year, using data from FY1950&ndash;2025.
-              </p>
-              <p>
-                <i>PB</i> is the primary balance (federal surplus plus interest outlays, % of GDP), <i>D</i> is debt held by the public (% of GDP), <i>Gap</i> = 100 &times; (real GDP &minus; CBO potential GDP) / potential GDP, and <i>Covid</i> is a FY2020&ndash;21 dummy. Following Bohn (1998), <i>g</i>&nbsp;&gt;&nbsp;0 means primary surpluses rise with debt, a sufficient condition for sustainability. Intervals use Newey-West (HAC, 2 lags) standard errors.
-              </p>
-            </details>
-          </div>
-        </div>
-      </div>
+      <section class="research">
+        <input type="radio" name="research-chart" id="chart-era" checked>
+        <input type="radio" name="research-chart" id="chart-rolling">
 
-      <p class="research-scroll">Read the articles below &darr;</p>
-    </section>
+        <div class="research-chart">
+          <div class="chart-switch">
+            <p class="chart-switch-label">Switch between the two charts:</p>
+            <div class="chart-tabs">
+              <label for="chart-era">
+                <span class="tab-title">By era</span>
+                <span class="tab-detail">Three periods, FY1950&ndash;2025</span>
+              </label>
+              <label for="chart-rolling">
+                <span class="tab-title">Rolling 30-year</span>
+                <span class="tab-detail">Windows ending FY1979&ndash;2025</span>
+              </label>
+            </div>
+          </div>
+          <a class="panel-era" href="debt-response-era.png">
+            <img src="debt-response-era.png" width="689" height="440" alt="Response of the US primary balance to lagged debt by era, with 95% confidence intervals: 0.029 for FY1950-1974, 0.059 for FY1975-2000, and -0.038 for FY2001-2025">
+          </a>
+          <a class="panel-rolling" href="debt-response-rolling.png">
+            <img src="debt-response-rolling.png" width="989" height="690" alt="Rolling 30-year estimate of the US primary balance's response to lagged debt with 95% confidence band, above the annual output gap; FY2025 estimate -0.067, p = 0.004">
+          </a>
+          <div class="research-caption">
+            <div class="panel-era">
+              <p>
+                Data: FRED. Made in Python with Claude. The response of the US primary balance to lagged debt (<i>g</i>), estimated separately for FY1950&ndash;1974, 1975&ndash;2000 and 2001&ndash;2025 in a single regression, controlling for the output gap and COVID. Following Bohn (1998), <i>g</i>&nbsp;&gt;&nbsp;0 means primary surpluses rise with debt, a sufficient condition for sustainability. Bars are 95% confidence intervals.
+              </p>
+              <details class="method">
+                <summary>Full specification</summary>
+                <p>
+                  A single OLS regression over FY1950&ndash;2025: <i>PB<sub>t</sub></i> = <i>&alpha;<sub>k</sub></i> + <i>&beta;</i>&middot;<i>Gap<sub>t</sub></i> + &Sigma; <i>g<sub>k</sub></i>&middot;(<i>D<sub>t&minus;1</sub></i> &times; <i>E<sub>k,t</sub></i>) + <i>&delta;</i>&middot;<i>Covid<sub>t</sub></i> + <i>&epsilon;<sub>t</sub></i>, where <i>E<sub>k</sub></i> equals 1 in era <i>k</i> (FY1950&ndash;1974, 1975&ndash;2000, 2001&ndash;2025) and 0 otherwise.
+                </p>
+                <p>
+                  <i>PB</i> is the primary balance and <i>D</i> is debt held by the public, both in % of GDP. <i>Gap</i> is the output gap against CBO potential GDP, and <i>Covid</i> is a FY2020&ndash;21 dummy. Each era has its own intercept <i>&alpha;<sub>k</sub></i>, so <i>g<sub>k</sub></i> measures the debt response within that era, while <i>&beta;</i> and <i>&delta;</i> are shared across eras. Intervals use Newey-West (HAC, 2 lags) standard errors.
+                </p>
+              </details>
+            </div>
+            <div class="panel-rolling">
+              <p>
+                Data: FRED. Made in Python with Claude. The same debt response (<i>g</i>), re-estimated over each 30-year window and plotted at the window's final fiscal year, controlling for the output gap and COVID. Below zero, primary surpluses no longer rise with debt. Shading is the 95% confidence interval; the lower panel shows the annual output gap. Latest window, FY1996&ndash;2025: <i>g</i>&nbsp;=&nbsp;&minus;0.067 (p&nbsp;=&nbsp;0.004).
+              </p>
+              <details class="method">
+                <summary>Full specification</summary>
+                <p>
+                  Each point is an OLS estimate of <i>PB<sub>t</sub></i> = <i>&alpha;</i> + <i>&beta;</i>&middot;<i>Gap<sub>t</sub></i> + <i>g</i>&middot;<i>D<sub>t&minus;1</sub></i> + <i>&delta;</i>&middot;<i>Covid<sub>t</sub></i> + <i>&epsilon;<sub>t</sub></i> over the 30 fiscal years ending in that year, using data from FY1950&ndash;2025.
+                </p>
+                <p>
+                  <i>PB</i> is the primary balance (federal surplus plus interest outlays, % of GDP), <i>D</i> is debt held by the public (% of GDP), <i>Gap</i> = 100 &times; (real GDP &minus; CBO potential GDP) / potential GDP, and <i>Covid</i> is a FY2020&ndash;21 dummy. Following Bohn (1998), <i>g</i>&nbsp;&gt;&nbsp;0 means primary surpluses rise with debt, a sufficient condition for sustainability. Intervals use Newey-West (HAC, 2 lags) standard errors.
+                </p>
+              </details>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
 
     <div class="home-grid">
       <div class="about">
