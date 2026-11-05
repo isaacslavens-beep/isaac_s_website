@@ -264,32 +264,42 @@
     }
 
     #chart-era:checked ~ .research-chart label[for="chart-era"],
-    #chart-rolling:checked ~ .research-chart label[for="chart-rolling"] {
+    #chart-rolling:checked ~ .research-chart label[for="chart-rolling"],
+    #chart-policy:checked ~ .research-chart label[for="chart-policy"],
+    #chart-spending:checked ~ .research-chart label[for="chart-spending"] {
       background: #3d5a80;
       border-color: #3d5a80;
       color: #ffffff;
     }
 
     #chart-era:checked ~ .research-chart label[for="chart-era"]::before,
-    #chart-rolling:checked ~ .research-chart label[for="chart-rolling"]::before {
+    #chart-rolling:checked ~ .research-chart label[for="chart-rolling"]::before,
+    #chart-policy:checked ~ .research-chart label[for="chart-policy"]::before,
+    #chart-spending:checked ~ .research-chart label[for="chart-spending"]::before {
       border-color: #ffffff;
       background: #ffffff;
       box-shadow: inset 0 0 0 3px #3d5a80;
     }
 
     #chart-era:checked ~ .research-chart label[for="chart-era"] .tab-detail,
-    #chart-rolling:checked ~ .research-chart label[for="chart-rolling"] .tab-detail {
+    #chart-rolling:checked ~ .research-chart label[for="chart-rolling"] .tab-detail,
+    #chart-policy:checked ~ .research-chart label[for="chart-policy"] .tab-detail,
+    #chart-spending:checked ~ .research-chart label[for="chart-spending"] .tab-detail {
       color: rgba(255, 255, 255, 0.85);
     }
 
     #chart-era:focus-visible ~ .research-chart label[for="chart-era"],
-    #chart-rolling:focus-visible ~ .research-chart label[for="chart-rolling"] {
+    #chart-rolling:focus-visible ~ .research-chart label[for="chart-rolling"],
+    #chart-policy:focus-visible ~ .research-chart label[for="chart-policy"],
+    #chart-spending:focus-visible ~ .research-chart label[for="chart-spending"] {
       outline: 2px solid #3d5a80;
       outline-offset: 2px;
     }
 
     #chart-era:checked ~ * .panel-rolling,
-    #chart-rolling:checked ~ * .panel-era {
+    #chart-rolling:checked ~ * .panel-era,
+    #chart-policy:checked ~ * .panel-spending,
+    #chart-spending:checked ~ * .panel-policy {
       display: none;
     }
 
@@ -413,11 +423,131 @@
   </figure>
   <div class="container">
 
+    <!-- Canada research: text on the left, chart switcher on the right -->
     <div class="top">
       <div class="site-intro">
         <h1>Isaac Slavens</h1>
         <p class="subtitle">Economics and Financial Management Student at Wilfrid Laurier University</p>
 
+        <div class="research-note">
+          <p>
+            Maintaining Canada's old-age dependency ratio at its current level today requires over 1.5 million immigrants annually, and that number would rise to 2.8 million by the 2060s.
+          </p>
+          <p>
+            Each wave of newcomers eventually makes its way into the old-age category which it was originally meant to offset, which is why a true solution to the dependency ratio requires a holistic budgetary reform which promotes endogenous demographic sustainability.
+          </p>
+          <p>
+            This site focuses on fiscal sustainability and debt dynamics, which are my primary interests right now.
+          </p>
+        </div>
+
+        <p class="research-scroll">Read the articles below &darr;</p>
+      </div>
+
+      <section class="research">
+        <input type="radio" name="canada-chart" id="chart-policy" checked>
+        <input type="radio" name="canada-chart" id="chart-spending">
+
+        <div class="research-chart">
+          <div class="chart-switch">
+            <p class="chart-switch-label">Switch between the two charts:</p>
+            <div class="chart-tabs">
+              <label for="chart-policy">
+                <span class="tab-title">Dependency ratio</span>
+                <span class="tab-detail">Policy scenarios to 2100</span>
+              </label>
+              <label for="chart-spending">
+                <span class="tab-title">Senior and child spending</span>
+                <span class="tab-detail">Share of GDP to 2100</span>
+              </label>
+            </div>
+          </div>
+          <a class="panel-policy" href="canada-demographic/2_combined_policy.png">
+            <img src="canada-demographic/2_combined_policy.png" width="1089" height="682" alt="Projected dependency ratio to 2100 under combined immigration and fiscal policy scenarios">
+          </a>
+          <a class="panel-spending" href="canada-demographic/3_total_spending.png">
+            <img src="canada-demographic/3_total_spending.png" width="1089" height="682" alt="Projected senior and child spending as a share of GDP under each scenario">
+          </a>
+          <div class="research-caption">
+            <p class="panel-policy">
+              Data: Statistics Canada, CRA; fertility response from international studies. Projection built in Python with AI assistance (Claude). Code and data: <a target="_blank" href="https://github.com/isaacslavens-beep/canada-dependency-ratio">GitHub</a>. From <a href="canada-demographic/">Canadian Demographic Sustainability</a>.
+            </p>
+            <p class="panel-spending">
+              Data: Statistics Canada, CIHI, Office of the Chief Actuary, CRA. Projection built in Python with AI assistance (Claude). Code and data: <a target="_blank" href="https://github.com/isaacslavens-beep/canada-dependency-ratio">GitHub</a>. From <a href="canada-demographic/">Canadian Demographic Sustainability</a>.
+            </p>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <div class="home-grid">
+      <div class="about">
+        <div class="epigraph">
+          <blockquote>
+            "Unless we think of our civilization as something that's going to stretch out into the future, we won't do the job of living well today."
+          </blockquote>
+          <p class="attribution">Hyman Minsky</p>
+        </div>
+      </div>
+
+      <div class="writing">
+        <p class="section-label">Writing</p>
+
+        <ul class="article-list">
+           <li>
+          <a href="canada-demographic/">
+            <div class="article-title">Canadian Demographic Sustainability</div>
+            <div class="article-meta">
+              <span class="article-date">November 2026</span>
+              <svg class="article-arrow" width="20" height="20" aria-hidden="true"><use href="#chevron"/></svg>
+            </div>
+          </a>
+        </li>
+        <li>
+          <a href="fed-independence/">
+            <div class="article-title">The Future of Federal Reserve Independence</div>
+            <div class="article-meta">
+              <span class="article-date">September 2026</span>
+              <svg class="article-arrow" width="20" height="20" aria-hidden="true"><use href="#chevron"/></svg>
+            </div>
+          </a>
+        </li>
+        <li>
+          <a href="USD-Golden-Age/">
+            <div class="article-title">The USD Golden Age</div>
+            <div class="article-meta">
+              <span class="article-date">September 2026</span>
+              <svg class="article-arrow" width="20" height="20" aria-hidden="true"><use href="#chevron"/></svg>
+            </div>
+          </a>
+        </li>
+        <li>
+          <a href="japandebt/">
+            <div class="article-title">Japan's Impossible Situation</div>
+            <div class="article-meta">
+              <span class="article-date">September 2026</span>
+              <svg class="article-arrow" width="20" height="20" aria-hidden="true"><use href="#chevron"/></svg>
+            </div>
+          </a>
+        </li>
+        <li>
+          <a href="americandebt/">
+            <div class="article-title">U.S. Debt Trouble</div>
+            <div class="article-meta">
+              <span class="article-date">September 2026</span>
+              <svg class="article-arrow" width="20" height="20" aria-hidden="true"><use href="#chevron"/></svg>
+            </div>
+          </a>
+        </li>
+        </ul>
+      </div>
+    </div>
+
+    <hr class="divider">
+
+    <!-- U.S. research: text on the left, chart switcher on the right -->
+    <div class="top">
+      <div class="site-intro">
         <div class="research-note">
           <p>
             Throughout the 21st century, U.S. primary surpluses have no longer risen in proportion to the level of government debt, which broke a postwar pattern.
@@ -429,8 +559,6 @@
             This site examines the nature and consequences of this economic environment in further detail, with a focus on sovereign debt. It is my primary interest right now.
           </p>
         </div>
-
-        <p class="research-scroll">Read the articles below &darr;</p>
       </div>
 
       <section class="research">
@@ -489,78 +617,6 @@
           </div>
         </div>
       </section>
-    </div>
-
-    <div class="home-grid">
-      <div class="about">
-        <div class="epigraph">
-          <blockquote>
-            "Unless we think of our civilization as something that's going to stretch out into the future, we won't do the job of living well today."
-          </blockquote>
-          <p class="attribution">Hyman Minsky</p>
-        </div>
-      </div>
-
-      <div class="writing">
-        <p class="section-label">Writing</p>
-
-        <ul class="article-list">
-           <li>
-          <a href="canada-demographic/">
-            <div class="article-title">Canada's Demographic Sustainability</div>
-            <div class="article-meta">
-              <span class="article-date">November 2026</span>
-              <svg class="article-arrow" width="20" height="20" aria-hidden="true"><use href="#chevron"/></svg>
-            </div>
-          </a>
-        </li>
-        <li>
-          <a href="fed-independence/">
-            <div class="article-title">The Future of Federal Reserve Independence</div>
-            <div class="article-meta">
-              <span class="article-date">September 2026</span>
-              <svg class="article-arrow" width="20" height="20" aria-hidden="true"><use href="#chevron"/></svg>
-            </div>
-          </a>
-        </li>
-        <li>
-          <a href="USD-Golden-Age/">
-            <div class="article-title">The USD Golden Age</div>
-            <div class="article-meta">
-              <span class="article-date">September 2026</span>
-              <svg class="article-arrow" width="20" height="20" aria-hidden="true"><use href="#chevron"/></svg>
-            </div>
-          </a>
-        </li>
-        <li>
-          <a href="fed-independence/">
-            <div class="article-title">The Future of Federal Reserve Independence</div>
-            <div class="article-meta">
-              <span class="article-date">September 2026</span>
-              <svg class="article-arrow" width="20" height="20" aria-hidden="true"><use href="#chevron"/></svg>
-            </div>
-          </a>
-        </li>
-        <li>
-          <a href="japandebt/">
-            <div class="article-title">Japan's Impossible Situation</div>
-            <div class="article-meta">
-              <span class="article-date">September 2026</span>
-              <svg class="article-arrow" width="20" height="20" aria-hidden="true"><use href="#chevron"/></svg>
-            </div>
-          </a>
-        </li>
-        <li>
-          <a href="americandebt/">
-            <div class="article-title">U.S. Debt Trouble</div>
-            <div class="article-meta">
-              <span class="article-date">September 2026</span>
-              <svg class="article-arrow" width="20" height="20" aria-hidden="true"><use href="#chevron"/></svg>
-            </div>
-          </a>
-        </li>
-        </ul>
-      </div>
     </div>
 
     <hr class="divider">
