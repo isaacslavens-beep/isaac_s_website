@@ -51,13 +51,6 @@ header.site-nav {
   color: #3d5a80;
 }
 
-.contact-links {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px 20px;
-  font-size: 0.9rem;
-}
-
 h1 {
   font-family: 'Libre Baskerville', serif;
   font-size: 2rem;
