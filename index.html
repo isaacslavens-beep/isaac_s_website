@@ -382,17 +382,9 @@
       }
     }
 
-    /* Photo beside the name, contact links underneath */
+    /* Name, subtitle, contact links */
     .intro {
-      display: flex;
-      align-items: center;
-      gap: 24px;
       margin-bottom: 64px;
-    }
-
-    .profile-image {
-      flex-shrink: 0;
-      width: 120px;
     }
 
     .intro .subtitle {
@@ -431,21 +423,6 @@
       color: inherit;
     }
 
-    @media (max-width: 480px) {
-      .intro {
-        gap: 16px;
-      }
-
-      .profile-image {
-        width: 88px;
-      }
-    }
-
-    .profile-image img {
-      width: 100%;
-      height: auto;
-      border-radius: 4px;
-    }
 
     .disclaimer {
       margin-top: 32px;
@@ -464,19 +441,14 @@
   </figure>
   <div class="container">
 
-    <!-- Name, subtitle, photo and contact links -->
+    <!-- Name, subtitle and contact links -->
     <div class="intro">
-      <div class="profile-image">
-        <img src="profile.jpg" width="480" height="646" decoding="async" alt="Isaac Slavens">
-      </div>
-      <div>
-        <h1>Isaac Slavens</h1>
-        <p class="subtitle">Economics and Financial Management Student at Wilfrid Laurier University</p>
-        <p class="contact-links">
-          <a href="https://www.linkedin.com/in/isaac-slavens" target="_blank">LinkedIn</a>
-          <span>Email: isaac.slavens@gmail.com</span>
-        </p>
-      </div>
+      <h1>Isaac Slavens</h1>
+      <p class="subtitle">Economics and Financial Management Student at Wilfrid Laurier University</p>
+      <p class="contact-links">
+        <a href="https://www.linkedin.com/in/isaac-slavens" target="_blank">LinkedIn</a>
+        <span>Email: isaac.slavens@gmail.com</span>
+      </p>
     </div>
 
     <h2 class="section-label">Research</h2>
