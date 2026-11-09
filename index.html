@@ -40,14 +40,6 @@
       display: block;
     }
 
-    .header figcaption {
-      padding: 8px 24px 0;
-      text-align: right;
-      font-size: 0.75rem;
-      font-style: italic;
-      color: #4a5568;
-    }
-
     .container {
       max-width: 800px;
       margin: 0 auto;
@@ -70,7 +62,8 @@
     }
 
     .epigraph {
-      margin-bottom: 40px;
+      max-width: 760px;
+      margin-top: 64px;
     }
 
     .epigraph blockquote {
@@ -368,11 +361,6 @@
         max-width: 1120px;
       }
 
-      .about {
-        max-width: 760px;
-        margin-bottom: 32px;
-      }
-
       .epigraph blockquote {
         font-size: 1.45rem;
         line-height: 1.6;
@@ -394,9 +382,63 @@
       }
     }
 
+    /* Photo beside the name, contact links underneath */
+    .intro {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      margin-bottom: 64px;
+    }
+
     .profile-image {
-      margin-top: 48px;
-      width: 240px;
+      flex-shrink: 0;
+      width: 120px;
+    }
+
+    .intro .subtitle {
+      margin-bottom: 12px;
+    }
+
+    .contact-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px 20px;
+      font-size: 0.95rem;
+      font-weight: 500;
+    }
+
+    .contact-links a {
+      color: #3d5a80;
+    }
+
+    /* Title and date above each research item */
+    .research-head {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 4px 16px;
+      margin-bottom: 20px;
+    }
+
+    .research-title {
+      font-family: 'Libre Baskerville', serif;
+      font-size: 1.1rem;
+      font-weight: 400;
+    }
+
+    .research-title a {
+      color: inherit;
+    }
+
+    @media (max-width: 480px) {
+      .intro {
+        gap: 16px;
+      }
+
+      .profile-image {
+        width: 88px;
+      }
     }
 
     .profile-image img {
@@ -422,200 +464,197 @@
   </figure>
   <div class="container">
 
-    <!-- Canada research: text on the left, chart switcher on the right -->
-    <div class="top">
-      <div class="site-intro">
+    <!-- Name, subtitle, photo and contact links -->
+    <div class="intro">
+      <div class="profile-image">
+        <img src="profile.jpg" width="480" height="646" decoding="async" alt="Isaac Slavens">
+      </div>
+      <div>
         <h1>Isaac Slavens</h1>
         <p class="subtitle">Economics and Financial Management Student at Wilfrid Laurier University</p>
-
-        <div class="research-note">
-          <p>
-            Maintaining Canada's old-age dependency ratio at its current level today requires over 1.5 million immigrants annually, and that number would rise to 2.8 million by the 2060s.
-          </p>
-          <p>
-            Each wave of newcomers eventually makes its way into the old-age category which it was originally meant to offset, which is why a true solution to the dependency ratio requires a holistic budgetary reform which promotes endogenous demographic sustainability.
-          </p>
-          <p>
-            This site focuses on fiscal sustainability and debt dynamics, which are my primary interests right now.
-          </p>
-        </div>
-
-        <p class="research-scroll">Read the articles below &darr;</p>
-      </div>
-
-      <section class="research">
-        <input type="radio" name="canada-chart" id="chart-policy" checked>
-        <input type="radio" name="canada-chart" id="chart-spending">
-
-        <div class="research-chart">
-          <div class="chart-switch">
-            <p class="chart-switch-label">Switch between the two charts:</p>
-            <div class="chart-tabs">
-              <label for="chart-policy">
-                <span class="tab-title">Dependency ratio</span>
-                <span class="tab-detail">Policy scenarios to 2100</span>
-              </label>
-              <label for="chart-spending">
-                <span class="tab-title">Senior and child spending</span>
-                <span class="tab-detail">Share of GDP to 2100</span>
-              </label>
-            </div>
-          </div>
-          <a class="panel-policy" href="canada-demographic/2_combined_policy.png" target="_blank">
-            <img src="canada-demographic/2_combined_policy.png" width="1089" height="682" alt="Projected dependency ratio to 2100 under combined immigration and fiscal policy scenarios">
-          </a>
-          <a class="panel-spending" href="canada-demographic/3_total_spending.png" target="_blank">
-            <img src="canada-demographic/3_total_spending.png" width="1089" height="682" alt="Projected senior and child spending as a share of GDP under each scenario">
-          </a>
-          <div class="research-caption">
-            <p class="panel-policy">
-              Data: Statistics Canada, CRA; fertility response from international studies. Projection built in Python with AI assistance (Claude). Code and data: <a target="_blank" href="https://github.com/isaacslavens-beep/canada-dependency-ratio">GitHub</a>. From <a href="canada-demographic/">Canadian Demographic Sustainability</a>.
-            </p>
-            <p class="panel-spending">
-              Data: Statistics Canada, CIHI, Office of the Chief Actuary, CRA. Projection built in Python with AI assistance (Claude). Code and data: <a target="_blank" href="https://github.com/isaacslavens-beep/canada-dependency-ratio">GitHub</a>. From <a href="canada-demographic/">Canadian Demographic Sustainability</a>.
-            </p>
-          </div>
-        </div>
-      </section>
-    </div>
-
-    <div class="home-grid">
-      <div class="about">
-        <div class="epigraph">
-          <blockquote>
-            "Unless we think of our civilization as something that's going to stretch out into the future, we won't do the job of living well today."
-          </blockquote>
-          <p class="attribution">Hyman Minsky</p>
-        </div>
-      </div>
-
-      <div class="writing">
-        <p class="section-label">Writing</p>
-
-        <ul class="article-list">
-           <li>
-          <a href="canada-demographic/">
-            <div class="article-title">Canadian Demographic Sustainability</div>
-            <div class="article-meta">
-              <span class="article-date">November 2026</span>
-              <svg class="article-arrow" width="20" height="20" aria-hidden="true"><use href="#chevron"/></svg>
-            </div>
-          </a>
-        </li>
-        <li>
-          <a href="fed-independence/">
-            <div class="article-title">The Future of Federal Reserve Independence</div>
-            <div class="article-meta">
-              <span class="article-date">September 2026</span>
-              <svg class="article-arrow" width="20" height="20" aria-hidden="true"><use href="#chevron"/></svg>
-            </div>
-          </a>
-        </li>
-        <li>
-          <a href="USD-Golden-Age/">
-            <div class="article-title">The USD Golden Age</div>
-            <div class="article-meta">
-              <span class="article-date">September 2026</span>
-              <svg class="article-arrow" width="20" height="20" aria-hidden="true"><use href="#chevron"/></svg>
-            </div>
-          </a>
-        </li>
-        <li>
-          <a href="japandebt/">
-            <div class="article-title">Japan's Impossible Situation</div>
-            <div class="article-meta">
-              <span class="article-date">September 2026</span>
-              <svg class="article-arrow" width="20" height="20" aria-hidden="true"><use href="#chevron"/></svg>
-            </div>
-          </a>
-        </li>
-        <li>
-          <a href="americandebt/">
-            <div class="article-title">U.S. Debt Trouble</div>
-            <div class="article-meta">
-              <span class="article-date">September 2026</span>
-              <svg class="article-arrow" width="20" height="20" aria-hidden="true"><use href="#chevron"/></svg>
-            </div>
-          </a>
-        </li>
-        </ul>
+        <p class="contact-links">
+          <a href="https://www.linkedin.com/in/isaac-slavens" target="_blank">LinkedIn</a>
+          <a href="mailto:isaac.slavens@gmail.com">isaac.slavens@gmail.com</a>
+        </p>
       </div>
     </div>
 
-    <hr class="divider">
+    <h2 class="section-label">Research</h2>
 
-    <!-- U.S. research: text on the left, chart switcher on the right -->
-    <div class="top">
-      <div class="site-intro">
-        <div class="research-note">
-          <p>
-            Throughout the 21st century, U.S. primary surpluses have no longer risen in proportion to the level of government debt, which broke a postwar pattern.
-          </p>
-          <p>
-            This trend accelerated in 2008, and again in 2020. These featured charts summarize why I am focused on this issue, given the clear divergence.
-          </p>
-          <p>
-            In my articles <a href="americandebt/" target="_blank">U.S. Debt Trouble</a> and <a href="fed-independence/" target="_blank">The Future of Federal Reserve Independence</a>, I explore this situation and its consequences in more detail.
-          </p>
+    <div class="research-item">
+      <!-- Title and date for the U.S. fiscal reaction research go here (not written yet) -->
+      <!-- U.S. research: text on the left, chart switcher on the right -->
+      <div class="top">
+        <div class="site-intro">
+          <div class="research-note">
+            <p>
+              Throughout the 21st century, U.S. primary surpluses have no longer risen in proportion to the level of government debt, which broke a postwar pattern.
+            </p>
+            <p>
+              This trend accelerated in 2008, and again in 2020. These featured charts summarize why I am focused on this issue, given the clear divergence.
+            </p>
+            <p>
+              In my article <a href="fed-independence/" target="_blank">The Future of Federal Reserve Independence</a>, I explore this situation and its consequences in more detail.
+            </p>
+          </div>
         </div>
+
+        <section class="research">
+          <input type="radio" name="research-chart" id="chart-era" checked>
+          <input type="radio" name="research-chart" id="chart-rolling">
+
+          <div class="research-chart">
+            <div class="chart-switch">
+              <p class="chart-switch-label">Switch between the two charts:</p>
+              <div class="chart-tabs">
+                <label for="chart-era">
+                  <span class="tab-title">By era</span>
+                  <span class="tab-detail">Three periods, FY1950&ndash;2025</span>
+                </label>
+                <label for="chart-rolling">
+                  <span class="tab-title">Rolling 30-year</span>
+                  <span class="tab-detail">Windows ending FY1979&ndash;2025</span>
+                </label>
+              </div>
+            </div>
+            <a class="panel-era" href="debt-response-era.png" target="_blank">
+              <img src="debt-response-era.png" width="689" height="440" alt="Response of the US primary balance to lagged debt by era, with 95% confidence intervals: 0.029 for FY1950-1974, 0.059 for FY1975-2000, and -0.038 for FY2001-2025">
+            </a>
+            <a class="panel-rolling" href="debt-response-rolling.png" target="_blank">
+              <img src="debt-response-rolling.png" width="989" height="690" alt="Rolling 30-year estimate of the US primary balance's response to lagged debt with 95% confidence band, above the annual output gap; FY2025 estimate -0.067, p = 0.004">
+            </a>
+            <div class="research-caption">
+              <div class="panel-era">
+                <p>
+                  Data: FRED. Made in Python with Claude. The response of the US primary balance to lagged debt (<i>g</i>), estimated separately for FY1950&ndash;1974, 1975&ndash;2000 and 2001&ndash;2025 in a single regression, controlling for the output gap and COVID. Following Bohn (1998), <i>g</i>&nbsp;&gt;&nbsp;0 means primary surpluses rise with debt, a sufficient condition for sustainability. Bars are 95% confidence intervals.
+                </p>
+                <details class="method">
+                  <summary>Full specification</summary>
+                  <p>
+                    A single OLS regression over FY1950&ndash;2025: <i>PB<sub>t</sub></i> = <i>&alpha;<sub>k</sub></i> + <i>&beta;</i>&middot;<i>Gap<sub>t</sub></i> + &Sigma; <i>g<sub>k</sub></i>&middot;(<i>D<sub>t&minus;1</sub></i> &times; <i>E<sub>k,t</sub></i>) + <i>&delta;</i>&middot;<i>Covid<sub>t</sub></i> + <i>&epsilon;<sub>t</sub></i>, where <i>E<sub>k</sub></i> equals 1 in era <i>k</i> (FY1950&ndash;1974, 1975&ndash;2000, 2001&ndash;2025) and 0 otherwise.
+                  </p>
+                  <p>
+                    <i>PB</i> is the primary balance and <i>D</i> is debt held by the public, both in % of GDP. <i>Gap</i> is the output gap against CBO potential GDP, and <i>Covid</i> is a FY2020&ndash;21 dummy. Each era has its own intercept <i>&alpha;<sub>k</sub></i>, so <i>g<sub>k</sub></i> measures the debt response within that era, while <i>&beta;</i> and <i>&delta;</i> are shared across eras. Intervals use Newey-West (HAC, 2 lags) standard errors.
+                  </p>
+                </details>
+              </div>
+              <div class="panel-rolling">
+                <p>
+                  Data: FRED. Made in Python with Claude. The same debt response (<i>g</i>), re-estimated over each 30-year window and plotted at the window's final fiscal year, controlling for the output gap and COVID. Below zero, primary surpluses no longer rise with debt. Shading is the 95% confidence interval; the lower panel shows the annual output gap. Latest window, FY1996&ndash;2025: <i>g</i>&nbsp;=&nbsp;&minus;0.067 (p&nbsp;=&nbsp;0.004).
+                </p>
+                <details class="method">
+                  <summary>Full specification</summary>
+                  <p>
+                    Each point is an OLS estimate of <i>PB<sub>t</sub></i> = <i>&alpha;</i> + <i>&beta;</i>&middot;<i>Gap<sub>t</sub></i> + <i>g</i>&middot;<i>D<sub>t&minus;1</sub></i> + <i>&delta;</i>&middot;<i>Covid<sub>t</sub></i> + <i>&epsilon;<sub>t</sub></i> over the 30 fiscal years ending in that year, using data from FY1950&ndash;2025.
+                  </p>
+                  <p>
+                    <i>PB</i> is the primary balance (federal surplus plus interest outlays, % of GDP), <i>D</i> is debt held by the public (% of GDP), <i>Gap</i> = 100 &times; (real GDP &minus; CBO potential GDP) / potential GDP, and <i>Covid</i> is a FY2020&ndash;21 dummy. Following Bohn (1998), <i>g</i>&nbsp;&gt;&nbsp;0 means primary surpluses rise with debt, a sufficient condition for sustainability. Intervals use Newey-West (HAC, 2 lags) standard errors.
+                  </p>
+                </details>
+              </div>
+            </div>
+          </div>
+        </section>
       </div>
+    </div>
 
-      <section class="research">
-        <input type="radio" name="research-chart" id="chart-era" checked>
-        <input type="radio" name="research-chart" id="chart-rolling">
+    <div class="research-item">
+      <div class="research-head">
+        <h3 class="research-title"><a href="canada-demographic/">Canadian Demographic Sustainability</a></h3>
+        <span class="article-date">November 2026</span>
+      </div>
+      <!-- Canada research: text on the left, chart switcher on the right -->
+      <div class="top">
+        <div class="site-intro">
+          <div class="research-note">
+            <p>
+              Maintaining Canada's old-age dependency ratio at its current level today requires over 1.5 million immigrants annually, and that number would rise to 2.8 million by the 2060s.
+            </p>
+            <p>
+              Each wave of newcomers eventually makes its way into the old-age category which it was originally meant to offset, which is why a true solution to the dependency ratio requires a holistic budgetary reform which promotes endogenous demographic sustainability.
+            </p>
+            <p>
+              This site focuses on fiscal sustainability and debt dynamics, which are my primary interests right now.
+            </p>
+          </div>
 
-        <div class="research-chart">
-          <div class="chart-switch">
-            <p class="chart-switch-label">Switch between the two charts:</p>
-            <div class="chart-tabs">
-              <label for="chart-era">
-                <span class="tab-title">By era</span>
-                <span class="tab-detail">Three periods, FY1950&ndash;2025</span>
-              </label>
-              <label for="chart-rolling">
-                <span class="tab-title">Rolling 30-year</span>
-                <span class="tab-detail">Windows ending FY1979&ndash;2025</span>
-              </label>
-            </div>
-          </div>
-          <a class="panel-era" href="debt-response-era.png" target="_blank">
-            <img src="debt-response-era.png" width="689" height="440" alt="Response of the US primary balance to lagged debt by era, with 95% confidence intervals: 0.029 for FY1950-1974, 0.059 for FY1975-2000, and -0.038 for FY2001-2025">
-          </a>
-          <a class="panel-rolling" href="debt-response-rolling.png" target="_blank">
-            <img src="debt-response-rolling.png" width="989" height="690" alt="Rolling 30-year estimate of the US primary balance's response to lagged debt with 95% confidence band, above the annual output gap; FY2025 estimate -0.067, p = 0.004">
-          </a>
-          <div class="research-caption">
-            <div class="panel-era">
-              <p>
-                Data: FRED. Made in Python with Claude. The response of the US primary balance to lagged debt (<i>g</i>), estimated separately for FY1950&ndash;1974, 1975&ndash;2000 and 2001&ndash;2025 in a single regression, controlling for the output gap and COVID. Following Bohn (1998), <i>g</i>&nbsp;&gt;&nbsp;0 means primary surpluses rise with debt, a sufficient condition for sustainability. Bars are 95% confidence intervals.
-              </p>
-              <details class="method">
-                <summary>Full specification</summary>
-                <p>
-                  A single OLS regression over FY1950&ndash;2025: <i>PB<sub>t</sub></i> = <i>&alpha;<sub>k</sub></i> + <i>&beta;</i>&middot;<i>Gap<sub>t</sub></i> + &Sigma; <i>g<sub>k</sub></i>&middot;(<i>D<sub>t&minus;1</sub></i> &times; <i>E<sub>k,t</sub></i>) + <i>&delta;</i>&middot;<i>Covid<sub>t</sub></i> + <i>&epsilon;<sub>t</sub></i>, where <i>E<sub>k</sub></i> equals 1 in era <i>k</i> (FY1950&ndash;1974, 1975&ndash;2000, 2001&ndash;2025) and 0 otherwise.
-                </p>
-                <p>
-                  <i>PB</i> is the primary balance and <i>D</i> is debt held by the public, both in % of GDP. <i>Gap</i> is the output gap against CBO potential GDP, and <i>Covid</i> is a FY2020&ndash;21 dummy. Each era has its own intercept <i>&alpha;<sub>k</sub></i>, so <i>g<sub>k</sub></i> measures the debt response within that era, while <i>&beta;</i> and <i>&delta;</i> are shared across eras. Intervals use Newey-West (HAC, 2 lags) standard errors.
-                </p>
-              </details>
-            </div>
-            <div class="panel-rolling">
-              <p>
-                Data: FRED. Made in Python with Claude. The same debt response (<i>g</i>), re-estimated over each 30-year window and plotted at the window's final fiscal year, controlling for the output gap and COVID. Below zero, primary surpluses no longer rise with debt. Shading is the 95% confidence interval; the lower panel shows the annual output gap. Latest window, FY1996&ndash;2025: <i>g</i>&nbsp;=&nbsp;&minus;0.067 (p&nbsp;=&nbsp;0.004).
-              </p>
-              <details class="method">
-                <summary>Full specification</summary>
-                <p>
-                  Each point is an OLS estimate of <i>PB<sub>t</sub></i> = <i>&alpha;</i> + <i>&beta;</i>&middot;<i>Gap<sub>t</sub></i> + <i>g</i>&middot;<i>D<sub>t&minus;1</sub></i> + <i>&delta;</i>&middot;<i>Covid<sub>t</sub></i> + <i>&epsilon;<sub>t</sub></i> over the 30 fiscal years ending in that year, using data from FY1950&ndash;2025.
-                </p>
-                <p>
-                  <i>PB</i> is the primary balance (federal surplus plus interest outlays, % of GDP), <i>D</i> is debt held by the public (% of GDP), <i>Gap</i> = 100 &times; (real GDP &minus; CBO potential GDP) / potential GDP, and <i>Covid</i> is a FY2020&ndash;21 dummy. Following Bohn (1998), <i>g</i>&nbsp;&gt;&nbsp;0 means primary surpluses rise with debt, a sufficient condition for sustainability. Intervals use Newey-West (HAC, 2 lags) standard errors.
-                </p>
-              </details>
-            </div>
-          </div>
+          <p class="research-scroll">Read the articles below &darr;</p>
         </div>
-      </section>
+
+        <section class="research">
+          <input type="radio" name="canada-chart" id="chart-policy" checked>
+          <input type="radio" name="canada-chart" id="chart-spending">
+
+          <div class="research-chart">
+            <div class="chart-switch">
+              <p class="chart-switch-label">Switch between the two charts:</p>
+              <div class="chart-tabs">
+                <label for="chart-policy">
+                  <span class="tab-title">Dependency ratio</span>
+                  <span class="tab-detail">Policy scenarios to 2100</span>
+                </label>
+                <label for="chart-spending">
+                  <span class="tab-title">Senior and child spending</span>
+                  <span class="tab-detail">Share of GDP to 2100</span>
+                </label>
+              </div>
+            </div>
+            <a class="panel-policy" href="canada-demographic/2_combined_policy.png" target="_blank">
+              <img src="canada-demographic/2_combined_policy.png" width="1089" height="682" alt="Projected dependency ratio to 2100 under combined immigration and fiscal policy scenarios">
+            </a>
+            <a class="panel-spending" href="canada-demographic/3_total_spending.png" target="_blank">
+              <img src="canada-demographic/3_total_spending.png" width="1089" height="682" alt="Projected senior and child spending as a share of GDP under each scenario">
+            </a>
+            <div class="research-caption">
+              <p class="panel-policy">
+                Data: Statistics Canada, CRA; fertility response from international studies. Projection built in Python with AI assistance (Claude). Code and data: <a target="_blank" href="https://github.com/isaacslavens-beep/canada-dependency-ratio">GitHub</a>. From <a href="canada-demographic/">Canadian Demographic Sustainability</a>.
+              </p>
+              <p class="panel-spending">
+                Data: Statistics Canada, CIHI, Office of the Chief Actuary, CRA. Projection built in Python with AI assistance (Claude). Code and data: <a target="_blank" href="https://github.com/isaacslavens-beep/canada-dependency-ratio">GitHub</a>. From <a href="canada-demographic/">Canadian Demographic Sustainability</a>.
+              </p>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <h2 class="section-label">Essays</h2>
+
+    <ul class="article-list">
+      <li>
+        <a href="fed-independence/">
+          <div class="article-title">The Future of Federal Reserve Independence</div>
+          <div class="article-meta">
+            <span class="article-date">September 2026</span>
+            <svg class="article-arrow" width="20" height="20" aria-hidden="true"><use href="#chevron"/></svg>
+          </div>
+        </a>
+      </li>
+      <li>
+        <a href="USD-Golden-Age/">
+          <div class="article-title">The USD Golden Age</div>
+          <div class="article-meta">
+            <span class="article-date">September 2026</span>
+            <svg class="article-arrow" width="20" height="20" aria-hidden="true"><use href="#chevron"/></svg>
+          </div>
+        </a>
+      </li>
+      <li>
+        <a href="japandebt/">
+          <div class="article-title">Japan's Impossible Situation</div>
+          <div class="article-meta">
+            <span class="article-date">September 2026</span>
+            <svg class="article-arrow" width="20" height="20" aria-hidden="true"><use href="#chevron"/></svg>
+          </div>
+        </a>
+      </li>
+    </ul>
+
+    <div class="epigraph">
+      <blockquote>
+        "Unless we think of our civilization as something that's going to stretch out into the future, we won't do the job of living well today."
+      </blockquote>
+      <p class="attribution">Hyman Minsky</p>
     </div>
 
     <hr class="divider">
@@ -630,10 +669,6 @@
     <footer>
       isaac.slavens@gmail.com
     </footer>
-
-    <div class="profile-image">
-      <img src="profile.jpg" width="480" height="646" loading="lazy" decoding="async" alt="Isaac Slavens">
-    </div>
 
     <p class="disclaimer">Nothing on this website is financial advice.</p>
 

@@ -28,17 +28,34 @@ body {
   padding: 80px 24px 120px;
 }
 
-.back {
-  font-size: 1rem;
-  text-decoration: none;
-  color: #000000;
-  display: inline-block;
-  margin-bottom: 48px;
+/* Same links at the top and bottom of every article */
+.site-nav {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px 24px;
   font-weight: 500;
 }
 
-.back:hover {
+header.site-nav {
+  margin-bottom: 48px;
+}
+
+.site-nav a {
+  color: #000000;
+  text-decoration: none;
+}
+
+.site-nav a:hover {
   color: #3d5a80;
+}
+
+.contact-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 20px;
+  font-size: 0.9rem;
 }
 
 h1 {
@@ -176,11 +193,6 @@ footer {
   padding-top: 24px;
   border-top: 1px solid #dcdce0;
   font-size: 0.85rem;
-}
-
-/* Bottom "Homepage" link, placed after the sources */
-.back-end {
-  margin: 48px 0 0;
 }
 
 @media (max-width: 640px) {
