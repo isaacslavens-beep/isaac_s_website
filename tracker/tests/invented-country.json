@@ -1,0 +1,40 @@
+{
+  "note": "Invented numbers for testing the model. This is not data about any real country.",
+  "start": {
+    "year": 2025,
+    "debt": 1.00,
+    "centralBank": 0.15,
+    "holdings": {
+      "domesticPrivate": 0.50,
+      "foreignOfficial": 0.15,
+      "foreignPrivate": 0.20
+    },
+    "yield": 0.04,
+    "averageRate": 0.03,
+    "inflation": 0.03,
+    "revenue": 0.17,
+    "stressThreshold": 0.02
+  },
+  "controls": {
+    "years": 30,
+    "growth": 0.02,
+    "primaryBalance": -0.03,
+    "primaryBalanceMode": "fixed",
+    "gamma": 0.03,
+    "capMode": "automatic",
+    "capLevel": 0.04,
+    "priceSensitive": {
+      "domesticPrivate": 0.50,
+      "foreignOfficial": 0.10,
+      "foreignPrivate": 1.00
+    },
+    "yieldResponse": 0.03,
+    "passThrough": 0.2,
+    "persistence": 0.5,
+    "baselineInflation": 0.02,
+    "foreignInflation": 0.02,
+    "maturity": 6,
+    "runoff": 0,
+    "selloffs": []
+  }
+}
