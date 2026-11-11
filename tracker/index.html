@@ -28,6 +28,18 @@
       <div class="strip">
         <h1 id="chart-title">Sovereign Debt Simulator</h1>
         <p class="meta" id="chart-meta"></p>
+
+        <!-- The central figure: how much purchasing power is lost -->
+        <div class="hero">
+          <p class="hero-label" id="hero-label"></p>
+          <p class="hero-number" id="hero-number"></p>
+          <p class="hero-line" id="hero-line"></p>
+          <details id="how">
+            <summary>How this figure is calculated</summary>
+            <div id="how-body"></div>
+          </details>
+        </div>
+
         <dl class="headline" id="headline"></dl>
       </div>
 
@@ -52,6 +64,12 @@
       </p>
       <p class="source" id="source-line"></p>
       <p class="source" id="coverage-line"></p>
+
+      <!-- Advanced settings sit under the chart, beside the main controls -->
+      <details id="advanced" open>
+        <summary>Advanced settings</summary>
+        <div id="advanced-controls" class="advanced-grid"></div>
+      </details>
     </main>
 
     <!-- Side panel: the controls. ui.js fills it in from data/presets.json -->
@@ -61,11 +79,6 @@
 
         <h2>Scenarios</h2>
         <div id="scenario-controls"></div>
-
-        <details id="advanced">
-          <summary>Advanced</summary>
-          <div id="advanced-controls"></div>
-        </details>
 
         <button type="button" id="reset">Reset to defaults</button>
       </form>

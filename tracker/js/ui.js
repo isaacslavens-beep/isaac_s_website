@@ -25,7 +25,7 @@ var page = {
   data: {},        // country key -> its data file
   controls: {},    // country key -> that country's current control values
   country: null,   // the country being shown
-  chart: "debt",
+  chart: "purchasing-power",
   range: 30,
   plot: null,      // the uPlot object on screen
   result: null     // the latest model result
@@ -263,7 +263,7 @@ function buildControls() {
 // Some controls only apply when another is switched on.
 function showOrHideControls() {
   var values = page.controls[page.country];
-  document.querySelectorAll("#controls .control").forEach(function (box) {
+  document.querySelectorAll(".control").forEach(function (box) {
     box.hidden = box.showWhen ? !box.showWhen(values) : false;
   });
 }
@@ -376,7 +376,32 @@ function chartList(country) {
     });
   });
 
+  // Purchasing power of money, with the starting year at 100. History is
+  // worked backward from past inflation.
+  function purchasingPowerHistory(year) {
+    var level = 100;
+    for (var y = country.start.year; y > year; y--) {
+      var inflation = historyValue(country, "inflation", y);
+      if (inflation === null) return null;
+      level *= 1 + inflation;
+    }
+    return level;
+  }
+  var withoutPurchases = pricesWithoutPurchases(country, page.controls[country.country]);
+
   return [
+    { key: "purchasing-power", title: "Purchasing power", units: "Index, starting year = 100",
+      rightLabel: "Index, starting year = 100",
+      sources: ["inflation"],
+      series: [
+        { label: "Purchasing power of money", color: 1, decimals: 1,
+          history: purchasingPowerHistory,
+          projection: function (row) { return 100 / row.priceLevel; } },
+        { label: "If the central bank bought no debt", color: 2, decimals: 1,
+          history: none,
+          projection: function (row) { return 100 / withoutPurchases[row.year - country.start.year]; } }
+      ] },
+
     { key: "debt", title: "Debt", units: "Percent of GDP",
       rightLabel: "Percent of GDP", rightUnit: "%",
       sources: ["debt"],
@@ -414,7 +439,9 @@ function chartList(country) {
           history: debtShareHistory("centralBank"),
           projection: function (row) { return shareOfDebt(row.centralBank, row.debt); } },
         { label: "Purchases in the year, share of GDP (left axis)", color: 2, unit: "%", decimals: 2, axis: "left",
-          history: none, projection: function (row) { return row.purchases * 100; } }
+          history: none, projection: function (row) { return row.purchases * 100; } },
+        { label: "Central bank holdings, share of GDP (left axis)", color: 3, unit: "%", decimals: 1, axis: "left",
+          history: history("centralBank", 100), projection: function (row) { return row.centralBank * 100; } }
       ] },
 
     { key: "inflation", title: "Inflation and currency", units: "Percent",
@@ -438,6 +465,18 @@ function chartList(country) {
           history: none, projection: function (row) { return row.realReturn * 100; } }
       ] }
   ];
+}
+
+// The price level each year if the central bank never bought debt:
+// inflation only drifts from its starting value back to the baseline.
+function pricesWithoutPurchases(country, c) {
+  var levels = [1];
+  var inflation = country.start.inflation.value;
+  for (var t = 1; t <= page.presets.years; t++) {
+    inflation = c.baselineInflation + c.persistence * (inflation - c.baselineInflation);
+    levels.push(levels[t - 1] * (1 + inflation));
+  }
+  return levels;
 }
 
 function currentChart() {
@@ -515,13 +554,14 @@ function fillText() {
     " · Units: " + definition.units +
     " · Frequency: annual";
 
+  fillHero();
+
   var figures = [
+    ["Real return to the lender, per year", FORMATS.percent1(h.annualRealReturn)],
     ["Debt in " + lastYear, FORMATS.percent0(h.finalDebt) + " of GDP"],
     ["First year of fiscal stress", h.firstStressYear || "not reached"],
     ["First year of fiscal dominance", h.firstDominanceYear || "not reached"],
-    ["Peak central bank share of the debt", FORMATS.percent0(h.peakCentralBankShare)],
-    ["Loss of purchasing power over " + years + " years", FORMATS.percent0(h.purchasingPowerLoss)],
-    ["Real return to the lender, per year", FORMATS.percent1(h.annualRealReturn)]
+    ["Peak central bank share of the debt", FORMATS.percent0(h.peakCentralBankShare)]
   ];
   var headline = document.getElementById("headline");
   headline.textContent = "";
@@ -555,6 +595,80 @@ function fillText() {
   document.getElementById("coverage-line").textContent =
     country.governmentCovered + " " + country.yearBasis +
     " Defaults marked illustrative are starting values, not estimates.";
+}
+
+// The central figure and the steps behind it, with this scenario's numbers.
+function fillHero() {
+  var country = page.data[page.country];
+  var c = page.controls[page.country];
+  var rows = page.result.rows;
+  var last = rows[rows.length - 1];
+  var years = rows.length - 1;
+  var startYear = country.start.year;
+  var loss = page.result.headline.purchasingPowerLoss;
+
+  document.getElementById("hero-label").textContent =
+    "Loss of purchasing power, " + startYear + " to " + last.year;
+  document.getElementById("hero-number").textContent = FORMATS.percent0(loss);
+  document.getElementById("hero-line").textContent =
+    "What costs 100 in " + startYear + " costs " + (last.priceLevel * 100).toFixed(0) + " in " + last.year +
+    ". Money that buys 100 today buys " + (100 / last.priceLevel).toFixed(0) + " then.";
+
+  var without = pricesWithoutPurchases(country, c);
+  var lossWithout = 1 - 1 / without[years];
+  var averageInflation = Math.pow(last.priceLevel, 1 / years) - 1;
+  var buyingYears = rows.filter(function (row) { return row.purchases > 0; });
+  var totalPurchases = 0;
+  buyingYears.forEach(function (row) { totalPurchases += row.purchases; });
+
+  var steps = [
+    "1. Loss of purchasing power = 1 − 1 ÷ price level. The price level in " + last.year + " is " +
+      last.priceLevel.toFixed(2) + " times its " + startYear + " level, so the loss is 1 − 1 ÷ " +
+      last.priceLevel.toFixed(2) + " = " + FORMATS.percent0(loss) + ".",
+    "2. The price level is each year's inflation compounded. Inflation averages " +
+      FORMATS.percent1(averageInflation) + " a year over the " + years + " years.",
+    "3. Inflation in a year = baseline inflation (" + FORMATS.percent1(c.baselineInflation) +
+      ") + pass-through (" + c.passThrough.toFixed(2) + ") × central bank purchases the year before" +
+      " + persistence (" + c.persistence.toFixed(2) + ") × last year's gap between inflation and the baseline.",
+    "4. The central bank buys debt only in years when the yield would otherwise rise above its cap. " +
+      (buyingYears.length
+        ? "In this scenario it buys in " + buyingYears.length + " of the " + years + " years, starting in " +
+          buyingYears[0].year + ", for a total of " + FORMATS.percent0(totalPurchases) + " of GDP."
+        : "In this scenario it never buys."),
+    "5. With no purchases at all, the loss would be " + FORMATS.percent0(lossWithout) +
+      ". Purchases account for the other " + ((loss - lossWithout) * 100).toFixed(0) + " points."
+  ];
+
+  var body = document.getElementById("how-body");
+  body.textContent = "";
+  steps.forEach(function (text) {
+    var paragraph = document.createElement("p");
+    paragraph.textContent = text;
+    body.append(paragraph);
+  });
+
+  // Every fifth year, so the steps can be checked against the numbers.
+  var table = document.createElement("table");
+  var head = table.insertRow();
+  ["Year", "Inflation", "Purchases, share of GDP", "Price level", "What 100 buys"].forEach(function (text) {
+    var cell = document.createElement("th");
+    cell.textContent = text;
+    head.append(cell);
+  });
+  rows.forEach(function (row, t) {
+    if (t % 5 !== 0) return;
+    var line = table.insertRow();
+    [row.year, FORMATS.percent1(row.inflation), FORMATS.percent1(row.purchases),
+      row.priceLevel.toFixed(2), (100 / row.priceLevel).toFixed(0)].forEach(function (text) {
+      line.insertCell().textContent = text;
+    });
+  });
+  body.append(table);
+
+  var closing = document.createElement("p");
+  closing.textContent = "Every number in these steps comes from the controls on this page. " +
+    "Change a control and the steps update.";
+  body.append(closing);
 }
 
 // ---------------------------------------------------------------- download
