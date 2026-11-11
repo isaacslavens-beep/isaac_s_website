@@ -1,0 +1,15 @@
+# Sovereign debt simulator (tracker/)
+
+# FRED API key, created by hand and never committed
+tracker/pipeline/.env
+
+# Private source reference, generated locally by the build
+tracker/SOURCES.md
+
+# Raw API responses cached by the pipeline
+tracker/pipeline/cache/
+
+# Python working files
+tracker/pipeline/.venv/
+tracker/pipeline/__pycache__/
+tracker/pipeline/**/__pycache__/
