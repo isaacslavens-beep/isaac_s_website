@@ -1,0 +1,165 @@
+# Every series the pipeline fetches. Nothing is fetched that is not in this file.
+#
+# fetch.py checks each one against its service before using it: the title
+# here must match the title the service reports, and the last observation
+# must be less than a year old.
+#
+# Fields
+#   key          the name the pipeline uses for the series
+#   country      the country file it feeds
+#   source       its entry in sources.yml
+#   service      how it is fetched: fred, fiscaldata, fiscaldata_maturity
+#                or imf_datamapper
+#   units        as published
+#   frequency    as published
+#   annual_rule  how it becomes one value per year
+#   feeds        the model input it feeds
+#
+# The United States is on a federal fiscal year basis. Fiscal year 2026 ran
+# from October 1, 2025 to September 30, 2026. "Year end" means September 30
+# (June 30 before fiscal year 1977).
+
+series:
+
+  - key: us_marketable_debt
+    country: united-states
+    source: us_treasury_mspd
+    service: fiscaldata
+    endpoint: /v1/debt/mspd/mspd_table_1
+    filter: security_type_desc:eq:Total Marketable
+    field: debt_held_public_mil_amt
+    units: millions of dollars
+    frequency: monthly
+    annual_rule: year end
+    feeds: debt
+
+  - key: us_average_rate
+    country: united-states
+    source: us_treasury_average_rates
+    service: fiscaldata
+    endpoint: /v2/accounting/od/avg_interest_rates
+    filter: security_desc:eq:Total Marketable
+    field: avg_interest_rate_amt
+    units: percent
+    frequency: monthly
+    annual_rule: year end
+    feeds: average interest rate on the debt stock
+
+  - key: us_maturity
+    country: united-states
+    source: us_treasury_mspd
+    service: fiscaldata_maturity
+    endpoint: /v1/debt/mspd/mspd_table_3_market
+    units: years
+    frequency: monthly
+    annual_rule: >
+      year end, computed as the average time to maturity of every unmatured
+      marketable security, weighted by the amount outstanding
+    feeds: average maturity
+
+  - key: us_gdp
+    country: united-states
+    source: bea_gdp
+    service: fred
+    id: GDP
+    title: Gross Domestic Product
+    units: billions of dollars, seasonally adjusted annual rate
+    frequency: quarterly
+    annual_rule: average of the four quarters of the fiscal year
+    feeds: nominal GDP, the denominator of every share of GDP
+
+  - key: us_fed_treasuries
+    country: united-states
+    source: fed_h41
+    service: fred
+    id: TREAST
+    title: "Assets: Securities Held Outright: U.S. Treasury Securities: All: Wednesday Level"
+    units: millions of dollars
+    frequency: weekly
+    annual_rule: last Wednesday on or before year end
+    feeds: central bank holdings
+
+  - key: us_yield_10y
+    country: united-states
+    source: fed_h15
+    service: fred
+    id: GS10
+    title: Market Yield on U.S. Treasury Securities at 10-Year Constant Maturity, Quoted on an Investment Basis
+    units: percent
+    frequency: monthly
+    annual_rule: the monthly average for the last month of the fiscal year
+    feeds: yield on new borrowing
+
+  - key: us_cpi
+    country: united-states
+    source: bls_cpi
+    service: fred
+    id: CPIAUCSL
+    title: "Consumer Price Index for All Urban Consumers: All Items in U.S. City Average"
+    units: index, 1982-1984 = 100, seasonally adjusted
+    frequency: monthly
+    annual_rule: >
+      average of the twelve months of the fiscal year (eleven if one month
+      was not published); inflation is the percent change in that average
+      from the fiscal year before
+    feeds: inflation
+
+  - key: us_surplus
+    country: united-states
+    source: omb_budget
+    service: fred
+    id: FYFSD
+    title: Federal Surplus or Deficit [-]
+    units: millions of dollars
+    frequency: annual, fiscal year
+    annual_rule: as published
+    feeds: primary balance (surplus or deficit plus interest outlays)
+
+  # On FRED this series is net interest through fiscal year 2014 and gross
+  # interest from 2015, so it is used through 2014 only. From 2015 net
+  # interest comes from the Monthly Treasury Statement (the next entry).
+  - key: us_interest
+    country: united-states
+    source: omb_budget
+    service: fred
+    id: FYOINT
+    title: "Federal Outlays: Interest"
+    units: millions of dollars
+    frequency: annual, fiscal year
+    annual_rule: as published, fiscal years through 2014 only
+    feeds: primary balance, and the history of interest as a share of revenue
+
+  - key: us_net_interest
+    country: united-states
+    source: us_treasury_mts
+    service: fiscaldata
+    endpoint: /v1/accounting/mts/mts_table_9
+    filter: classification_desc:eq:Net Interest,record_calendar_month:eq:09
+    field: current_fytd_rcpt_outly_amt
+    units: dollars, fiscal year to date
+    frequency: monthly
+    annual_rule: the fiscal-year-to-date total in the September statement, fiscal years from 2015
+    feeds: primary balance, and the history of interest as a share of revenue
+
+  - key: us_receipts
+    country: united-states
+    source: omb_budget
+    service: fred
+    id: FYFR
+    title: Federal Receipts
+    units: millions of dollars
+    frequency: annual, fiscal year
+    annual_rule: as published
+    feeds: government revenue
+
+  - key: us_growth_baseline
+    country: united-states
+    source: imf_weo
+    service: imf_datamapper
+    indicator: NGDP_RPCH
+    area: USA
+    title: Real GDP growth
+    units: annual percent change
+    frequency: annual, calendar year
+    annual_rule: average of the five years after the starting year
+    feeds: baseline real growth

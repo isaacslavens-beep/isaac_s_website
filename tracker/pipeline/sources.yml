@@ -1,0 +1,247 @@
+# The single record of every source the simulator uses.
+#
+# Every value in a data file names one or more keys from this file, and the
+# build fails if a key is missing here. The private sources document is
+# generated from this file.
+#
+# A field marked "to confirm" has not been checked against the publisher's
+# own documentation yet. It is never filled with a guess. No entry may be
+# marked "to confirm" when the tracker branch is merged.
+#
+# "retrieved_on" is filled in by the build, in data/meta.json.
+
+sources:
+
+  us_treasury_mspd:
+    name: Monthly Statement of the Public Debt (MSPD)
+    publisher: U.S. Department of the Treasury, Bureau of the Fiscal Service
+    address: https://fiscaldata.treasury.gov/datasets/monthly-statement-public-debt/
+    chart_label: U.S. Treasury, Monthly Statement of the Public Debt
+    measures: >
+      The amount of Treasury securities outstanding at the end of each
+      month, by type of security, and every marketable security with its
+      maturity date.
+    used_for: Debt (marketable debt held by the public) and average maturity.
+    series_or_tables:
+      - "Summary of Treasury Securities Outstanding (API: /v1/debt/mspd/mspd_table_1), line Total Marketable, column debt_held_public_mil_amt"
+      - "Detail of Marketable Treasury Securities Outstanding (API: /v1/debt/mspd/mspd_table_3_market)"
+    definition_notes: >
+      Federal government only. Marketable securities: bills, notes, bonds,
+      Treasury Inflation-Protected Securities, floating rate notes and
+      Federal Financing Bank securities. "Held by the public" includes the
+      Federal Reserve's holdings and excludes holdings of federal government
+      accounts. Nonmarketable securities are excluded. To confirm against
+      the dataset's documentation: whether inflation-protected securities
+      are counted at their inflation-adjusted amount.
+    units_and_frequency: >
+      Published in millions of dollars, monthly, from January 2001.
+      Converted to a share of GDP at fiscal year end (September 30).
+    transformations:
+      - Debt, take the September 30 value of Total Marketable held by the public, divide by fiscal year GDP.
+      - Average maturity, for every unmatured security on September 30 take the years to its maturity date, and average them weighted by the amount outstanding.
+    category_mapping: not an ownership table
+    retrieval: automated
+    reuse_terms: to confirm
+    known_limits: >
+      The API starts in January 2001, so debt history on the charts starts
+      in fiscal year 2001. The average maturity is computed by this
+      pipeline, not published by the Treasury, and may differ from the
+      Treasury's own figure. To confirm: how the Treasury's published
+      average maturity is defined.
+
+  us_treasury_average_rates:
+    name: Average Interest Rates on U.S. Treasury Securities
+    publisher: U.S. Department of the Treasury, Bureau of the Fiscal Service
+    address: https://fiscaldata.treasury.gov/datasets/average-interest-rates-treasury-securities/
+    chart_label: U.S. Treasury, Average Interest Rates on U.S. Treasury Securities
+    measures: >
+      The average interest rate on each type of Treasury security
+      outstanding at the end of each month.
+    used_for: Average interest rate on the whole debt stock.
+    series_or_tables:
+      - "API: /v2/accounting/od/avg_interest_rates, line Total Marketable"
+    definition_notes: >
+      Federal government only, marketable securities. To confirm against
+      the dataset's documentation: how the average is weighted, and how
+      inflation-protected securities and bills enter it.
+    units_and_frequency: Published in percent, monthly, from January 2001. Converted to a fraction at fiscal year end.
+    transformations:
+      - Take the September 30 value for Total Marketable and divide by 100.
+    category_mapping: not an ownership table
+    retrieval: automated
+    reuse_terms: to confirm
+    known_limits: to confirm
+
+  bea_gdp:
+    name: Gross Domestic Product
+    publisher: U.S. Bureau of Economic Analysis
+    address: https://fred.stlouisfed.org/series/GDP
+    chart_label: U.S. Bureau of Economic Analysis, Gross Domestic Product
+    measures: >
+      The market value of the goods and services produced by labor and
+      property located in the United States (from the series notes on FRED).
+    used_for: Nominal GDP, the denominator of every share of GDP.
+    series_or_tables:
+      - "FRED series GDP (BEA account code A191RC), from the BEA release Gross Domestic Product"
+    definition_notes: Current dollars, seasonally adjusted annual rate.
+    units_and_frequency: >
+      Published in billions of dollars, quarterly. Converted to a fiscal
+      year figure.
+    transformations:
+      - Average the four quarters of the fiscal year (October to September; July to June before fiscal year 1977).
+    category_mapping: not an ownership table
+    retrieval: automated, through FRED (Federal Reserve Bank of St. Louis), which mirrors the BEA series
+    reuse_terms: to confirm (BEA's terms and FRED's terms of use)
+    known_limits: >
+      Revised regularly. The fiscal year average is computed by this
+      pipeline and can differ slightly from the fiscal year GDP that the
+      Office of Management and Budget uses.
+
+  fed_h41:
+    name: H.4.1 Factors Affecting Reserve Balances
+    publisher: Board of Governors of the Federal Reserve System
+    address: https://fred.stlouisfed.org/series/TREAST
+    chart_label: Federal Reserve, H.4.1 Factors Affecting Reserve Balances
+    measures: U.S. Treasury securities held outright by the Federal Reserve, on each Wednesday.
+    used_for: Central bank holdings.
+    series_or_tables:
+      - "FRED series TREAST, Assets: Securities Held Outright: U.S. Treasury Securities: All: Wednesday Level"
+    definition_notes: >
+      To confirm against the H.4.1 release: whether holdings are at face
+      value and whether inflation compensation on inflation-protected
+      securities is included.
+    units_and_frequency: Published in millions of dollars, weekly, from December 2002. Converted to a share of GDP at fiscal year end.
+    transformations:
+      - Take the last Wednesday on or before September 30 and divide by fiscal year GDP.
+    category_mapping: Federal Reserve holdings are the central bank group.
+    retrieval: automated, through FRED, which mirrors the Federal Reserve series
+    reuse_terms: to confirm (the Federal Reserve's terms and FRED's terms of use)
+    known_limits: Starts in December 2002, so central bank holdings on the charts start in fiscal year 2003.
+
+  fed_h15:
+    name: H.15 Selected Interest Rates
+    publisher: Board of Governors of the Federal Reserve System
+    address: https://fred.stlouisfed.org/series/GS10
+    chart_label: Federal Reserve, H.15 Selected Interest Rates
+    measures: The market yield on U.S. Treasury securities at 10-year constant maturity, as a monthly average.
+    used_for: Yield on new borrowing.
+    series_or_tables:
+      - "FRED series GS10, Market Yield on U.S. Treasury Securities at 10-Year Constant Maturity, Quoted on an Investment Basis"
+    definition_notes: A constant maturity yield read from the Treasury's yield curve, not the yield of one bond.
+    units_and_frequency: Published in percent, monthly. Converted to a fraction.
+    transformations:
+      - Take the value for September, the last month of the fiscal year, and divide by 100.
+    category_mapping: not an ownership table
+    retrieval: automated, through FRED, which mirrors the Federal Reserve series
+    reuse_terms: to confirm (the Federal Reserve's terms and FRED's terms of use)
+    known_limits: >
+      The model uses the 10-year yield as the yield on all new borrowing,
+      although the Treasury borrows at many maturities.
+
+  bls_cpi:
+    name: Consumer Price Index for All Urban Consumers
+    publisher: U.S. Bureau of Labor Statistics
+    address: https://fred.stlouisfed.org/series/CPIAUCSL
+    chart_label: U.S. Bureau of Labor Statistics, Consumer Price Index
+    measures: >
+      A price index of a basket of goods and services paid by urban
+      consumers (from the series notes on FRED).
+    used_for: Inflation.
+    series_or_tables:
+      - "FRED series CPIAUCSL, Consumer Price Index for All Urban Consumers: All Items in U.S. City Average"
+    definition_notes: All items, U.S. city average, seasonally adjusted.
+    units_and_frequency: Published as an index (1982-1984 = 100), monthly. Converted to annual inflation as a fraction.
+    transformations:
+      - Average the twelve months of the fiscal year.
+      - Inflation is that average divided by the average for the fiscal year before, minus one.
+    category_mapping: not an ownership table
+    retrieval: automated, through FRED, which mirrors the BLS series
+    reuse_terms: to confirm (BLS's terms and FRED's terms of use)
+    known_limits: >
+      The index for October 2025 is missing from the series, so fiscal year
+      2026 is averaged over the eleven months that exist. To confirm with
+      BLS: why the month is missing.
+
+  omb_budget:
+    name: Fiscal Year Budget Data (Historical Tables)
+    publisher: U.S. Office of Management and Budget
+    address: https://www.whitehouse.gov/omb/historical-tables/
+    chart_label: U.S. Office of Management and Budget, Fiscal Year Budget Data
+    measures: Federal receipts, outlays for interest, and the surplus or deficit for each fiscal year.
+    used_for: Primary balance, government revenue, and the history of interest as a share of revenue.
+    series_or_tables:
+      - "FRED series FYFSD, Federal Surplus or Deficit [-]"
+      - "FRED series FYOINT, Federal Outlays: Interest"
+      - "FRED series FYFR, Federal Receipts"
+    definition_notes: >
+      Federal government only. Dates are the end of the fiscal year. The
+      latest fiscal year is filled in each October from the Treasury's
+      September figures and replaced with official OMB figures the next
+      January or February (from the series notes on FRED). Federal
+      Outlays: Interest is used through fiscal year 2014 only: its values
+      match net interest through 2014 and gross interest on Treasury debt
+      from 2015. To confirm against the Historical Tables: that the values
+      through 2014 are net interest, and what net interest nets out.
+    units_and_frequency: Published in millions of dollars, annual, by fiscal year. Converted to shares of GDP.
+    transformations:
+      - Revenue is receipts divided by fiscal year GDP.
+      - The primary balance is the surplus or deficit plus net interest, divided by fiscal year GDP. Net interest comes from this source through fiscal year 2014 and from the Monthly Treasury Statement from 2015.
+      - The fiscal stress threshold is the largest five-year average of the primary balance.
+    category_mapping: not an ownership table
+    retrieval: automated, through FRED, which mirrors the OMB series
+    reuse_terms: to confirm (OMB's terms and FRED's terms of use)
+    known_limits: >
+      The fiscal year ended June 30 until 1976 and September 30 from 1977;
+      the three months between are left out of the annual series. Net
+      interest covers all federal debt held by the public, not only
+      marketable securities. The interest series changes definition in
+      2015 (see the definition notes).
+      Primary balance history starts in fiscal year 1948, the first year
+      for which quarterly GDP covers the whole fiscal year.
+
+  us_treasury_mts:
+    name: Monthly Treasury Statement (MTS)
+    publisher: U.S. Department of the Treasury, Bureau of the Fiscal Service
+    address: https://fiscaldata.treasury.gov/datasets/monthly-treasury-statement/
+    chart_label: U.S. Treasury, Monthly Treasury Statement
+    measures: Federal receipts by source and outlays by function, for each month and for the fiscal year to date.
+    used_for: Net interest from fiscal year 2015, for the primary balance and the history of interest as a share of revenue.
+    series_or_tables:
+      - "Table 9, Summary of Receipts by Source, and Outlays by Function of the U.S. Government (API: /v1/accounting/mts/mts_table_9), line Net Interest, column current_fytd_rcpt_outly_amt, September statement"
+    definition_notes: >
+      Federal government only. To confirm against the statement's
+      documentation: what the Net Interest function nets out.
+    units_and_frequency: Published in dollars, monthly, from fiscal year 2015. Converted to a share of GDP by fiscal year.
+    transformations:
+      - Take the fiscal-year-to-date total from the September statement.
+      - The primary balance is the surplus or deficit plus net interest, divided by fiscal year GDP.
+    category_mapping: not an ownership table
+    retrieval: automated
+    reuse_terms: to confirm
+    known_limits: >
+      September figures are preliminary until the Office of Management and
+      Budget publishes official figures the next January or February. The
+      API starts in fiscal year 2015, which is why earlier years come from
+      the OMB series.
+
+  imf_weo:
+    name: World Economic Outlook
+    publisher: International Monetary Fund
+    address: https://www.imf.org/external/datamapper/NGDP_RPCH@WEO
+    chart_label: International Monetary Fund, World Economic Outlook
+    measures: Real GDP growth by calendar year, with the IMF's projections for the coming years.
+    used_for: Baseline real growth, the default for the growth slider.
+    series_or_tables:
+      - "IMF DataMapper indicator NGDP_RPCH (Real GDP growth), area USA"
+    definition_notes: Annual percent change in GDP at constant prices. Calendar years.
+    units_and_frequency: Published in percent, annual, rounded to one decimal place. Converted to a fraction.
+    transformations:
+      - Average the projections for the five years after the starting year and divide by 100.
+    category_mapping: not an ownership table
+    retrieval: automated, from the IMF's DataMapper API
+    reuse_terms: to confirm
+    known_limits: >
+      Projections, revised twice a year. The edition used is recorded in
+      data/meta.json. The specification expected this series from
+      DBnomics, but its copy stopped at the April 2025 edition, so the
+      IMF's own API is used instead.

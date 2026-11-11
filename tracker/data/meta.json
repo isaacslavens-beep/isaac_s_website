@@ -1,0 +1,42 @@
+{
+  "lastSuccessfulRun": "2026-11-11",
+  "sources": {
+    "bea_gdp": {
+      "label": "U.S. Bureau of Economic Analysis, Gross Domestic Product",
+      "retrievedOn": "2026-11-11"
+    },
+    "bls_cpi": {
+      "label": "U.S. Bureau of Labor Statistics, Consumer Price Index",
+      "retrievedOn": "2026-11-11"
+    },
+    "fed_h15": {
+      "label": "Federal Reserve, H.15 Selected Interest Rates",
+      "retrievedOn": "2026-11-11"
+    },
+    "fed_h41": {
+      "label": "Federal Reserve, H.4.1 Factors Affecting Reserve Balances",
+      "retrievedOn": "2026-11-11"
+    },
+    "imf_weo": {
+      "label": "International Monetary Fund, World Economic Outlook",
+      "retrievedOn": "2026-11-11",
+      "edition": "World Economic Outlook (October 2026)"
+    },
+    "omb_budget": {
+      "label": "U.S. Office of Management and Budget, Fiscal Year Budget Data",
+      "retrievedOn": "2026-11-11"
+    },
+    "us_treasury_average_rates": {
+      "label": "U.S. Treasury, Average Interest Rates on U.S. Treasury Securities",
+      "retrievedOn": "2026-11-11"
+    },
+    "us_treasury_mspd": {
+      "label": "U.S. Treasury, Monthly Statement of the Public Debt",
+      "retrievedOn": "2026-11-11"
+    },
+    "us_treasury_mts": {
+      "label": "U.S. Treasury, Monthly Treasury Statement",
+      "retrievedOn": "2026-11-11"
+    }
+  }
+}
