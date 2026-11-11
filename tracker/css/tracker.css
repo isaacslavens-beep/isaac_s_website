@@ -199,6 +199,12 @@ button:disabled {
   line-height: 1.15;
 }
 
+.hero-per-year {
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
 .hero-line {
   font-size: 15px;
 }

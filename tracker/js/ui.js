@@ -701,7 +701,7 @@ function fillCompare() {
   var lastYear = compared.tables[0].result.rows[compared.tables[0].result.rows.length - 1].year;
 
   var head = table.insertRow();
-  ["Country", "Loss of purchasing power to " + lastYear, "Real return per year",
+  ["Country", "Loss of purchasing power to " + lastYear, "Loss per year", "Real return per year",
     "Debt in " + lastYear + ", share of GDP", "First year of fiscal stress",
     "First year of fiscal dominance"].forEach(function (text) {
     var cell = document.createElement("th");
@@ -711,12 +711,19 @@ function fillCompare() {
   compared.tables.forEach(function (t) {
     var h = t.result.headline;
     var line = table.insertRow();
-    [t.country.name, FORMATS.percent0(h.purchasingPowerLoss), FORMATS.percent1(h.annualRealReturn),
+    [t.country.name, FORMATS.percent0(h.purchasingPowerLoss),
+      FORMATS.percent1(annualLoss(h.purchasingPowerLoss, t.result.rows.length - 1)),
+      FORMATS.percent1(h.annualRealReturn),
       FORMATS.percent0(h.finalDebt), h.firstStressYear || "not reached",
       h.firstDominanceYear || "not reached"].forEach(function (text) {
       line.insertCell().textContent = text;
     });
   });
+}
+
+// A total loss of purchasing power as a steady yearly rate.
+function annualLoss(loss, years) {
+  return 1 - Math.pow(1 - loss, 1 / years);
 }
 
 // The central figure and the steps behind it, with this scenario's numbers.
@@ -731,7 +738,15 @@ function fillHero() {
 
   document.getElementById("hero-label").textContent =
     "Loss of purchasing power, " + startYear + " to " + last.year;
-  document.getElementById("hero-number").textContent = FORMATS.percent0(loss);
+  // The same loss as a steady yearly rate: losing this much every year
+  // for the whole period adds up to the total.
+  var lossPerYear = annualLoss(loss, years);
+  var number = document.getElementById("hero-number");
+  var perYear = document.createElement("span");
+  perYear.className = "hero-per-year";
+  perYear.textContent = FORMATS.percent1(lossPerYear) + " a year";
+  number.textContent = FORMATS.percent0(loss) + " ";
+  number.append(perYear);
   document.getElementById("hero-line").textContent =
     "What costs 100 in " + startYear + " costs " + (last.priceLevel * 100).toFixed(0) + " in " + last.year +
     ". Money that buys 100 today buys " + (100 / last.priceLevel).toFixed(0) + " then.";
@@ -746,7 +761,8 @@ function fillHero() {
   var steps = [
     "1. Loss of purchasing power = 1 − 1 ÷ price level. The price level in " + last.year + " is " +
       last.priceLevel.toFixed(2) + " times its " + startYear + " level, so the loss is 1 − 1 ÷ " +
-      last.priceLevel.toFixed(2) + " = " + FORMATS.percent0(loss) + ".",
+      last.priceLevel.toFixed(2) + " = " + FORMATS.percent0(loss) + ". As a steady yearly rate that is " +
+      FORMATS.percent1(lossPerYear) + " a year: 1 − (1 − " + FORMATS.percent0(loss) + ") ^ (1 ÷ " + years + ").",
     "2. The price level is each year's inflation compounded. Inflation averages " +
       FORMATS.percent1(averageInflation) + " a year over the " + years + " years.",
     "3. Inflation in a year = baseline inflation (" + FORMATS.percent1(c.baselineInflation) +
