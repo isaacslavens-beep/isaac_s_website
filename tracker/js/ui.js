@@ -81,6 +81,12 @@ function controlList(country) {
       help: "The share of these holders that asks for a higher yield to hold more debt." });
   });
 
+  // Baseline inflation sets most of the loss of purchasing power, so it
+  // sits with the main controls.
+  list.push({ key: "baselineInflation", section: "main", type: "range", format: "percent1",
+    label: "Baseline inflation",
+    help: "The inflation rate the economy returns to when the central bank is not buying debt." });
+
   list.push({ key: "passThrough", section: "main", type: "range", format: "number2",
     label: "Pass-through",
     help: "Points of inflation the next year for each point of GDP the central bank buys." });
@@ -131,9 +137,6 @@ function controlList(country) {
     { key: "persistence", section: "advanced", type: "range", format: "number2",
       label: "Inflation persistence",
       help: "How much of last year's gap between inflation and its baseline carries into this year." },
-    { key: "baselineInflation", section: "advanced", type: "range", format: "percent1",
-      label: "Baseline inflation",
-      help: "The inflation rate the economy returns to when the central bank is not buying debt." },
     { key: "runoff", section: "advanced", type: "range", format: "percent1",
       label: "Central bank runoff",
       help: "How much the central bank lets its holdings shrink each year, as a share of GDP." },
@@ -171,6 +174,10 @@ function presetFor(control, country) {
   if (control.key === "primaryBalance") preset.default = start.primaryBalance.value;
   if (control.key === "capLevel") preset.default = start.yield.value;
   if (control.key === "maturity") preset.default = start.maturity.value;
+  if (control.key === "baselineInflation") {
+    preset.default = start.baselineInflation.value;
+    preset.basis = "Default: " + start.baselineInflation.note + ".";
+  }
   if (control.key === "capMode") preset.default = "automatic";
   if (control.type === "check") preset.default = false;
   return preset;
@@ -263,7 +270,7 @@ function buildControls() {
 
     box.append(label, help);
     if (control.type !== "check") box.append(input);
-    if (preset.illustrative || control.key.indexOf("w_") === 0) {
+    if (preset.illustrative || preset.showBasis || control.key.indexOf("w_") === 0) {
       var basis = document.createElement("p");
       basis.className = "basis";
       basis.textContent = preset.basis;

@@ -17,7 +17,7 @@ import sys
 import yaml
 
 import march_countries
-from helpers import (CACHE, DATA, HERE, MANUAL, by_year, first_unbroken_year, largest_five_year_average,
+from helpers import (CACHE, DATA, HERE, MANUAL, baseline_inflation, by_year, first_unbroken_year, largest_five_year_average,
                      last_on_or_before, last_values, load, quarter_start, stop, write_json)
 from parsers import us_fed_f32s, us_tic_history, us_tic_table5
 
@@ -153,6 +153,7 @@ def build_united_states(sources):
         if name != "interestToRevenue":
             start[name] = {"value": values[start_year], "source": source}
     start["maturity"] = {"value": maturity[start_end], "source": ["us_treasury_mspd"]}
+    start["baselineInflation"] = baseline_inflation(inflation, start_year, ["bls_cpi"])
     start["growth"] = {
         "value": baseline_growth,
         "source": ["imf_weo"],
@@ -356,6 +357,8 @@ def validate(country, sources):
         for offset, value in enumerate(series["values"]):
             check_value(f"history.{name} {series['firstYear'] + offset}", value)
 
+    if "baselineInflation" not in start:
+        problems.append("start.baselineInflation is missing")
     if not (start["maturity"]["value"] >= 1):
         problems.append("start.maturity must be at least 1 year")
 

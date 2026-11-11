@@ -12,7 +12,7 @@ which is the same for all three.
 
 import os
 
-from helpers import MANUAL, first_unbroken_year, largest_five_year_average, last_values, load, stop
+from helpers import MANUAL, baseline_inflation, first_unbroken_year, largest_five_year_average, last_values, load, stop
 from parsers import (ca_boc_debt, ca_statcan_gfs, ca_statcan_holdings, jp_boj_fof, jp_mof_debt,
                      jp_mof_general_bonds, jp_mof_maturity, jp_mof_table4, jp_mof_table20,
                      uk_dmo_gilt_holdings, uk_dmo_portfolio, uk_ons_psa6, uk_ons_tbill_holdings)
@@ -342,6 +342,7 @@ def assemble(country, sources, given):
     rate_note = given["rate_note"] + ("; " + carried["averageRate"] if "averageRate" in carried else "")
     start["averageRate"] = item(average_rate[start_year], given["rate_source"], rate_note)
     start["maturity"] = item(given["maturity"][start_year], given["maturity_source"], given.get("maturity_note"))
+    start["baselineInflation"] = baseline_inflation(inflation, start_year, ["bis_cpi"])
     start["growth"] = item(sum(growth[year] for year in growth_years) / 5 / 100, ["imf_weo"],
                            "average of IMF projections for " + growth_years[0] + " to " + growth_years[-1])
     start["stressThreshold"] = item(

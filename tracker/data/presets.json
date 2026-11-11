@@ -33,8 +33,8 @@
       "basis": "Illustrative assumption."
     },
     "baselineInflation": {
-      "min": 0, "max": 0.06, "step": 0.001, "default": 0.02, "illustrative": true,
-      "basis": "Illustrative assumption: the inflation target of all four central banks."
+      "min": 0, "max": 0.06, "step": 0.001, "default": null, "showBasis": true,
+      "basis": "The country's average inflation since 1972, as historical precedent: the years since the United States ended the dollar's convertibility into gold in August 1971."
     },
     "foreignInflation": {
       "min": 0, "max": 0.06, "step": 0.001, "default": 0.02, "illustrative": true,

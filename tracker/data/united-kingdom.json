@@ -68,6 +68,13 @@
         "dmo_debt_portfolio"
       ]
     },
+    "baselineInflation": {
+      "value": 0.04929444231671343,
+      "source": [
+        "bis_cpi"
+      ],
+      "note": "average inflation from 1972 to 2026, the years since the United States ended the dollar's convertibility into gold in August 1971"
+    },
     "growth": {
       "value": 0.014199999999999999,
       "source": [

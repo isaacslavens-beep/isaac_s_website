@@ -61,6 +61,13 @@
         "us_treasury_mspd"
       ]
     },
+    "baselineInflation": {
+      "value": 0.03928704111010495,
+      "source": [
+        "bls_cpi"
+      ],
+      "note": "average inflation from 1972 to 2026, the years since the United States ended the dollar's convertibility into gold in August 1971"
+    },
     "growth": {
       "value": 0.019799999999999998,
       "source": [

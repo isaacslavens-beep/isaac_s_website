@@ -84,6 +84,29 @@ def stop(message):
     sys.exit(1)
 
 
+BASELINE_FROM = 1972   # the first full year after the dollar's link to gold ended
+
+
+def baseline_inflation(inflation, last_year, source):
+    """Average inflation from 1972 to the starting year, as the item
+    written to the data file. The United States ended the dollar's
+    convertibility into gold in August 1971, so 1972 is the first full
+    year without it (Isaac, 2026-11-11). The average is compounded: the
+    steady rate that gives the same rise in prices over the period."""
+    level = 1.0
+    for year in range(BASELINE_FROM, last_year + 1):
+        if year not in inflation:
+            stop(f"inflation has no value for {year}, so the average since {BASELINE_FROM} cannot be computed")
+        level *= 1 + inflation[year]
+    years = last_year - BASELINE_FROM + 1
+    return {
+        "value": level ** (1 / years) - 1,
+        "source": source,
+        "note": f"average inflation from {BASELINE_FROM} to {last_year}, the years since the United States "
+                "ended the dollar's convertibility into gold in August 1971",
+    }
+
+
 def largest_five_year_average(values, last_year):
     """The largest five-year average in the unbroken run of years ending at
     last_year. Returns the average and its first and last year."""
