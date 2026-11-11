@@ -41,7 +41,10 @@
 //   maturity          m    average maturity in years
 //   runoff            q    central bank runoff per year
 //   selloffs               a list of { group, total, years }: the group sells
-//                          "total" (a share of GDP) evenly over "years" years
+//                          "total" (a share of GDP) evenly over "years" years.
+//                          Its captive and price-sensitive holdings shrink
+//                          in proportion, and the remaining price-sensitive
+//                          holders must absorb what it sold.
 
 function runModel(start, controls) {
   checkInputs(start, controls);
@@ -64,13 +67,8 @@ function runModel(start, controls) {
   // (the pipeline allows up to 1%), so the groups are scaled to fit exactly.
   var h0 = scaleToFit(start.holdings, d0 - start.centralBank);
 
-  // W: the price-sensitive part of all starting holdings.
-  var W = 0;
   var totalH0 = 0;
-  groups.forEach(function (k) {
-    W += w[k] * h0[k];
-    totalH0 += h0[k];
-  });
+  groups.forEach(function (k) { totalH0 += h0[k]; });
 
   // The cap. In automatic mode it stays null until the first stress year.
   var cap = controls.capMode === "fixed" ? controls.capLevel : null;
@@ -142,14 +140,19 @@ function runModel(start, controls) {
 
     // 4. Captive holdings: the part of each group that is not
     // price-sensitive keeps its share of the debt, less any selloff. A
-    // group cannot sell more than its captive holdings.
+    // selloff also shrinks the group's price-sensitive base, in
+    // proportion, and a group cannot sell more than it started with.
+    // W is the price-sensitive base of all groups together.
     var captive = {};
+    var base = {};
     var totalCaptive = 0;
+    var W = 0;
     groups.forEach(function (k) {
-      var full = (1 - w[k]) * h0[k] * debt / d0;
-      var sold = Math.min(selloffSoFar(controls.selloffs, k, t), full);
-      captive[k] = full - sold;
+      var sold = Math.min(selloffSoFar(controls.selloffs, k, t), h0[k]);
+      captive[k] = Math.max((1 - w[k]) * (h0[k] * debt / d0 - sold), 0);
+      base[k] = w[k] * (h0[k] - sold);
       totalCaptive += captive[k];
+      W += base[k];
     });
 
     // 5. What price-sensitive holders must absorb beyond their starting
@@ -202,7 +205,7 @@ function runModel(start, controls) {
         captivePart -= takenFromCaptive * captive[k] / totalCaptive;
       }
       // If no group is price-sensitive at all, split by starting holdings.
-      var portion = W > 0 ? w[k] * h0[k] / W : h0[k] / totalH0;
+      var portion = W > 0 ? base[k] / W : h0[k] / totalH0;
       holdings[k] = captivePart + portion * priceSensitiveTotal;
       sum += holdings[k];
     });

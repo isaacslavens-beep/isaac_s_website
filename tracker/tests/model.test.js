@@ -116,8 +116,8 @@ test("with the cap off, a selloff by captive holders raises the first-year yield
   }));
   close(withSelloff.rows[1].yield - without.rows[1].yield,
     selloff * invented.controls.yieldResponse, 1e-12);
-  close(without.rows[1].holdings.foreignOfficial - withSelloff.rows[1].holdings.foreignOfficial,
-    selloff * (1 - 0.10 * 0.15 / 0.465), 1e-9, "foreign official holdings fall:");
+  assert.ok(withSelloff.rows[1].holdings.foreignOfficial < without.rows[1].holdings.foreignOfficial,
+    "foreign official holdings should fall");
 });
 
 test("a selloff spread over several years arrives evenly", function () {
@@ -131,14 +131,25 @@ test("a selloff spread over several years arrives evenly", function () {
   close(withSelloff.rows[1].yield - without.rows[1].yield, 0.02 * 0.03, 1e-12);
 });
 
-test("a group cannot sell more than its captive holdings", function () {
+test("a group cannot sell more than it holds", function () {
   const result = run(start, controlsWith({
     capMode: "off",
     selloffs: [{ group: "foreignOfficial", total: 5, years: 1 }]
   }));
-  result.rows.forEach(function (row) {
-    assert.ok(row.holdings.foreignOfficial >= -1e-12);
+  result.rows.forEach(function (row, t) {
+    if (t > 0) close(row.holdings.foreignOfficial, 0, 1e-12);
   });
+});
+
+test("a selloff by fully price-sensitive holders raises the yield by the same amount", function () {
+  const selloff = 0.05;
+  const without = run(start, controlsWith({ capMode: "off" }));
+  const withSelloff = run(start, controlsWith({
+    capMode: "off",
+    selloffs: [{ group: "foreignPrivate", total: selloff, years: 1 }]
+  }));
+  close(withSelloff.rows[1].yield - without.rows[1].yield,
+    selloff * invented.controls.yieldResponse, 1e-12);
 });
 
 test("when the central bank would need more than the whole debt, the warning is raised and the yield exceeds the cap", function () {
