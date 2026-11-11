@@ -54,13 +54,15 @@ var FORMATS = {
 // goes: main, scenario or advanced. The one-line descriptions are shown
 // under each label.
 function controlList(country) {
+  // The main controls, in order of how much they move the loss of
+  // purchasing power: the largest first.
   var list = [
-    { key: "growth", section: "main", type: "range", format: "percent1",
-      label: "Real growth",
-      help: "How fast the economy grows each year, after inflation." },
-    { key: "primaryBalance", section: "main", type: "range", format: "percent1",
-      label: "Primary balance",
-      help: "The budget balance before interest, as a share of GDP. Negative is a deficit." },
+    { key: "baselineInflation", section: "main", type: "range", format: "percent1",
+      label: "Baseline inflation",
+      help: "The inflation rate the economy returns to when the central bank is not buying debt." },
+    { key: "passThrough", section: "main", type: "range", format: "number2",
+      label: "Pass-through",
+      help: "Points of inflation the next year for each point of GDP the central bank buys." },
     { key: "capMode", section: "main", type: "select",
       label: "Yield cap",
       help: "The highest yield the central bank tolerates before it buys debt.",
@@ -72,24 +74,14 @@ function controlList(country) {
     { key: "capLevel", section: "main", type: "range", format: "percent1", indent: true,
       showWhen: function (c) { return c.capMode === "fixed"; },
       label: "Cap level",
-      help: "The yield the central bank holds when the cap is fixed." }
+      help: "The yield the central bank holds when the cap is fixed." },
+    { key: "primaryBalance", section: "main", type: "range", format: "percent1",
+      label: "Primary balance",
+      help: "The budget balance before interest, as a share of GDP. Negative is a deficit." },
+    { key: "growth", section: "main", type: "range", format: "percent1",
+      label: "Real growth",
+      help: "How fast the economy grows each year, after inflation." }
   ];
-
-  Object.keys(country.start.holdings).forEach(function (group) {
-    list.push({ key: "w_" + group, section: "main", type: "range", format: "percent0",
-      label: "Price-sensitive share: " + GROUP_LABELS[group].toLowerCase(),
-      help: "The share of these holders that asks for a higher yield to hold more debt." });
-  });
-
-  // Baseline inflation sets most of the loss of purchasing power, so it
-  // sits with the main controls.
-  list.push({ key: "baselineInflation", section: "main", type: "range", format: "percent1",
-    label: "Baseline inflation",
-    help: "The inflation rate the economy returns to when the central bank is not buying debt." });
-
-  list.push({ key: "passThrough", section: "main", type: "range", format: "number2",
-    label: "Pass-through",
-    help: "Points of inflation the next year for each point of GDP the central bank buys." });
 
   if (country.start.holdings.foreignOfficial) {
     list.push(
@@ -133,19 +125,24 @@ function controlList(country) {
     );
   }
 
+  // Advanced settings: these move the result less.
   list.push(
     { key: "persistence", section: "advanced", type: "range", format: "number2",
       label: "Inflation persistence",
-      help: "How much of last year's gap between inflation and its baseline carries into this year." },
-    { key: "runoff", section: "advanced", type: "range", format: "percent1",
-      label: "Central bank runoff",
-      help: "How much the central bank lets its holdings shrink each year, as a share of GDP." },
+      help: "How much of last year's gap between inflation and its baseline carries into this year." }
+  );
+  Object.keys(country.start.holdings).forEach(function (group) {
+    list.push({ key: "w_" + group, section: "advanced", type: "range", format: "percent0",
+      label: "Price-sensitive share: " + GROUP_LABELS[group].toLowerCase(),
+      help: "The share of these holders that asks for a higher yield to hold more debt." });
+  });
+  list.push(
     { key: "yieldResponse", section: "advanced", type: "range", format: "basisPoints",
       label: "Yield response",
       help: "Basis points of yield for each point of GDP that price-sensitive holders must absorb." },
-    { key: "foreignInflation", section: "advanced", type: "range", format: "percent1",
-      label: "Foreign inflation",
-      help: "Inflation abroad, used for the exchange rate." },
+    { key: "runoff", section: "advanced", type: "range", format: "percent1",
+      label: "Central bank runoff",
+      help: "How much the central bank lets its holdings shrink each year, as a share of GDP." },
     { key: "maturity", section: "advanced", type: "range", format: "years1",
       label: "Average maturity",
       help: "The average number of years until the debt is repaid. With a shorter maturity, a change in yields reaches the interest bill sooner." }
@@ -347,7 +344,7 @@ function modelInputs(country, c) {
       passThrough: c.passThrough,
       persistence: c.persistence,
       baselineInflation: c.baselineInflation,
-      foreignInflation: c.foreignInflation,
+      foreignInflation: page.presets.controls.foreignInflation.default, // only moves the exchange rate, which no chart shows
       maturity: c.maturity,
       runoff: c.runoff,
       selloffs: selloffs
@@ -387,19 +384,6 @@ function chartList(country) {
     };
   }
   var none = function () { return null; };
-
-  var holders = [{
-    label: "Central bank", color: 1,
-    history: debtShareHistory("centralBank"),
-    projection: function (row) { return shareOfDebt(row.centralBank, row.debt); }
-  }];
-  Object.keys(country.start.holdings).forEach(function (group, n) {
-    holders.push({
-      label: GROUP_LABELS[group], color: n + 2,
-      history: debtShareHistory(group),
-      projection: function (row) { return shareOfDebt(row.holdings[group], row.debt); }
-    });
-  });
 
   // Purchasing power of money, with the starting year at 100. History is
   // worked backward from past inflation.
@@ -449,12 +433,6 @@ function chartList(country) {
           projection: function (row) { return row.interestToRevenue === null ? null : row.interestToRevenue * 100; } }
       ] },
 
-    { key: "holders", title: "Who holds the debt", units: "Percent of the debt",
-      rightLabel: "Percent of the debt", rightUnit: "%",
-      stacked: true,
-      sources: ["centralBank"].concat(Object.keys(country.start.holdings)),
-      series: holders.map(function (s) { return Object.assign({ unit: "%", decimals: 1 }, s); }) },
-
     { key: "central-bank", title: "Central bank", units: "Percent of the debt",
       rightLabel: "Percent of the debt", rightUnit: "%",
       leftLabel: "Percent of GDP", leftUnit: "%", leftDecimals: 1,
@@ -467,27 +445,6 @@ function chartList(country) {
           history: none, projection: function (row) { return row.purchases * 100; } },
         { label: "Central bank holdings, share of GDP (left axis)", color: 3, unit: "%", decimals: 1, axis: "left",
           history: history("centralBank", 100), projection: function (row) { return row.centralBank * 100; } }
-      ] },
-
-    { key: "inflation", title: "Inflation and currency", units: "Percent",
-      rightLabel: "Percent", rightUnit: "%", rightDecimals: 1,
-      leftLabel: "Index, starting year = 100",
-      sources: ["inflation"],
-      series: [
-        { label: "Inflation", color: 1, unit: "%", decimals: 2,
-          history: history("inflation", 100), projection: function (row) { return row.inflation * 100; } },
-        { label: "Price level (left axis)", color: 2, decimals: 1, axis: "left",
-          history: none, projection: function (row) { return row.priceLevel * 100; } },
-        { label: "Exchange rate (left axis)", color: 3, decimals: 1, axis: "left",
-          history: none, projection: function (row) { return row.exchangeRate * 100; } }
-      ] },
-
-    { key: "return", title: "Lender's return", units: "Index, starting year = 100",
-      rightLabel: "Index, starting year = 100",
-      sources: [],
-      series: [
-        { label: "Real return index", color: 1, decimals: 1,
-          history: none, projection: function (row) { return row.realReturn * 100; } }
       ] }
   ];
 }
