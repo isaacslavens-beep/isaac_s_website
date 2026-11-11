@@ -41,7 +41,7 @@ def main():
 
     os.makedirs(DATA, exist_ok=True)
     write_json(os.path.join(DATA, country["country"] + ".json"), country)
-    write_json(os.path.join(DATA, "meta.json"), build_meta(series_list, sources))
+    write_json(os.path.join(DATA, "meta.json"), build_meta(series_list, sources, [country]))
 
     print(f"Wrote {country['country']}.json, starting year {country['start']['year']}.")
     if not country["available"]:
@@ -390,7 +390,8 @@ def validate(country, sources):
 
 # ---------------------------------------------------------------- meta.json
 
-def build_meta(series_list, sources):
+def build_meta(series_list, sources, countries):
+    """When each source was retrieved, and which countries are available."""
     retrieved = {}
     editions = {}
     for series in series_list:
@@ -400,8 +401,29 @@ def build_meta(series_list, sources):
         retrieved[source] = max(retrieved.get(source, ""), cached["retrieved"])
         if cached["service"] == "imf_datamapper":
             editions[source] = cached["metadata"]["source"]
+
+    # Manual files: the download date is the last field of each line in
+    # the country's notes.txt (file | address | table name | date).
+    manual_files = {
+        "us_tic_mfh": ("united-states", [us_tic_table5.FILE, us_tic_history.FILE]),
+        "fed_z1": ("united-states", [us_fed_f32s.FILE]),
+    }
+    for source, (folder, names) in manual_files.items():
+        notes = os.path.join(MANUAL, folder, "notes.txt")
+        if not os.path.exists(notes):
+            continue
+        with open(notes) as f:
+            for line in f:
+                cells = [cell.strip() for cell in line.split("|")]
+                if len(cells) == 4 and cells[0] in names:
+                    retrieved[source] = max(retrieved.get(source, ""), cells[3])
+
     return {
         "lastSuccessfulRun": datetime.date.today().isoformat(),
+        "countries": {
+            country["country"]: {"name": country["name"], "available": country["available"]}
+            for country in countries
+        },
         "sources": {
             key: {
                 "label": sources[key]["chart_label"],

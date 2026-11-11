@@ -1,0 +1,74 @@
+{
+  "note": "Ranges and default values for the controls, with the basis for each default. A default of null means the value comes from the country's data file. Values are fractions: 0.02 means 2%. Defaults marked illustrative are starting values for exploring scenarios, not estimates.",
+
+  "years": 30,
+
+  "controls": {
+    "growth": {
+      "min": -0.01, "max": 0.04, "step": 0.001, "default": null,
+      "basis": "Country baseline: the average of the IMF's projections for the five years after the starting year."
+    },
+    "primaryBalance": {
+      "min": -0.08, "max": 0.04, "step": 0.001, "default": null,
+      "basis": "The latest full-year value in the country's data."
+    },
+    "capLevel": {
+      "min": 0, "max": 0.12, "step": 0.001, "default": null,
+      "basis": "Used only when the cap is fixed. Starts at the country's current yield."
+    },
+    "passThrough": {
+      "min": 0, "max": 1, "step": 0.01, "default": 0.05, "illustrative": true,
+      "basis": "Illustrative assumption until the historical presets are computed from data. The default will then be the lowest preset."
+    },
+    "selloffShare": {
+      "min": 0, "max": 1, "step": 0.05, "default": 0.25, "illustrative": true,
+      "basis": "Illustrative assumption."
+    },
+    "selloffYears": {
+      "min": 1, "max": 10, "step": 1, "default": 5, "illustrative": true,
+      "basis": "Illustrative assumption."
+    },
+    "persistence": {
+      "min": 0, "max": 0.95, "step": 0.05, "default": 0.5, "illustrative": true,
+      "basis": "Illustrative assumption."
+    },
+    "baselineInflation": {
+      "min": 0, "max": 0.06, "step": 0.001, "default": 0.02, "illustrative": true,
+      "basis": "Illustrative assumption: the inflation target of all four central banks."
+    },
+    "foreignInflation": {
+      "min": 0, "max": 0.06, "step": 0.001, "default": 0.02, "illustrative": true,
+      "basis": "Illustrative assumption."
+    },
+    "runoff": {
+      "min": 0, "max": 0.02, "step": 0.001, "default": 0, "illustrative": true,
+      "basis": "Illustrative assumption: the central bank keeps its holdings steady as a share of GDP."
+    },
+    "yieldResponse": {
+      "min": 0.005, "max": 0.1, "step": 0.005, "default": 0.03, "illustrative": true,
+      "basis": "Illustrative assumption: about 3 basis points of yield for each point of GDP of debt, one value for all four countries. To be confirmed against Laubach (2009) and Gamber and Seliski (2019) before publishing."
+    },
+    "maturity": {
+      "min": 1, "max": 20, "step": 0.1, "default": null,
+      "basis": "The average maturity of the country's debt, from its data file."
+    }
+  },
+
+  "priceSensitive": {
+    "min": 0, "max": 1, "step": 0.01,
+    "note": "A group's default comes from the country's data file where the data separates holders by type. Otherwise it is the illustrative value here.",
+    "defaults": {
+      "domesticPrivate": { "default": 0.5, "illustrative": true, "basis": "Illustrative assumption." },
+      "foreignOfficial": { "default": 0.1, "illustrative": true, "basis": "Illustrative assumption." },
+      "foreignPrivate": { "default": 1.0, "illustrative": true, "basis": "Illustrative assumption." },
+      "foreign": { "default": 0.6, "illustrative": true, "basis": "Illustrative assumption for countries whose data cannot separate foreign official from foreign private holders." }
+    }
+  },
+
+  "passThroughPresets": [
+    { "key": "liquidity-trap", "label": "Liquidity trap", "episode": "Japan, 2013 to 2019", "value": null },
+    { "key": "post-crisis", "label": "Post-crisis", "episode": "United States, 2009 to 2014", "value": null },
+    { "key": "pandemic", "label": "Pandemic", "episode": "United States and United Kingdom, 2020 to 2022", "value": null },
+    { "key": "yield-peg", "label": "Yield peg", "episode": "United States, 1942 to 1951", "value": null }
+  ]
+}

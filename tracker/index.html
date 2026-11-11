@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sovereign Debt Simulator | Isaac Slavens</title>
+  <meta name="description" content="A scenario tool that projects the real return to a lender holding a government's debt. Not a forecast and not financial advice.">
+  <link rel="stylesheet" href="js/vendor/uPlot.min.css">
+  <link rel="stylesheet" href="css/tracker.css">
+</head>
+<body>
+
+  <!-- Top bar: site name, country tabs, chart selector, theme toggle -->
+  <header class="topbar">
+    <a class="site-name" href="../">Isaac Slavens</a>
+    <nav class="tabs" id="country-tabs" aria-label="Country"></nav>
+    <label class="chart-picker">
+      Chart
+      <select id="chart-select"></select>
+    </label>
+    <button type="button" id="theme-toggle">Dark theme</button>
+  </header>
+
+  <div class="layout">
+
+    <!-- Main area: header strip, chart, key and source -->
+    <main class="main">
+      <div class="strip">
+        <h1 id="chart-title">Sovereign Debt Simulator</h1>
+        <p class="meta" id="chart-meta"></p>
+        <dl class="headline" id="headline"></dl>
+      </div>
+
+      <p class="warning" id="warning" role="status" hidden></p>
+
+      <div class="chart-tools">
+        <div class="range" role="group" aria-label="Years projected">
+          <button type="button" data-range="10">10Y</button>
+          <button type="button" data-range="20">20Y</button>
+          <button type="button" data-range="30">30Y</button>
+        </div>
+        <button type="button" id="download">Download CSV</button>
+      </div>
+
+      <div id="chart" class="chart"></div>
+
+      <p class="key" id="zone-key">
+        <span class="swatch swatch-history"></span> History
+        <span class="swatch swatch-projection"></span> Projection
+        <span class="swatch swatch-stress"></span> Fiscal stress
+        <span class="swatch swatch-dominance"></span> Fiscal dominance
+      </p>
+      <p class="source" id="source-line"></p>
+      <p class="source" id="coverage-line"></p>
+    </main>
+
+    <!-- Side panel: the controls. ui.js fills it in from data/presets.json -->
+    <aside class="panel" aria-label="Scenario controls">
+      <form id="controls" onsubmit="return false">
+        <div id="main-controls"></div>
+
+        <h2>Scenarios</h2>
+        <div id="scenario-controls"></div>
+
+        <details id="advanced">
+          <summary>Advanced</summary>
+          <div id="advanced-controls"></div>
+        </details>
+
+        <button type="button" id="reset">Reset to defaults</button>
+      </form>
+    </aside>
+
+  </div>
+
+  <footer class="footer">
+    <p>This is a scenario tool with adjustable assumptions. It is not a forecast.</p>
+    <p>Nothing here is financial advice.</p>
+    <p><a href="https://github.com/isaacslavens-beep/isaac_s_website/tree/main/tracker">Code for this tool</a></p>
+  </footer>
+
+  <script src="js/vendor/uPlot.iife.min.js"></script>
+  <script src="js/model.js"></script>
+  <script src="js/charts.js"></script>
+  <script src="js/ui.js"></script>
+</body>
+</html>

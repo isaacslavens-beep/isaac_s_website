@@ -1,0 +1,356 @@
+/* Sovereign debt simulator styles.
+   Colors are set once as variables: light theme first, dark theme below.
+   charts.js reads the same variables, so the chart follows the theme. */
+
+:root {
+  --bg: #ffffff;
+  --panel: #f6f7f9;
+  --text: #1b1f24;
+  --muted: #57606a;
+  --border: #d0d7de;
+  --grid: #e3e6ea;
+  --accent: #1a56db;
+  --line-1: #1a56db;   /* blue */
+  --line-2: #b8410f;   /* orange */
+  --line-3: #0f766e;   /* teal */
+  --line-4: #6d28d9;   /* purple */
+  --stress: rgba(87, 96, 106, 0.14);
+  --dominance: rgba(87, 96, 106, 0.32);
+  --warning-bg: #fff4d6;
+  --warning-text: #5c3d00;
+}
+
+:root[data-theme="dark"] {
+  --bg: #131722;
+  --panel: #1c2030;
+  --text: #d1d4dc;
+  --muted: #9aa0ab;
+  --border: #363a48;
+  --grid: #262a38;
+  --accent: #5b9cf5;
+  --line-1: #5b9cf5;
+  --line-2: #f0883e;
+  --line-3: #3fb9a8;
+  --line-4: #b392f0;
+  --stress: rgba(154, 160, 171, 0.16);
+  --dominance: rgba(154, 160, 171, 0.36);
+  --warning-bg: #3d3212;
+  --warning-text: #f2d98a;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-size: 15px;
+  line-height: 1.45;
+  font-variant-numeric: tabular-nums;
+}
+
+a {
+  color: var(--accent);
+}
+
+button,
+select,
+input {
+  font: inherit;
+  color: inherit;
+}
+
+button,
+select {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 5px 10px;
+  cursor: pointer;
+}
+
+button:hover,
+select:hover {
+  border-color: var(--muted);
+}
+
+button:focus-visible,
+select:focus-visible,
+input:focus-visible,
+summary:focus-visible,
+a:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+button[aria-pressed="true"] {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--bg);
+}
+
+button:disabled {
+  color: var(--muted);
+  cursor: not-allowed;
+}
+
+/* ---------- Top bar ---------- */
+
+.topbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+  padding: 8px 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.site-name {
+  font-weight: 600;
+  color: var(--text);
+  text-decoration: none;
+}
+
+.tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  flex: 1;
+}
+
+.chart-picker {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted);
+}
+
+/* ---------- Layout: chart beside a narrow panel ---------- */
+
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 300px;
+}
+
+.main {
+  padding: 14px 16px;
+  min-width: 0;
+}
+
+.panel {
+  padding: 14px 16px;
+  background: var(--panel);
+  border-left: 1px solid var(--border);
+}
+
+/* Below 800 pixels the panel moves under the chart. */
+@media (max-width: 800px) {
+  .layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .panel {
+    border-left: none;
+    border-top: 1px solid var(--border);
+  }
+}
+
+/* ---------- Header strip ---------- */
+
+.strip h1 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.meta,
+.key,
+.source {
+  margin: 4px 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.headline {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 24px;
+  margin: 10px 0;
+}
+
+.headline div {
+  min-width: 110px;
+}
+
+.headline dt {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.headline dd {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 600;
+}
+
+.warning {
+  margin: 8px 0;
+  padding: 8px 12px;
+  background: var(--warning-bg);
+  color: var(--warning-text);
+  border-radius: 4px;
+}
+
+/* ---------- Chart ---------- */
+
+.chart-tools {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 10px 0 6px;
+}
+
+.range {
+  display: flex;
+  gap: 4px;
+}
+
+.chart {
+  width: 100%;
+  min-height: 300px;
+}
+
+/* The legend under the chart shows the values for the year under the
+   pointer. History lines share a legend entry with their projection. */
+.u-legend {
+  color: var(--text);
+  font-size: 13px;
+  text-align: left;
+}
+
+.u-legend .legend-hidden {
+  display: none;
+}
+
+.swatch {
+  display: inline-block;
+  width: 22px;
+  height: 10px;
+  margin: 0 4px 0 10px;
+  vertical-align: middle;
+}
+
+.swatch:first-child {
+  margin-left: 0;
+}
+
+.swatch-history {
+  height: 0;
+  border-top: 2px solid var(--line-1);
+}
+
+.swatch-projection {
+  height: 0;
+  border-top: 2px dashed var(--line-1);
+}
+
+.swatch-stress {
+  background: var(--stress);
+  border: 1px solid var(--border);
+}
+
+.swatch-dominance {
+  background: var(--dominance);
+  border: 1px solid var(--border);
+}
+
+/* ---------- Controls ---------- */
+
+.panel h2 {
+  margin: 18px 0 8px;
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}
+
+.control {
+  margin-bottom: 14px;
+}
+
+.control label {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-weight: 600;
+}
+
+.control output {
+  font-weight: 400;
+}
+
+.control .help,
+.control .basis {
+  margin: 2px 0 4px;
+  color: var(--muted);
+  font-size: 12.5px;
+}
+
+.control input[type="range"] {
+  width: 100%;
+  margin: 2px 0;
+  accent-color: var(--accent);
+}
+
+.control select {
+  width: 100%;
+}
+
+.control.check label {
+  justify-content: flex-start;
+  align-items: center;
+}
+
+.control.indent {
+  margin-left: 22px;
+}
+
+.control[hidden] {
+  display: none;
+}
+
+details {
+  margin: 18px 0;
+}
+
+summary {
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  margin-bottom: 10px;
+}
+
+#reset {
+  width: 100%;
+}
+
+/* ---------- Footer ---------- */
+
+.footer {
+  padding: 12px 16px 20px;
+  border-top: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.footer p {
+  margin: 2px 0;
+}

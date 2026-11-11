@@ -1,5 +1,11 @@
 {
   "lastSuccessfulRun": "2026-11-11",
+  "countries": {
+    "united-states": {
+      "name": "United States",
+      "available": true
+    }
+  },
   "sources": {
     "bea_gdp": {
       "label": "U.S. Bureau of Economic Analysis, Gross Domestic Product",
@@ -17,6 +23,10 @@
       "label": "Federal Reserve, H.4.1 Factors Affecting Reserve Balances",
       "retrievedOn": "2026-11-11"
     },
+    "fed_z1": {
+      "label": "Federal Reserve, Financial Accounts of the United States",
+      "retrievedOn": "2026-11-11"
+    },
     "imf_weo": {
       "label": "International Monetary Fund, World Economic Outlook",
       "retrievedOn": "2026-11-11",
@@ -24,6 +34,10 @@
     },
     "omb_budget": {
       "label": "U.S. Office of Management and Budget, Fiscal Year Budget Data",
+      "retrievedOn": "2026-11-11"
+    },
+    "us_tic_mfh": {
+      "label": "U.S. Treasury, Major Foreign Holders of Treasury Securities",
       "retrievedOn": "2026-11-11"
     },
     "us_treasury_average_rates": {

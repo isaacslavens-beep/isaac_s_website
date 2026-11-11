@@ -243,7 +243,9 @@ function runModel(start, controls) {
       exchangeRate: prev.exchangeRate * (1 + piF) / (1 + inflation),
       cap: cap,
       stress: stress,
-      dominance: purchases > 0,
+      // Fiscal dominance: the central bank is buying to hold the cap, or
+      // already holds all the debt and still cannot hold it.
+      dominance: purchases > 0 || capBroken,
       capBroken: capBroken,
       debtRepaid: debtRepaid
     });

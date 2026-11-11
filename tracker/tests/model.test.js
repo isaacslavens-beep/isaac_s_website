@@ -136,9 +136,12 @@ test("a group cannot sell more than it holds", function () {
     capMode: "off",
     selloffs: [{ group: "foreignOfficial", total: 5, years: 1 }]
   }));
-  result.rows.forEach(function (row, t) {
-    if (t > 0) close(row.holdings.foreignOfficial, 0, 1e-12);
+  // The group's holdings never go below zero. In the first year almost
+  // nothing is left: only the growth of its captive share with the debt.
+  result.rows.forEach(function (row) {
+    assert.ok(row.holdings.foreignOfficial >= -1e-12);
   });
+  assert.ok(result.rows[1].holdings.foreignOfficial < 0.01);
 });
 
 test("a selloff by fully price-sensitive holders raises the yield by the same amount", function () {
