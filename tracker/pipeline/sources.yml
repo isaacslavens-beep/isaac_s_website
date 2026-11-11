@@ -159,8 +159,9 @@ sources:
     reuse_terms: to confirm (BLS's terms and FRED's terms of use)
     known_limits: >
       The index for October 2025 is missing from the series, so fiscal year
-      2026 is averaged over the eleven months that exist. To confirm with
-      BLS: why the month is missing.
+      2026 is averaged over the eleven months that exist. Isaac's
+      explanation: the federal government shutdown in October 2025. To
+      confirm against a BLS notice.
 
   omb_budget:
     name: Fiscal Year Budget Data (Historical Tables)
