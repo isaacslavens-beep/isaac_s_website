@@ -220,22 +220,48 @@ button:disabled {
   max-width: 70ch;
 }
 
-#how-body table {
+#how-body table,
+#compare-table {
   border-collapse: collapse;
   margin: 8px 0;
   font-size: 13.5px;
 }
 
 #how-body th,
-#how-body td {
+#how-body td,
+#compare-table th,
+#compare-table td {
   padding: 3px 14px 3px 0;
   text-align: right;
   border-bottom: 1px solid var(--border);
 }
 
-#how-body th {
+#how-body th,
+#compare-table th {
   color: var(--muted);
   font-weight: 600;
+}
+
+/* The compare table: country names on the left, the first figure large */
+#compare-table {
+  display: block;
+  overflow-x: auto;
+  font-size: 14px;
+}
+
+#compare-table[hidden] {
+  display: none;
+}
+
+#compare-table th:first-child,
+#compare-table td:first-child {
+  text-align: left;
+  font-weight: 600;
+}
+
+#compare-table td:nth-child(2) {
+  font-size: 22px;
+  font-weight: 700;
 }
 
 .headline {
@@ -310,6 +336,10 @@ button:disabled {
 
 .swatch:first-child {
   margin-left: 0;
+}
+
+.zone-only .swatch:first-child {
+  margin-left: 10px;
 }
 
 .swatch-history {
@@ -424,4 +454,8 @@ summary {
 
 .footer p {
   margin: 2px 0;
+}
+
+.headline[hidden] {
+  display: none;
 }

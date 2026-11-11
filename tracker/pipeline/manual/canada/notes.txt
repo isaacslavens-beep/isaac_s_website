@@ -1,0 +1,5 @@
+One line per file: file | address | table name | download date. Taken from Isaac's README of 2026-11-11. An address marked "to confirm" was not recorded in the README.
+
+CA_federal_provincial_debt_securities_holdings_by_sector_quarterly_StatCan_36100580.csv | Statistics Canada, table 36-10-0580-01 (exact address to confirm) | National Balance Sheet Accounts: federal and provincial debt securities by holding sector, quarterly 1990 Q1 to 2026 Q2. Extracted by Isaac from the table | 2026-11-11
+CA_federal_provincial_revenue_interest_balance_by_fiscal_year_StatCan_GFS.csv | Statistics Canada, table 10-10-0015-01 (exact address to confirm) | Government finance statistics: revenue, interest, net lending or borrowing by fiscal year. Built by Isaac by adding up the quarters from April to March | 2026-11-11
+CA_federal_marketable_debt_outstanding_and_average_term_monthly_BankOfCanada.csv | Bank of Canada (exact address to confirm) | Government of Canada unmatured direct securities and their average term to maturity, monthly to October 2026 | 2026-11-11

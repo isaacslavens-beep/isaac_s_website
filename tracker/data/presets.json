@@ -61,6 +61,7 @@
       "domesticPrivate": { "default": 0.5, "illustrative": true, "basis": "Illustrative assumption." },
       "foreignOfficial": { "default": 0.1, "illustrative": true, "basis": "Illustrative assumption." },
       "foreignPrivate": { "default": 1.0, "illustrative": true, "basis": "Illustrative assumption." },
+      "domestic": { "default": 0.5, "illustrative": true, "basis": "Illustrative assumption." },
       "foreign": { "default": 0.6, "illustrative": true, "basis": "Illustrative assumption for countries whose data cannot separate foreign official from foreign private holders." }
     }
   },

@@ -1,0 +1,6 @@
+One line per file: file | address | table name | download date. Taken from Isaac's README of 2026-11-11. An address marked "to confirm" was not recorded in the README.
+
+UK_gilt_holdings_by_sector_quarterly_1987-2026Q1_DMO_from_ONS.xls | UK Debt Management Office, dmo.gov.uk (exact address to confirm) | Distribution of gilt holdings by sector, ONS data, market value, quarterly 1987 Q1 to 2026 Q1 | 2026-11-11
+UK_TBill_holdings_by_sector_quarterly_ONS_UKEA.csv | Office for National Statistics, UK Economic Accounts time series (exact address to confirm) | Sterling Treasury bills held by each sector, quarterly to 2026 Q2. Extracted by Isaac from the ONS dataset, release of 2026-09-30 | 2026-11-11
+UK_debt_portfolio_outstanding_and_average_maturity_quarterly_2004-2026_DMO.xls | UK Debt Management Office, dmo.gov.uk (exact address to confirm) | Debt portfolio: nominal and market value, average maturity, gross and net, quarterly 2004 to 2026 | 2026-11-11
+UK_public_sector_finances_appendixA_Sep2026_ONS_incl_central_govt_tables_PSA6.xlsx | Office for National Statistics, Public sector finances, Appendix A (exact address to confirm) | Public sector finances tables 1 to 10, September 2026; sheets PSA6B_1 and PSA6B_2, central government account | 2026-11-11

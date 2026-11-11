@@ -13,6 +13,7 @@ var COUNTRIES = [
 
 var GROUP_LABELS = {
   domesticPrivate: "Domestic private",
+  domestic: "Domestic",
   foreignOfficial: "Foreign official",
   foreignPrivate: "Foreign private",
   foreign: "Foreign"
@@ -26,6 +27,7 @@ var page = {
   controls: {},    // country key -> that country's current control values
   country: null,   // the country being shown
   chart: "purchasing-power",
+  compare: false,  // true while the chart overlays all the countries
   range: 30,
   plot: null,      // the uPlot object on screen
   result: null     // the latest model result
@@ -91,6 +93,19 @@ function controlList(country) {
       { key: "selloffShare", section: "scenario", type: "range", format: "percent0", indent: true,
         showWhen: function (c) { return c.selloffOn; },
         label: "Share sold", help: "The share of foreign official holdings sold." },
+      { key: "selloffYears", section: "scenario", type: "range", format: "years0", indent: true,
+        showWhen: function (c) { return c.selloffOn; },
+        label: "Over", help: "The number of years the selling is spread over." }
+    );
+  }
+  if (country.start.holdings.foreign) {
+    list.push(
+      { key: "selloffOn", section: "scenario", type: "check",
+        label: "Foreign selloff",
+        help: "Holders abroad sell part of their holdings." },
+      { key: "selloffShare", section: "scenario", type: "range", format: "percent0", indent: true,
+        showWhen: function (c) { return c.selloffOn; },
+        label: "Share sold", help: "The share of foreign holdings sold." },
       { key: "selloffYears", section: "scenario", type: "range", format: "years0", indent: true,
         showWhen: function (c) { return c.selloffOn; },
         label: "Over", help: "The number of years the selling is spread over." }
@@ -286,7 +301,10 @@ function modelInputs(country, c) {
 
   var selloffs = [];
   if (c.selloffOn) {
-    selloffs.push({ group: "foreignOfficial", total: c.selloffShare * holdings.foreignOfficial, years: c.selloffYears });
+    // The group that sells: foreign official holders where the data
+    // separates them, all foreign holders where it does not.
+    var seller = holdings.foreignOfficial !== undefined ? "foreignOfficial" : "foreign";
+    selloffs.push({ group: seller, total: c.selloffShare * holdings[seller], years: c.selloffYears });
   }
   if (c.japanOn) {
     Object.keys(s.japanHoldings.split).forEach(function (group) {
@@ -485,9 +503,9 @@ function currentChart() {
 }
 
 // The years and values of the current chart, ready to plot or download.
-function chartTable(definition) {
-  var country = page.data[page.country];
-  var rows = page.result.rows;
+function chartTable(definition, country, rows) {
+  country = country || page.data[page.country];
+  rows = rows || page.result.rows;
   var startYear = country.start.year;
 
   // History starts at the first year any line has data.
@@ -513,8 +531,71 @@ function chartTable(definition) {
   return { years: years, startIndex: startIndex, series: series };
 }
 
+// ---------------------------------------------------------------- compare view
+
+// Runs the model for one country with that country's own control values.
+function resultFor(key) {
+  var inputs = modelInputs(page.data[key], page.controls[key]);
+  return runModel(inputs.start, inputs.controls);
+}
+
+// The countries that have data, in the order of the tabs.
+function loadedCountries() {
+  return COUNTRIES.map(function (c) { return c.key; }).filter(function (key) { return page.data[key]; });
+}
+
+// The first line of the current chart for every country, on one set of
+// years. Each country keeps its own control values.
+function compareTable() {
+  var tables = loadedCountries().map(function (key) {
+    var country = page.data[key];
+    var definition = chartList(country).filter(function (chart) { return chart.key === page.chart; })[0];
+    var result = resultFor(key);
+    var one = Object.assign({}, definition, { series: [definition.series[0]] });
+    return { country: country, definition: definition, result: result, table: chartTable(one, country, result.rows) };
+  });
+
+  var firstYear = Math.min.apply(null, tables.map(function (t) { return t.table.years[0]; }));
+  var lastYear = Math.max.apply(null, tables.map(function (t) { return t.table.years[t.table.years.length - 1]; }));
+  var startYear = Math.min.apply(null, tables.map(function (t) { return t.country.start.year; }));
+  var years = [];
+  for (var y = firstYear; y <= lastYear; y++) years.push(y);
+
+  var series = tables.map(function (t, n) {
+    var line = t.table.series[0];
+    var offset = t.table.years[0] - firstYear;
+    return Object.assign({}, line, {
+      label: t.country.name,
+      color: n + 1,
+      axis: "right",
+      values: years.map(function (year, i) {
+        var v = line.values[i - offset];
+        return v === undefined ? null : v;
+      })
+    });
+  });
+  return { years: years, startIndex: startYear - firstYear, series: series, tables: tables };
+}
+
 function draw() {
   var definition = currentChart();
+  var container = document.getElementById("chart");
+  if (page.plot) page.plot.destroy();
+
+  if (page.compare) {
+    var compared = compareTable();
+    var first = definition.series[0];
+    page.plot = drawChart(container, {
+      years: compared.years, startIndex: compared.startIndex, series: compared.series,
+      zones: [], endLabels: true,
+      rightLabel: first.axis === "left" ? definition.leftLabel : definition.rightLabel,
+      rightUnit: first.unit || "", rightDecimals: definition.rightDecimals,
+      xMin: Math.max(compared.years[0], compared.years[compared.startIndex] - page.range / 2),
+      xMax: compared.years[compared.startIndex] + page.range
+    });
+    return;
+  }
+
   var table = chartTable(definition);
   var startYear = table.years[table.startIndex];
 
@@ -525,8 +606,6 @@ function draw() {
     else if (row.stress) zones.push({ year: row.year, type: "stress" });
   });
 
-  var container = document.getElementById("chart");
-  if (page.plot) page.plot.destroy();
   page.plot = drawChart(container, Object.assign({}, definition, table, {
     zones: zones,
     xMin: Math.max(table.years[0], startYear - page.range / 2),
@@ -546,15 +625,25 @@ function fillText() {
   var lastYear = page.result.rows[page.result.rows.length - 1].year;
   var years = page.result.rows.length - 1;
 
-  document.getElementById("chart-title").textContent = country.name + ": " + definition.title;
+  document.getElementById("chart-title").textContent =
+    (page.compare ? "All countries: " + first.label : country.name + ": " + definition.title);
   document.getElementById("chart-meta").textContent =
-    first.label + " in " + country.start.year + ": " +
-    (startValue === null ? "no data" : startValue.toFixed(first.decimals) + (first.unit || "")) +
+    (page.compare
+      ? "Each country uses its own control values. The controls shown are for " + country.name + "; " +
+        "choose another country above to change its controls"
+      : first.label + " in " + country.start.year + ": " +
+        (startValue === null ? "no data" : startValue.toFixed(first.decimals) + (first.unit || ""))) +
     " · Data updated " + page.meta.lastSuccessfulRun +
-    " · Units: " + definition.units +
+    " · Units: " + (first.axis === "left" && page.compare ? definition.leftLabel : definition.units) +
     " · Frequency: annual";
 
-  fillHero();
+  // In the compare view the central figure is a table of all countries,
+  // and the zones and single-country figures are hidden.
+  document.getElementById("hero-single").hidden = page.compare;
+  document.getElementById("compare-table").hidden = !page.compare;
+  document.getElementById("headline").hidden = page.compare;
+  document.querySelectorAll(".zone-only").forEach(function (element) { element.hidden = page.compare; });
+  if (page.compare) fillCompare(); else fillHero();
 
   var figures = [
     ["Real return to the lender, per year", FORMATS.percent1(h.annualRealReturn)],
@@ -576,25 +665,58 @@ function fillText() {
   });
 
   var warning = document.getElementById("warning");
-  warning.hidden = h.firstCapBrokenYear === null;
+  warning.hidden = page.compare || h.firstCapBrokenYear === null;
   if (h.firstCapBrokenYear !== null) {
     warning.textContent = "The cap cannot be held. From " + h.firstCapBrokenYear +
       " the central bank holds all of the debt and the yield rises above the cap.";
   }
 
   // The source line names the publisher and series behind the history.
+  // In the compare view it names the sources of every country's line.
   var labels = [];
-  definition.sources.forEach(function (name) {
-    (country.history[name] ? country.history[name].source : []).forEach(function (key) {
-      var label = page.meta.sources[key].label;
-      if (labels.indexOf(label) === -1) labels.push(label);
+  (page.compare ? loadedCountries() : [page.country]).forEach(function (key) {
+    var names = page.compare ? definition.sources.slice(0, 1) : definition.sources;
+    names.forEach(function (name) {
+      var series = page.data[key].history[name];
+      (series ? series.source : []).forEach(function (source) {
+        var label = page.meta.sources[source].label;
+        if (labels.indexOf(label) === -1) labels.push(label);
+      });
     });
   });
   document.getElementById("source-line").textContent =
     (labels.length ? "Sources: " + labels.join("; ") + ". " : "") + "Projection: this tool's model.";
   document.getElementById("coverage-line").textContent =
-    country.governmentCovered + " " + country.yearBasis +
+    (page.compare ? country.name + ": " : "") +
+    country.governmentCovered + " " + country.yearBasis + " " +
+    (country.notes || []).join(" ") +
     " Defaults marked illustrative are starting values, not estimates.";
+}
+
+// The compare view's table: the main figures for every country.
+function fillCompare() {
+  var compared = compareTable();
+  var table = document.getElementById("compare-table");
+  table.textContent = "";
+  var lastYear = compared.tables[0].result.rows[compared.tables[0].result.rows.length - 1].year;
+
+  var head = table.insertRow();
+  ["Country", "Loss of purchasing power to " + lastYear, "Real return per year",
+    "Debt in " + lastYear + ", share of GDP", "First year of fiscal stress",
+    "First year of fiscal dominance"].forEach(function (text) {
+    var cell = document.createElement("th");
+    cell.textContent = text;
+    head.append(cell);
+  });
+  compared.tables.forEach(function (t) {
+    var h = t.result.headline;
+    var line = table.insertRow();
+    [t.country.name, FORMATS.percent0(h.purchasingPowerLoss), FORMATS.percent1(h.annualRealReturn),
+      FORMATS.percent0(h.finalDebt), h.firstStressYear || "not reached",
+      h.firstDominanceYear || "not reached"].forEach(function (text) {
+      line.insertCell().textContent = text;
+    });
+  });
 }
 
 // The central figure and the steps behind it, with this scenario's numbers.
@@ -676,7 +798,7 @@ function fillHero() {
 function downloadCsv() {
   var country = page.data[page.country];
   var definition = currentChart();
-  var table = chartTable(definition);
+  var table = page.compare ? compareTable() : chartTable(definition);
   var values = page.controls[page.country];
 
   function cell(text) {
@@ -686,11 +808,13 @@ function downloadCsv() {
 
   var lines = [
     "# Sovereign debt simulator. A scenario tool, not a forecast and not financial advice.",
-    "# " + country.name + ": " + definition.title,
+    "# " + (page.compare ? "All countries: " + definition.series[0].label : country.name + ": " + definition.title),
     "# Control values that produced these series:"
   ];
-  Object.keys(values).forEach(function (key) {
-    lines.push("# " + key + "," + values[key]);
+  (page.compare ? loadedCountries() : [page.country]).forEach(function (key) {
+    Object.keys(page.controls[key]).forEach(function (name) {
+      lines.push("# " + (page.compare ? page.data[key].name + "," : "") + name + "," + page.controls[key][name]);
+    });
   });
   lines.push(["year", "history or projection"].concat(table.series.map(function (s) {
     return s.label + (s.unit === "%" ? " (%)" : "");
@@ -705,7 +829,7 @@ function downloadCsv() {
 
   var link = document.createElement("a");
   link.href = URL.createObjectURL(new Blob([lines.join("\n") + "\n"], { type: "text/csv" }));
-  link.download = page.country + "-" + definition.key + ".csv";
+  link.download = (page.compare ? "all-countries" : page.country) + "-" + definition.key + ".csv";
   document.body.append(link);
   link.click();
   link.remove();
@@ -722,10 +846,22 @@ function writeAddress() {
   params.set("c", code);
   params.set("chart", page.chart);
   params.set("range", page.range);
+  if (page.compare) params.set("compare", "1");
+  function text(v) {
+    return typeof v === "boolean" ? (v ? "1" : "0") : v;
+  }
   var values = page.controls[page.country];
   Object.keys(values).forEach(function (key) {
-    var v = values[key];
-    params.set(key, typeof v === "boolean" ? (v ? "1" : "0") : v);
+    params.set(key, text(values[key]));
+  });
+  // Other countries' controls are written only where they differ from
+  // their defaults, with the country's code in front: jp.growth=0.01
+  COUNTRIES.forEach(function (c) {
+    if (c.key === page.country || !page.data[c.key]) return;
+    var defaults = defaultControls(page.data[c.key]);
+    Object.keys(page.controls[c.key]).forEach(function (key) {
+      if (page.controls[c.key][key] !== defaults[key]) params.set(c.code + "." + key, text(page.controls[c.key][key]));
+    });
   });
   history.replaceState(null, "", "?" + params.toString());
 }
@@ -736,21 +872,28 @@ function readAddress() {
   if (match && page.data[match.key]) page.country = match.key;
   if (params.get("chart")) page.chart = params.get("chart");
   if (["10", "20", "30"].indexOf(params.get("range")) !== -1) page.range = Number(params.get("range"));
+  page.compare = params.get("compare") === "1";
 
-  var country = page.data[page.country];
-  var values = page.controls[page.country];
-  controlList(country).forEach(function (control) {
-    var text = params.get(control.key);
-    if (text === null) return;
-    var preset = presetFor(control, country);
-    if (control.type === "range") {
-      var number = parseFloat(text);
-      if (isFinite(number)) values[control.key] = snap(number, preset);
-    } else if (control.type === "check") {
-      values[control.key] = text === "1";
-    } else if (control.options.some(function (o) { return o[0] === text; })) {
-      values[control.key] = text;
-    }
+  // The current country's controls have plain names. The other
+  // countries' have the country's code in front.
+  COUNTRIES.forEach(function (c) {
+    var country = page.data[c.key];
+    if (!country) return;
+    var values = page.controls[c.key];
+    var prefix = c.key === page.country ? "" : c.code + ".";
+    controlList(country).forEach(function (control) {
+      var text = params.get(prefix + control.key);
+      if (text === null) return;
+      var preset = presetFor(control, country);
+      if (control.type === "range") {
+        var number = parseFloat(text);
+        if (isFinite(number)) values[control.key] = snap(number, preset);
+      } else if (control.type === "check") {
+        values[control.key] = text === "1";
+      } else if (control.options.some(function (o) { return o[0] === text; })) {
+        values[control.key] = text;
+      }
+    });
   });
 }
 
@@ -869,6 +1012,13 @@ function startPage() {
       draw();
     });
     document.getElementById("download").addEventListener("click", downloadCsv);
+    var compare = document.getElementById("compare-toggle");
+    compare.setAttribute("aria-pressed", page.compare ? "true" : "false");
+    compare.addEventListener("click", function () {
+      page.compare = !page.compare;
+      compare.setAttribute("aria-pressed", page.compare ? "true" : "false");
+      update();
+    });
     document.getElementById("reset").addEventListener("click", function () {
       page.controls[page.country] = defaultControls(page.data[page.country]);
       buildControls();

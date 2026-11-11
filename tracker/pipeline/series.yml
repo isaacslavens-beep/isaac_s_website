@@ -8,8 +8,8 @@
 #   key          the name the pipeline uses for the series
 #   country      the country file it feeds
 #   source       its entry in sources.yml
-#   service      how it is fetched: fred, fiscaldata, fiscaldata_maturity
-#                or imf_datamapper
+#   service      how it is fetched: fred, fiscaldata, fiscaldata_maturity,
+#                imf_datamapper or bis
 #   units        as published
 #   frequency    as published
 #   annual_rule  how it becomes one value per year
@@ -18,6 +18,12 @@
 # The United States is on a federal fiscal year basis. Fiscal year 2026 ran
 # from October 1, 2025 to September 30, 2026. "Year end" means September 30
 # (June 30 before fiscal year 1977).
+#
+# The United Kingdom, Japan and Canada are on a fiscal year from April 1 to
+# March 31, named here by the calendar year it ends in: "2026" is the year
+# from April 1, 2025 to March 31, 2026. "Year end" means March 31. Their
+# debt, ownership and budget figures come from files Isaac downloads by
+# hand (see manual/ and sources.yml); only the series below are fetched.
 
 series:
 
@@ -158,6 +164,150 @@ series:
     service: imf_datamapper
     indicator: NGDP_RPCH
     area: USA
+    title: Real GDP growth
+    units: annual percent change
+    frequency: annual, calendar year
+    annual_rule: average of the five years after the starting year
+    feeds: baseline real growth
+
+  - key: uk_gdp
+    country: united-kingdom
+    source: ons_gdp
+    service: fred
+    id: UKNGDP
+    title: Gross Domestic Product for United Kingdom
+    units: millions of pounds, seasonally adjusted
+    frequency: quarterly
+    annual_rule: sum of the four quarters from April to March
+    feeds: the denominator of every share of GDP
+
+  - key: uk_yield_10y
+    country: united-kingdom
+    source: oecd_yields
+    service: fred
+    id: IRLTLT01GBM156N
+    title: "Interest Rates: Long-Term Government Bond Yields: 10-Year: Main (Including Benchmark) for United Kingdom"
+    units: percent
+    frequency: monthly average
+    annual_rule: the value for March, the last month of the fiscal year
+    feeds: market yield
+
+  - key: uk_cpi
+    country: united-kingdom
+    source: bis_cpi
+    service: bis
+    dataflow: WS_LONG_CPI
+    version: "1.0"
+    series: M.GB.628
+    area: GB
+    unit_code: 628
+    units: index
+    frequency: monthly
+    annual_rule: average of the twelve months from April to March, then the change from the year before
+    feeds: inflation
+
+  - key: uk_growth_baseline
+    country: united-kingdom
+    source: imf_weo
+    service: imf_datamapper
+    indicator: NGDP_RPCH
+    area: GBR
+    title: Real GDP growth
+    units: annual percent change
+    frequency: annual, calendar year
+    annual_rule: average of the five years after the starting year
+    feeds: baseline real growth
+
+  - key: jp_gdp
+    country: japan
+    source: cao_gdp
+    service: fred
+    id: JPNNGDP
+    title: Gross Domestic Product for Japan
+    units: billions of yen, at an annual rate, seasonally adjusted
+    frequency: quarterly
+    annual_rule: average of the four quarters from April to March (each quarter is published at an annual rate)
+    feeds: the denominator of every share of GDP
+
+  - key: jp_yield_10y
+    country: japan
+    source: oecd_yields
+    service: fred
+    id: IRLTLT01JPM156N
+    title: "Interest Rates: Long-Term Government Bond Yields: 10-Year: Main (Including Benchmark) for Japan"
+    units: percent
+    frequency: monthly average
+    annual_rule: the value for March, the last month of the fiscal year
+    feeds: market yield
+
+  - key: jp_cpi
+    country: japan
+    source: bis_cpi
+    service: bis
+    dataflow: WS_LONG_CPI
+    version: "1.0"
+    series: M.JP.628
+    area: JP
+    unit_code: 628
+    units: index
+    frequency: monthly
+    annual_rule: average of the twelve months from April to March, then the change from the year before
+    feeds: inflation
+
+  - key: jp_growth_baseline
+    country: japan
+    source: imf_weo
+    service: imf_datamapper
+    indicator: NGDP_RPCH
+    area: JPN
+    title: Real GDP growth
+    units: annual percent change
+    frequency: annual, calendar year
+    annual_rule: average of the five years after the starting year
+    feeds: baseline real growth
+
+  - key: ca_gdp
+    country: canada
+    source: imf_ifs_gdp
+    service: fred
+    id: NGDPSAXDCCAQ
+    title: Nominal Gross Domestic Product (GDP) for Canada
+    units: millions of dollars, seasonally adjusted
+    frequency: quarterly
+    annual_rule: sum of the four quarters from April to March
+    feeds: the denominator of every share of GDP
+
+  - key: ca_yield_10y
+    country: canada
+    source: oecd_yields
+    service: fred
+    id: IRLTLT01CAM156N
+    title: "Interest Rates: Long-Term Government Bond Yields: 10-Year: Main (Including Benchmark) for Canada"
+    units: percent
+    frequency: monthly average
+    annual_rule: the value for March, the last month of the fiscal year
+    feeds: market yield
+
+  - key: ca_cpi
+    country: canada
+    source: bis_cpi
+    service: bis
+    dataflow: WS_LONG_CPI
+    version: "1.0"
+    series: M.CA.628
+    area: CA
+    unit_code: 628
+    units: index
+    frequency: monthly
+    annual_rule: average of the twelve months from April to March, then the change from the year before
+    feeds: inflation
+
+  - key: ca_growth_baseline
+    country: canada
+    source: imf_weo
+    service: imf_datamapper
+    indicator: NGDP_RPCH
+    area: CAN
     title: Real GDP growth
     units: annual percent change
     frequency: annual, calendar year

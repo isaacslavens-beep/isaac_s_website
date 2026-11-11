@@ -10,7 +10,7 @@
 </head>
 <body>
 
-  <!-- Top bar: site name, country tabs, chart selector, theme toggle -->
+  <!-- Top bar: site name, country tabs, chart selector, compare and theme toggles -->
   <header class="topbar">
     <a class="site-name" href="../">Isaac Slavens</a>
     <nav class="tabs" id="country-tabs" aria-label="Country"></nav>
@@ -18,6 +18,7 @@
       Chart
       <select id="chart-select"></select>
     </label>
+    <button type="button" id="compare-toggle" aria-pressed="false">Compare countries</button>
     <button type="button" id="theme-toggle">Dark theme</button>
   </header>
 
@@ -31,13 +32,17 @@
 
         <!-- The central figure: how much purchasing power is lost -->
         <div class="hero">
-          <p class="hero-label" id="hero-label"></p>
-          <p class="hero-number" id="hero-number"></p>
-          <p class="hero-line" id="hero-line"></p>
-          <details id="how">
-            <summary>How this figure is calculated</summary>
-            <div id="how-body"></div>
-          </details>
+          <div id="hero-single">
+            <p class="hero-label" id="hero-label"></p>
+            <p class="hero-number" id="hero-number"></p>
+            <p class="hero-line" id="hero-line"></p>
+            <details id="how">
+              <summary>How this figure is calculated</summary>
+              <div id="how-body"></div>
+            </details>
+          </div>
+          <!-- Shown instead when all countries are compared -->
+          <table id="compare-table" hidden></table>
         </div>
 
         <dl class="headline" id="headline"></dl>
@@ -59,8 +64,8 @@
       <p class="key" id="zone-key">
         <span class="swatch swatch-history"></span> History
         <span class="swatch swatch-projection"></span> Projection
-        <span class="swatch swatch-stress"></span> Fiscal stress
-        <span class="swatch swatch-dominance"></span> Fiscal dominance
+        <span class="zone-only"><span class="swatch swatch-stress"></span> Fiscal stress</span>
+        <span class="zone-only"><span class="swatch swatch-dominance"></span> Fiscal dominance</span>
       </p>
       <p class="source" id="source-line"></p>
       <p class="source" id="coverage-line"></p>

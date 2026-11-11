@@ -356,3 +356,488 @@ sources:
       data/meta.json. The specification expected this series from
       DBnomics, but its copy stopped at the April 2025 edition, so the
       IMF's own API is used instead.
+
+  # ------------------------------------------------------------ shared by the United Kingdom, Japan and Canada
+
+  oecd_yields:
+    name: Long-term government bond yields, 10-year (OECD Main Economic Indicators)
+    publisher: Organisation for Economic Co-operation and Development, through FRED
+    address: https://fred.stlouisfed.org/series/IRLTLT01GBM156N
+    chart_label: OECD, long-term government bond yields
+    measures: The yield on 10-year government bonds, as a monthly average.
+    used_for: Market yield for the United Kingdom, Japan and Canada.
+    series_or_tables:
+      - "FRED IRLTLT01GBM156N (United Kingdom)"
+      - "FRED IRLTLT01JPM156N (Japan)"
+      - "FRED IRLTLT01CAM156N (Canada)"
+    definition_notes: >
+      Central government bonds of about ten years' maturity. For Canada
+      this is the federal government's yield and is used for provincial
+      debt as well (Isaac, 2026-11-11). To confirm against the OECD's
+      documentation: the exact bond each country's series follows.
+    units_and_frequency: Published in percent, monthly, not seasonally adjusted. Converted to a fraction.
+    transformations:
+      - Take the value for March, the last month of the fiscal year.
+    category_mapping: not an ownership table
+    retrieval: automated
+    reuse_terms: to confirm
+    known_limits: >
+      A monthly average, not the yield on March 31. One maturity stands in
+      for the whole debt. Provincial yields in Canada are higher than the
+      federal yield.
+
+  bis_cpi:
+    name: Consumer prices, long series (WS_LONG_CPI)
+    publisher: Bank for International Settlements
+    address: https://data.bis.org/topics/CPI
+    chart_label: Bank for International Settlements, consumer prices
+    measures: The consumer price index of each country, monthly.
+    used_for: Inflation for the United Kingdom, Japan and Canada.
+    series_or_tables:
+      - "BIS WS_LONG_CPI, series M.GB.628, M.JP.628 and M.CA.628"
+    definition_notes: >
+      The national consumer price index as compiled by the BIS from
+      national sources. Used instead of the FRED series for these
+      countries, which stopped updating. To confirm against the BIS
+      documentation: that unit code 628 is the index with 2010 = 100, and
+      which national index is used for each country.
+    units_and_frequency: Published as an index, monthly. Converted to a yearly rate of change.
+    transformations:
+      - Average the twelve months from April to March.
+      - Inflation is that average divided by the previous year's average, minus one.
+    category_mapping: not an ownership table
+    retrieval: automated
+    reuse_terms: to confirm
+    known_limits: Not seasonally adjusted, which does not matter for a twelve-month average.
+
+  # ------------------------------------------------------------ United Kingdom
+
+  ons_gdp:
+    name: Gross domestic product at current prices
+    publisher: Office for National Statistics, through FRED
+    address: https://fred.stlouisfed.org/series/UKNGDP
+    chart_label: Office for National Statistics, gross domestic product
+    measures: The value of everything produced in the United Kingdom in a quarter, at current prices.
+    used_for: The denominator of every United Kingdom share of GDP.
+    series_or_tables:
+      - "FRED UKNGDP, Gross Domestic Product for United Kingdom"
+    definition_notes: Current prices, seasonally adjusted, not at an annual rate.
+    units_and_frequency: Published in millions of pounds, quarterly. Added up over the fiscal year.
+    transformations:
+      - Add the four quarters from April to March.
+    category_mapping: not an ownership table
+    retrieval: automated
+    reuse_terms: to confirm
+    known_limits: Revised with each release, so shares of GDP in earlier years can change.
+
+  dmo_debt_portfolio:
+    name: Debt portfolio, outstanding amounts and average maturity
+    publisher: UK Debt Management Office
+    address: to confirm
+    chart_label: UK Debt Management Office, debt portfolio
+    measures: Gilts and Treasury bills outstanding at each quarter end, and their average maturity.
+    used_for: Debt and average maturity for the United Kingdom.
+    series_or_tables:
+      - "Sheet 'Table data (net)', row 'Uplifted Nominal Value (£Billion), All Gilts + TBills'"
+      - "Sheet 'Table data (net)', row 'Average Maturity (years) - based on nominal values, All Gilts + TBills'"
+    definition_notes: >
+      Central government marketable debt in sterling: conventional gilts,
+      index-linked gilts and Treasury bills. Index-linked gilts are counted
+      at their nominal value uplifted for inflation. The net table is used
+      because it is close to the total in the ONS holdings tables. To
+      confirm against the Debt Management Office's notes: that "net" means
+      net of the government's own holdings, and nothing else.
+    units_and_frequency: Published in billions of pounds and in years, quarterly from 2005. The March 31 values are used.
+    transformations:
+      - Debt, take the March 31 value and divide by fiscal year GDP.
+      - Average maturity, take the March 31 value as published.
+    category_mapping: not an ownership table
+    retrieval: downloaded by hand (Isaac, 2026-11-11)
+    reuse_terms: to confirm
+    known_limits: >
+      Excludes National Savings and other non-marketable debt. Debt history
+      starts in the year to March 2006.
+
+  dmo_gilt_holdings:
+    name: Distribution of gilt holdings by sector
+    publisher: UK Debt Management Office, from Office for National Statistics data
+    address: to confirm
+    chart_label: UK Debt Management Office, distribution of gilt holdings
+    measures: Gilts held by each sector of the economy at each quarter end, at market value.
+    used_for: Who holds United Kingdom debt, and the default price-sensitive share of domestic holders.
+    series_or_tables:
+      - "Sheet 'ONS DATA main (rev)', first-quarter rows, all sector columns"
+    definition_notes: >
+      Market value, millions of pounds. The Bank of England column includes
+      the Asset Purchase Facility (to confirm against the Debt Management
+      Office's notes). Overseas holdings are not split into official and
+      private holders.
+    units_and_frequency: Published in millions of pounds, quarterly from 1987. The first quarter (end of March) is used, as shares of the total.
+    transformations:
+      - Add gilts and Treasury bills (see ons_ukea_tbills) for each group.
+      - Divide each group by the total to get its share, and apply the share to the debt.
+    category_mapping:
+      decided_by: >
+        The specification treats banks, pension funds and insurers as
+        captive, and investment funds and households as price-sensitive.
+        For other sectors, Isaac's rule of 2026-11-11 for the United States
+        is applied: price-sensitive, except governments, which are captive.
+        Public corporations are treated as government. To confirm with
+        Isaac that the same rule applies here.
+      lines:
+        - {sector: bank_of_england, name: Bank of England, group: central bank, basis: not a private holder}
+        - {sector: other_mfi, name: Monetary financial institutions other than the Bank of England, group: captive, basis: specification}
+        - {sector: NIZC, name: Insurance companies and pension funds, group: captive, basis: specification}
+        - {sector: NJSA, name: Other financial institutions, group: price-sensitive, basis: Isaac's rule}
+        - {sector: NKKY, name: Private non-financial companies, group: price-sensitive, basis: Isaac's rule}
+        - {sector: NISU, name: Households, group: price-sensitive, basis: specification}
+        - {sector: NJLS, name: Non-profit institutions serving households, group: price-sensitive, basis: Isaac's rule}
+        - {sector: NJFK, name: Local government, group: captive, basis: Isaac's rule}
+        - {sector: NKEQ, name: Public corporations, group: captive, basis: Isaac's rule}
+        - {sector: NLDU, name: Overseas holdings, group: foreign, basis: not a domestic holder}
+    retrieval: downloaded by hand (Isaac, 2026-11-11)
+    reuse_terms: to confirm
+    known_limits: >
+      "Other financial institutions" mixes investment funds with other
+      kinds of company. Shares at market value are applied to debt at
+      nominal value.
+
+  ons_ukea_tbills:
+    name: UK Economic Accounts, sterling Treasury bills by holding sector
+    publisher: Office for National Statistics
+    address: to confirm
+    chart_label: Office for National Statistics, UK Economic Accounts
+    measures: Sterling Treasury bills held by each sector at each quarter end.
+    used_for: Who holds United Kingdom Treasury bills, added to gilt holdings.
+    series_or_tables:
+      - "ONS series NIIV (total), NLDH, NNTJ, NIYP, NJRN, NKED, NKKL, NISH, NJLF, NJEX; release of 2026-09-30"
+    definition_notes: >
+      Millions of pounds. Monetary financial institutions include the Bank
+      of England here; its bill holdings are not shown separately, so all
+      of this sector's bills are counted as banks'. To confirm against the
+      ONS documentation: the valuation of the series.
+    units_and_frequency: Published in millions of pounds, quarterly. The first quarter (end of March) is used.
+    transformations:
+      - Add to gilt holdings for each group (see dmo_gilt_holdings).
+    category_mapping:
+      decided_by: The same rule as dmo_gilt_holdings.
+      lines:
+        - {sector: NNTJ, name: Monetary financial institutions, group: captive, basis: specification}
+        - {sector: NIYP, name: Insurance companies and pension funds, group: captive, basis: specification}
+        - {sector: NJRN, name: Other financial institutions, group: price-sensitive, basis: Isaac's rule}
+        - {sector: NKKL, name: Private non-financial companies, group: price-sensitive, basis: Isaac's rule}
+        - {sector: NISH, name: Households, group: price-sensitive, basis: specification}
+        - {sector: NJLF, name: Non-profit institutions serving households, group: price-sensitive, basis: Isaac's rule}
+        - {sector: NJEX, name: Local authorities, group: captive, basis: Isaac's rule}
+        - {sector: NKED, name: Public corporations, group: captive, basis: Isaac's rule}
+        - {sector: NLDH, name: Rest of the world, group: foreign, basis: not a domestic holder}
+    retrieval: downloaded by hand (Isaac, 2026-11-11; extracted by Isaac from the ONS dataset)
+    reuse_terms: to confirm
+    known_limits: Any Treasury bills the Bank of England holds are counted as banks' holdings.
+
+  ons_psf:
+    name: Public sector finances, Appendix A, central government account
+    publisher: Office for National Statistics
+    address: to confirm
+    chart_label: Office for National Statistics, public sector finances
+    measures: Central government receipts, spending, interest paid and net borrowing.
+    used_for: Revenue, primary balance, interest as a share of revenue, and the average interest rate for the United Kingdom.
+    series_or_tables:
+      - "Sheet PSA6B_1, series ANBV, total current receipts"
+      - "Sheet PSA6B_2, series NMFX, interest"
+      - "Sheet PSA6B_2, series -NMFJ, net borrowing"
+    definition_notes: >
+      Central government, national accounts basis, financial years from
+      April to March. Interest is gross interest paid and includes the
+      inflation uplift on index-linked gilts. To confirm against the ONS
+      methodology: how interest paid to the Bank of England's Asset
+      Purchase Facility is treated.
+    units_and_frequency: Published in millions of pounds. The financial-year rows are used, divided by fiscal year GDP.
+    transformations:
+      - Revenue, total current receipts divided by GDP.
+      - Primary balance, interest minus net borrowing, divided by GDP.
+      - Average interest rate, interest divided by the average of the debt at the start and end of the year.
+    category_mapping: not an ownership table
+    retrieval: downloaded by hand (Isaac, 2026-11-11)
+    reuse_terms: to confirm
+    known_limits: >
+      Interest is gross, not net of interest received, unlike the United
+      States figure. The average interest rate is computed by this
+      pipeline, not published.
+
+  # ------------------------------------------------------------ Japan
+
+  cao_gdp:
+    name: National Accounts of Japan, gross domestic product at current prices
+    publisher: Cabinet Office of Japan, through FRED
+    address: https://fred.stlouisfed.org/series/JPNNGDP
+    chart_label: Cabinet Office of Japan, gross domestic product
+    measures: The value of everything produced in Japan, at current prices.
+    used_for: The denominator of every Japanese share of GDP.
+    series_or_tables:
+      - "FRED JPNNGDP, Gross Domestic Product for Japan"
+    definition_notes: >
+      Current prices, seasonally adjusted. Each quarter is published at an
+      annual rate: the values are the size of a year's GDP (to confirm
+      against the Cabinet Office's documentation; inferred from the size
+      of the numbers).
+    units_and_frequency: Published in billions of yen, quarterly from 1994. Averaged over the fiscal year.
+    transformations:
+      - Average the four quarters from April to March.
+    category_mapping: not an ownership table
+    retrieval: automated
+    reuse_terms: to confirm
+    known_limits: >
+      Starts in 1994, so no Japanese share of GDP exists before the year
+      to March 1995. That leaves the primary surpluses of the late 1980s
+      out of the fiscal stress threshold.
+
+  mof_debt:
+    name: Central government debt (government bonds, borrowings and financing bills)
+    publisher: Ministry of Finance, Japan
+    address: to confirm
+    chart_label: Ministry of Finance, Japan, central government debt
+    measures: Central government debt outstanding at each quarter end, by type, at face value.
+    used_for: Debt for Japan.
+    series_or_tables:
+      - "Sheet 'suii', rows General Bonds, Fiscal Investment and Loan Program Bonds, Financing Bills"
+    definition_notes: >
+      Face value. General bonds plus Fiscal Investment and Loan Program
+      bonds plus financing bills: the securities the Bank of Japan's
+      holdings table covers. Subsidy bonds, subscription bonds and
+      borrowings are left out because they are not traded.
+    units_and_frequency: Published in 100 million yen, quarterly. The March 31 values are used, divided by fiscal year GDP.
+    transformations:
+      - Add the three rows for March 31 and divide by fiscal year GDP.
+    category_mapping: not an ownership table
+    retrieval: downloaded by hand (Isaac, 2026-11-11)
+    reuse_terms: to confirm
+    known_limits: >
+      The file covers the last five years only, so debt and holder history
+      for Japan starts in the year to March 2022. A longer face-value
+      series is needed for the back-test from 2012.
+
+  boj_fof:
+    name: Flow of Funds Accounts, government securities by holding sector
+    publisher: Bank of Japan
+    address: to confirm
+    chart_label: Bank of Japan, Flow of Funds Accounts
+    measures: Treasury discount bills and central government securities and FILP bonds held by each sector at the end of each fiscal year.
+    used_for: Who holds Japanese debt, and the default price-sensitive share of domestic holders.
+    series_or_tables:
+      - "Fiscal-year-end stocks, assets side, instruments 'Treasury discount bills' and 'Central government securities and FILP bonds', by sector"
+    definition_notes: >
+      Market value, 100 million yen. Financial dealers and brokers can
+      hold a negative amount of bonds (a short position). Overseas holders
+      are not split into official and private.
+    units_and_frequency: Published in 100 million yen. Fiscal-year-end (March 31) stocks are used, as shares of the total.
+    transformations:
+      - Add bills and bonds for each sector, then add the sectors of each group.
+      - Divide each group by the total to get its share, and apply the share to the debt.
+    category_mapping:
+      decided_by: >
+        The specification treats banks, pension funds and insurers as
+        captive, and investment funds and households as price-sensitive.
+        For other sectors, Isaac's rule of 2026-11-11 for the United States
+        is applied: price-sensitive, except governments, which are captive.
+        Public financial institutions and public corporations are treated
+        as government. To confirm with Isaac that the same rule applies here.
+      lines:
+        - {sector: Central bank, group: central bank, basis: not a private holder}
+        - {sector: Depository corporations, group: captive, basis: specification}
+        - {sector: Insurance and pension funds, group: captive, basis: specification}
+        - {sector: Securities investment trusts, group: price-sensitive, basis: specification}
+        - {sector: Nonbanks, group: price-sensitive, basis: Isaac's rule}
+        - {sector: Public financial institutions, group: captive, basis: Isaac's rule}
+        - {sector: Financial dealers and brokers, group: price-sensitive, basis: Isaac's rule}
+        - {sector: Financial auxiliaries, group: price-sensitive, basis: Isaac's rule}
+        - {sector: Public captive financial institutions, group: captive, basis: Isaac's rule}
+        - {sector: Private nonfinancial corporations, group: price-sensitive, basis: Isaac's rule}
+        - {sector: Public nonfinancial corporations, group: captive, basis: Isaac's rule}
+        - {sector: General government, group: captive, basis: Isaac's rule}
+        - {sector: Households, group: price-sensitive, basis: specification}
+        - {sector: Private nonprofit institutions serving households, group: price-sensitive, basis: Isaac's rule}
+        - {sector: Overseas, group: foreign, basis: not a domestic holder}
+    retrieval: downloaded by hand (Isaac, 2026-11-11; extracted by Isaac from the Bank of Japan's series)
+    reuse_terms: to confirm
+    known_limits: >
+      General government includes the public pension funds. Shares at
+      market value are applied to debt at face value.
+
+  mof_dmr:
+    name: Debt Management Report 2026
+    publisher: Ministry of Finance, Japan
+    address: to confirm
+    chart_label: Ministry of Finance, Japan, Debt Management Report
+    measures: The average remaining maturity of government bonds, their average interest rate, and interest payments.
+    used_for: Average maturity, the average interest rate, and interest as a share of revenue for Japan.
+    series_or_tables:
+      - "Figure 2-18, average maturity of JGBs, stock basis"
+      - "General bonds outstanding, weighted average interest rate, general account interest payments"
+    definition_notes: >
+      The stock-basis maturity is the average remaining maturity of bonds
+      outstanding at fiscal year end. The interest rate is the weighted
+      average on general bonds. To confirm against the report: whether the
+      maturity figure covers Treasury discount bills and FILP bonds.
+    units_and_frequency: Published in years and months, percent, and trillions of yen, by fiscal year.
+    transformations:
+      - Average maturity, years plus months divided by twelve.
+      - Average interest rate, as published, as a fraction.
+      - Interest as a share of revenue, interest payments divided by general account revenue.
+    category_mapping: not an ownership table
+    retrieval: downloaded by hand (Isaac, 2026-11-11; extracted by Isaac from the report)
+    reuse_terms: to confirm
+    known_limits: >
+      Financing bills are part of the debt but not of these averages, so
+      the true average maturity of the debt is somewhat shorter. Interest
+      payments are published to one decimal place and from fiscal year
+      2016 only.
+
+  mof_general_account:
+    name: General account settlement, revenue (table 4) and expenditure (table 20)
+    publisher: Ministry of Finance, Japan
+    address: to confirm
+    chart_label: Ministry of Finance, Japan, general account settlement
+    measures: Settled general account revenue by item and expenditure by category, by fiscal year.
+    used_for: Revenue and the primary balance for Japan.
+    series_or_tables:
+      - "Table 4, columns 公債金 (bond issues), 前年度剰余金受入 (surplus carried over), 合計 (total)"
+      - "Table 20, rows 国債費 (national debt service) and 合計 (total), settled amounts"
+    definition_notes: >
+      Central government general account only; special accounts are not
+      included. The primary balance follows the Ministry of Finance's
+      definition, as Isaac decided on 2026-11-11: revenue other than bond
+      issues, minus spending other than debt service (interest and
+      redemption). The surplus carried over from the previous year is also
+      left out of revenue, because it is not income of the year. To
+      confirm with Isaac: leaving out the carried-over surplus.
+    units_and_frequency: Published in millions of yen (table 4) and thousands of yen (table 20), by fiscal year. Divided by fiscal year GDP.
+    transformations:
+      - Revenue, total minus bond issues minus the surplus carried over, divided by GDP.
+      - Primary balance, that revenue minus (total expenditure minus national debt service), divided by GDP.
+    category_mapping: not an ownership table
+    retrieval: downloaded by hand (Isaac, 2026-11-11)
+    reuse_terms: to confirm
+    known_limits: >
+      Accounts are settled late: the latest is the year to March 2025, so
+      that year's values are carried into the starting year. The general
+      account is narrower than the central government in the national
+      accounts.
+
+  # ------------------------------------------------------------ Canada
+
+  imf_ifs_gdp:
+    name: International Financial Statistics, nominal gross domestic product
+    publisher: International Monetary Fund, through FRED
+    address: https://fred.stlouisfed.org/series/NGDPSAXDCCAQ
+    chart_label: International Monetary Fund, International Financial Statistics
+    measures: The value of everything produced in Canada in a quarter, at current prices.
+    used_for: The denominator of every Canadian share of GDP.
+    series_or_tables:
+      - "FRED NGDPSAXDCCAQ, Nominal Gross Domestic Product (GDP) for Canada"
+    definition_notes: >
+      Current prices, seasonally adjusted, in domestic currency. To
+      confirm: that the quarters are not at an annual rate (inferred from
+      the size of the numbers).
+    units_and_frequency: Published in millions of dollars, quarterly. Added up over the fiscal year.
+    transformations:
+      - Add the four quarters from April to March.
+    category_mapping: not an ownership table
+    retrieval: automated
+    reuse_terms: to confirm
+    known_limits: Revised with each release.
+
+  statcan_nbsa:
+    name: National Balance Sheet Accounts, table 36-10-0580-01
+    publisher: Statistics Canada
+    address: to confirm
+    chart_label: Statistics Canada, National Balance Sheet Accounts
+    measures: Federal and provincial debt securities, by the sector that owes them and the sector that holds them.
+    used_for: Debt, who holds it, and the default price-sensitive share of domestic holders for Canada.
+    series_or_tables:
+      - "Liabilities at book value: Government of Canada bonds and short-term paper; provincial and territorial government bonds; other short-term paper owed by provincial and territorial governments"
+      - "Assets at market value, by sector: Government of Canada bonds, Government of Canada short-term paper, provincial and territorial government bonds"
+    definition_notes: >
+      Debt is at book value. Holdings are at market value, the only
+      valuation published for every sector. The holders of provincial
+      short-term paper are not published separately, so that paper is
+      spread over the groups in the same proportions as the three
+      instruments whose holders are known. Holdings by one government of
+      another's debt are counted as held by governments, not removed.
+    units_and_frequency: Published in millions of dollars, quarterly from 1990. The first quarter (end of March) is used.
+    transformations:
+      - Debt, add the four liabilities and divide by fiscal year GDP.
+      - Holders, add the three instruments for each group, divide by the total, and apply the share to the debt.
+    category_mapping:
+      decided_by: >
+        The specification treats banks, pension funds and insurers as
+        captive, and investment funds and households as price-sensitive.
+        For other sectors, Isaac's rule of 2026-11-11 for the United States
+        is applied: price-sensitive, except governments, which are captive.
+        Government business enterprises are treated as government. To
+        confirm with Isaac that the same rule applies here.
+      lines:
+        - {sector: Total monetary authorities, group: central bank, basis: not a private holder}
+        - {sector: Total chartered banks and quasi-banks, group: captive, basis: specification}
+        - {sector: Insurance and pension funds, group: captive, basis: specification}
+        - {sector: Total other private financial institutions, group: price-sensitive, basis: specification}
+        - {sector: Financial government business enterprises, group: captive, basis: Isaac's rule}
+        - {sector: Non-financial private corporations, group: price-sensitive, basis: Isaac's rule}
+        - {sector: Non-financial government business enterprises, group: captive, basis: Isaac's rule}
+        - {sector: General governments, group: captive, basis: Isaac's rule}
+        - {sector: Households and non-profit institutions serving households, group: price-sensitive, basis: specification}
+        - {sector: Non-residents, group: foreign, basis: not a domestic holder}
+    retrieval: downloaded by hand (Isaac, 2026-11-11; extracted by Isaac from the table)
+    reuse_terms: to confirm
+    known_limits: >
+      "Other private financial institutions" is mostly investment funds
+      but also includes dealers and other lenders. Social security funds
+      (the Canada and Quebec pension plans) are inside general governments.
+
+  statcan_gfs:
+    name: Government finance statistics, table 10-10-0015-01
+    publisher: Statistics Canada
+    address: to confirm
+    chart_label: Statistics Canada, government finance statistics
+    measures: Revenue, expense, interest and net lending or borrowing of the federal and the provincial and territorial governments.
+    used_for: Revenue, primary balance, interest as a share of revenue, and the average interest rate for Canada.
+    series_or_tables:
+      - "Federal government and provincial and territorial government: Revenue, Interest, Net lending or borrowing, by fiscal year"
+    definition_notes: >
+      National accounts basis, not the Public Accounts budget basis, so
+      the figures differ from the Fiscal Reference Tables (Isaac accepted
+      this on 2026-11-11). Isaac added up the quarters from April to March.
+    units_and_frequency: Published in millions of dollars, quarterly; used by fiscal year, divided by fiscal year GDP.
+    transformations:
+      - Revenue, federal plus provincial revenue, divided by GDP.
+      - Primary balance, federal plus provincial net lending, plus federal and provincial interest, divided by GDP.
+      - Average interest rate, federal plus provincial interest divided by the average of the debt at the start and end of the year.
+    category_mapping: not an ownership table
+    retrieval: downloaded by hand (Isaac, 2026-11-11; built by Isaac from the quarterly table)
+    reuse_terms: to confirm
+    known_limits: >
+      Adding the two levels counts federal transfers to provinces twice in
+      revenue; the primary balance is not affected. Interest includes
+      interest on liabilities other than securities, so the average
+      interest rate is somewhat overstated.
+
+  boc_debt:
+    name: Government of Canada unmatured direct securities and average term to maturity
+    publisher: Bank of Canada
+    address: to confirm
+    chart_label: Bank of Canada, Government of Canada securities outstanding
+    measures: The average term to maturity of the federal government's marketable securities, monthly.
+    used_for: Average maturity for Canada.
+    series_or_tables:
+      - "V37346, average term to maturity (months), unmatured direct securities excluding non-marketable securities"
+    definition_notes: >
+      Federal government only. Used for the combined federal and
+      provincial debt because no provincial figure is published (Isaac,
+      2026-11-11).
+    units_and_frequency: Published in months, monthly. The March value is used, divided by twelve.
+    transformations:
+      - Take the March value and divide by twelve.
+    category_mapping: not an ownership table
+    retrieval: downloaded by hand (Isaac, 2026-11-11)
+    reuse_terms: to confirm
+    known_limits: Provincial debt is on average longer-dated than federal debt, so the true figure is probably higher.

@@ -14,7 +14,9 @@ machine it comes from the .env file next to this script. It is passed to
 FRED as a request parameter and is never printed or saved.
 """
 
+import csv
 import datetime
+import io
 import json
 import os
 import sys
@@ -29,6 +31,7 @@ CACHE = os.path.join(HERE, "cache")
 FRED = "https://api.stlouisfed.org/fred"
 FISCALDATA = "https://api.fiscaldata.treasury.gov/services/api/fiscal_service"
 IMF = "https://www.imf.org/external/datamapper/api/v1"
+BIS = "https://stats.bis.org/api/v2/data/dataflow/BIS"
 
 PAUSE = 0.6  # seconds between requests, well inside every service's limits
 
@@ -52,6 +55,8 @@ def main():
             result = fetch_fiscaldata_maturity(series)
         elif service == "imf_datamapper":
             result = fetch_imf(series)
+        elif service == "bis":
+            result = fetch_bis(series)
         else:
             stop(f"{key}: unknown service '{service}'")
 
@@ -196,6 +201,43 @@ def fetch_imf(series):
         "observations": observations,
         "last_updated": info["last-modified"],
     }
+
+
+# ---------------------------------------------------------------- BIS
+
+def fetch_bis(series):
+    """One monthly series from the Bank for International Settlements, as
+    a table with one line per month. The service gives no title to check,
+    so every line is checked against the dataset, country and unit that
+    series.yml names."""
+    time.sleep(PAUSE)
+    url = f"{BIS}/{series['dataflow']}/{series['version']}/{series['series']}"
+    try:
+        response = requests.get(url, headers={"Accept": "application/vnd.sdmx.data+csv"}, timeout=60)
+    except requests.RequestException as error:
+        stop(f"could not reach {url} ({type(error).__name__})")
+    if response.status_code != 200:
+        stop(f"{url} answered HTTP {response.status_code}: {response.text[:200]}")
+
+    rows = list(csv.DictReader(io.StringIO(response.text)))
+    expected = {
+        "STRUCTURE_ID": f"BIS:{series['dataflow']}({series['version']})",
+        "FREQ": "M",
+        "REF_AREA": series["area"],
+        "UNIT_MEASURE": str(series["unit_code"]),
+    }
+    observations = []
+    for row in rows:
+        for column, wanted in expected.items():
+            if row.get(column) != wanted:
+                stop(f"{series['key']}: the BIS gives {column} as \"{row.get(column)}\" "
+                     f"but series.yml expects \"{wanted}\"")
+        if row["OBS_VALUE"] not in ("", "NaN"):
+            observations.append([row["TIME_PERIOD"] + "-01", float(row["OBS_VALUE"])])
+    if not observations:
+        stop(f"{series['key']}: the BIS returned no observations")
+    observations.sort()
+    return {"service": "bis", "metadata": expected, "observations": observations}
 
 
 # ---------------------------------------------------------------- shared
