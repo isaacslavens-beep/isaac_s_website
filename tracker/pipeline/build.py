@@ -16,6 +16,8 @@ import sys
 
 import yaml
 
+from parsers import us_fed_f32s, us_tic_history, us_tic_table5
+
 HERE = os.path.dirname(os.path.abspath(__file__))
 CACHE = os.path.join(HERE, "cache")
 MANUAL = os.path.join(HERE, "manual")
@@ -28,7 +30,7 @@ def main():
     with open(os.path.join(HERE, "series.yml")) as f:
         series_list = yaml.safe_load(f)["series"]
 
-    country = build_united_states()
+    country = build_united_states(sources)
 
     problems = validate(country, sources)
     if problems:
@@ -53,7 +55,7 @@ def main():
 
 # ---------------------------------------------------------------- United States
 
-def build_united_states():
+def build_united_states(sources):
     """The United States on a federal fiscal year basis. Fiscal year 2026
     ended on September 30, 2026."""
     surplus = load("us_surplus")
@@ -160,22 +162,29 @@ def build_united_states():
         "note": f"largest five-year average primary balance, fiscal years {threshold_years[0]} to {threshold_years[1]}",
     }
 
-    # Ownership comes from files Isaac downloads by hand. Until their
-    # parsers exist and the files are in manual/united-states/, the country
-    # is marked unavailable.
-    missing = [
-        "holdings by group: domestic private, foreign official, foreign private (manual files)",
-        "Japan-resident holdings of Treasuries (manual file)",
-    ]
+    # Ownership comes from the files Isaac downloads by hand. If one is
+    # missing, the country is marked unavailable.
+    ownership = us_ownership(sources, start_year, gdp, debt, central_bank)
+    missing = ownership["missing"]
+    parameters = {}
+    if not missing:
+        start["holdings"] = ownership["start"]
+        start["japanHoldings"] = ownership["japan"]
+        parameters["priceSensitive"] = {"domesticPrivate": ownership["domesticShare"]}
+        for group, values in ownership["history"].items():
+            source = ["us_treasury_mspd", "fed_h41", "us_tic_mfh", "bea_gdp"] if group == "domesticPrivate" \
+                else ["us_tic_mfh", "bea_gdp"]
+            history[group] = (values, source)
 
     return {
         "country": "united-states",
         "name": "United States",
-        "available": False,
+        "available": not missing,
         "missing": missing,
         "yearBasis": "Federal fiscal year, ending September 30 (June 30 before fiscal year 1977).",
         "governmentCovered": "Federal government only. State and local debt is not included.",
         "start": start,
+        "parameters": parameters,
         "history": {
             name: {
                 "source": source,
@@ -185,6 +194,125 @@ def build_united_states():
             for name, (values, source) in history.items()
         },
     }
+
+
+def us_ownership(sources, start_year, gdp, debt, central_bank):
+    """Holdings by group from the manual files, as shares of GDP.
+
+    Foreign official and foreign private come from the Treasury's Major
+    Foreign Holders tables. Domestic private is what is left: debt minus
+    Federal Reserve holdings minus foreign holdings. The Federal Reserve's
+    sector table gives the price-sensitive share of domestic holders.
+    """
+    folder = os.path.join(MANUAL, "united-states")
+    names = [us_tic_table5.FILE, us_tic_history.FILE, us_fed_f32s.FILE, us_fed_f32s.DICTIONARY]
+    missing = ["manual file united-states/" + name for name in names
+               if not os.path.exists(os.path.join(folder, name))]
+    if missing:
+        return {"missing": missing}
+
+    try:
+        table5 = us_tic_table5.parse(os.path.join(folder, us_tic_table5.FILE))
+        older = us_tic_history.parse(os.path.join(folder, us_tic_history.FILE))
+        sectors = us_fed_f32s.parse(os.path.join(folder, us_fed_f32s.FILE),
+                                    os.path.join(folder, us_fed_f32s.DICTIONARY))
+    except ValueError as error:
+        stop(str(error))
+
+    # Foreign holdings for each fiscal year: September, from Table 5 if it
+    # covers that month and from the historical table otherwise. For the
+    # starting year, the latest month is used if September is not out yet.
+    history = {"domesticPrivate": {}, "foreignOfficial": {}, "foreignPrivate": {}}
+    as_of = {}
+    rows = {}
+    for year in sorted(debt):
+        if year not in central_bank:
+            continue
+        month = f"{year}-09"
+        if month in table5:
+            rows[year], as_of[year] = table5[month], month
+        elif year in older:
+            rows[year], as_of[year] = older[year], month
+        elif year == start_year:
+            latest = max(table5)
+            if not f"{year - 1}-09" < latest < month:
+                stop(f"{us_tic_table5.FILE}: its latest month, {latest}, is not in fiscal year {year}")
+            rows[year], as_of[year] = table5[latest], latest
+        else:
+            continue
+        row = rows[year]
+        official = row["official"] / gdp[year]            # billions of dollars over billions
+        private = (row["total"] - row["official"]) / gdp[year]
+        domestic = debt[year] - central_bank[year] - official - private
+        if domestic <= 0:
+            stop(f"united-states {year}: Federal Reserve and foreign holdings exceed the debt")
+        history["foreignOfficial"][year] = official
+        history["foreignPrivate"][year] = private
+        history["domesticPrivate"][year] = domestic
+
+    if start_year not in rows:
+        stop(f"united-states: no foreign holdings for the starting year {start_year}")
+    row = rows[start_year]
+    month_note = f"foreign holdings as of {as_of[start_year]}"
+    if as_of[start_year] != f"{start_year}-09":
+        month_note += f", the latest month published (September {start_year} is not out yet)"
+
+    start = {
+        "domesticPrivate": {
+            "value": history["domesticPrivate"][start_year],
+            "source": ["us_treasury_mspd", "fed_h41", "us_tic_mfh", "bea_gdp"],
+            "note": "debt minus Federal Reserve holdings minus foreign holdings; " + month_note,
+        },
+        "foreignOfficial": {
+            "value": history["foreignOfficial"][start_year],
+            "source": ["us_tic_mfh", "bea_gdp"],
+            "note": month_note,
+        },
+        "foreignPrivate": {
+            "value": history["foreignPrivate"][start_year],
+            "source": ["us_tic_mfh", "bea_gdp"],
+            "note": "all foreign holdings minus foreign official; " + month_note,
+        },
+    }
+
+    official_share = row["official"] / row["total"]
+    japan = {
+        "value": row["japan"] / gdp[start_year],
+        "source": ["us_tic_mfh", "bea_gdp"],
+        "note": "Japan-resident holdings; " + month_note + ". The source does not split them into "
+                "official and private, so a selloff is taken from the two foreign groups in "
+                "proportion to their holdings.",
+        "split": {"foreignOfficial": official_share, "foreignPrivate": 1 - official_share},
+    }
+
+    # The price-sensitive share of domestic holders, using the mapping of
+    # sectors to groups recorded in sources.yml.
+    totals = {}
+    for line in sources["fed_z1"]["category_mapping"]["lines"]:
+        code = line["code"]
+        if code not in sectors["values"]:
+            stop(f"{us_fed_f32s.FILE}: the series {code} in sources.yml is not in the file")
+        if not sectors["descriptions"][code].startswith(line["sector"]):
+            stop(f"{us_fed_f32s.FILE}: {code} is described as \"{sectors['descriptions'][code]}\", "
+                 f"but sources.yml maps it as \"{line['sector']}\"")
+        totals[line["group"]] = totals.get(line["group"], 0) + sectors["values"][code]
+
+    # Every holder must be mapped exactly once: together with the table's
+    # discrepancy line, the mapped sectors must add up to the total.
+    marketable = sectors["values"]["FL313161105.Q"]
+    if abs(sum(totals.values()) - marketable) > 0.001 * marketable:
+        stop(f"{us_fed_f32s.FILE}: the mapped sectors add up to {sum(totals.values()):,.0f} but total "
+             f"marketable Treasury securities are {marketable:,.0f}. A sector is missing from, or "
+             "counted twice in, the mapping in sources.yml.")
+
+    domestic_share = {
+        "value": totals["price-sensitive"] / (totals["price-sensitive"] + totals["captive"]),
+        "source": ["fed_z1"],
+        "note": f"price-sensitive domestic sectors as a share of all domestic private sectors, {sectors['period']}",
+    }
+
+    return {"missing": [], "start": start, "japan": japan,
+            "domesticShare": domestic_share, "history": history}
 
 
 def largest_five_year_average(values, last_year):
@@ -221,11 +349,16 @@ def validate(country, sources):
             if key not in sources:
                 problems.append(f"{label} points to '{key}', which is not in sources.yml")
 
-    for name, item in start.items():
-        if isinstance(item, dict):
-            check_sources("start." + name, item.get("source"))
-            if name != "maturity":
-                check_value("start." + name, item["value"])
+    items = {"start." + name: item for name, item in start.items() if isinstance(item, dict)}
+    for name, item in start.get("holdings", {}).items():
+        items["start.holdings." + name] = item
+    for name, item in country["parameters"].get("priceSensitive", {}).items():
+        items["parameters.priceSensitive." + name] = item
+    items.pop("start.holdings", None)
+    for label, item in items.items():
+        check_sources(label, item.get("source"))
+        if label != "start.maturity":
+            check_value(label, item["value"])
 
     for name, series in country["history"].items():
         check_sources("history." + name, series.get("source"))

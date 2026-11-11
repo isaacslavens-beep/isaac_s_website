@@ -225,6 +225,116 @@ sources:
       API starts in fiscal year 2015, which is why earlier years come from
       the OMB series.
 
+  us_tic_mfh:
+    name: Major Foreign Holders of Treasury Securities
+    publisher: U.S. Department of the Treasury, Treasury International Capital (TIC) system
+    address: https://ticdata.treasury.gov/resource-center/data-chart-center/tic/Documents/slt_table5.txt
+    chart_label: U.S. Treasury, Major Foreign Holders of Treasury Securities
+    measures: >
+      Estimated foreign holdings of U.S. Treasury marketable and
+      non-marketable bills, bonds and notes at the end of each month, by
+      country, with the part held by foreign official institutions (from
+      the notes in the file).
+    used_for: Foreign official and foreign private holdings, and Japan-resident holdings for the repatriation scenario.
+    series_or_tables:
+      - "Table 5, Major Foreign Holders of Treasury Securities (slt_table5.txt), rows Grand Total, Of Which: Foreign Official, Japan"
+      - "Historical table (mfhhis01.txt), rows Grand Total, For. Official, Japan"
+    definition_notes: >
+      Collected primarily from U.S.-based custodians and broker-dealers.
+      Securities held in overseas custody accounts may not be attributed to
+      their actual owners, so the country figures are not a precise
+      accounting of ownership (from the notes in the file). Includes
+      non-marketable securities, while the debt series is marketable only.
+      To confirm against the TIC documentation: whether holdings are at
+      market value or face value.
+    units_and_frequency: Published in billions of dollars, monthly. Converted to shares of GDP at fiscal year end.
+    transformations:
+      - Take September of each year. For the latest year, if September is not published yet, take the latest month (Isaac's decision, 2026-11-11).
+      - Table 5 is used for the months it covers and the historical table for earlier years.
+      - Foreign official is the Foreign Official row. Foreign private is the Grand Total minus Foreign Official. Both are divided by fiscal year GDP.
+      - Japan-resident holdings are the Japan row divided by fiscal year GDP.
+    category_mapping:
+      decided_by: >
+        Isaac, 2026-11-11. The table does not split Japan's holdings into
+        official and private, so the repatriation scenario takes them from
+        the foreign official and foreign private groups in proportion to
+        each group's share of all foreign holdings.
+      lines:
+        - {row: "Of Which: Foreign Official / For. Official", group: foreign official}
+        - {row: "Grand Total minus Foreign Official", group: foreign private}
+    retrieval: downloaded by hand (Isaac, 2026-11-11)
+    reuse_terms: to confirm
+    known_limits: >
+      The historical table has series breaks each June through 2011, when
+      annual surveys were introduced into the estimates. Domestic private
+      holdings are computed as debt minus Federal Reserve holdings minus
+      these foreign holdings, so any difference in valuation or coverage
+      between the sources ends up in domestic private.
+
+  fed_z1:
+    name: Financial Accounts of the United States (Z.1), table F3.2.s Treasury securities
+    publisher: Board of Governors of the Federal Reserve System
+    address: https://www.federalreserve.gov/releases/z1/
+    chart_label: Federal Reserve, Financial Accounts of the United States
+    measures: Treasury securities held by each sector of the economy at the end of each quarter.
+    used_for: The default price-sensitive share of domestic private holders.
+    series_or_tables:
+      - "Table F3.2.s Treasury securities, levels (F3_2_s.csv), from z1_csv_files.zip, release of 2026-09-11"
+    definition_notes: >
+      Most sectors' holdings are at market value and the federal
+      government's liability is not, which the table reconciles in its
+      "Instrument discrepancies" line (from the data dictionary). To
+      confirm against the Z.1 documentation: how the households sector is
+      measured.
+    units_and_frequency: Published in millions of dollars, quarterly. Used as a ratio, for the latest quarter.
+    transformations:
+      - Add up the domestic sectors mapped as captive and those mapped as price-sensitive.
+      - The domestic price-sensitive share is price-sensitive holdings divided by the sum of the two.
+    category_mapping:
+      decided_by: >
+        The specification treats banks, pension funds and insurers as
+        captive, and investment funds and households as price-sensitive.
+        For the sectors that rule does not cover, Isaac decided on
+        2026-11-11: price-sensitive, except governments, which are
+        captive; money market funds count as investment funds.
+        Government-sponsored enterprises are treated as price-sensitive
+        because they are companies, not governments (to confirm with
+        Isaac).
+      lines:
+        - {code: LM153061105.Q, sector: Households and nonprofit organizations, group: price-sensitive, basis: specification}
+        - {code: LM103061103.Q, sector: Nonfinancial corporate business, group: price-sensitive, basis: Isaac}
+        - {code: LM113061003.Q, sector: Nonfinancial noncorporate business, group: price-sensitive, basis: Isaac}
+        - {code: LM213061103.Q, sector: State and local governments, group: captive, basis: Isaac}
+        - {code: LM713061103.Q, sector: Central bank, group: central bank, basis: not domestic private}
+        - {code: LM763061100.Q, sector: U.S.-chartered depository institutions, group: captive, basis: specification}
+        - {code: LM753061103.Q, sector: Foreign banking offices in the U.S., group: captive, basis: specification}
+        - {code: LM743061103.Q, sector: Banks in U.S.-affiliated areas, group: captive, basis: specification}
+        - {code: LM473061105.Q, sector: Credit unions, group: captive, basis: specification}
+        - {code: LM513061105.Q, sector: Property-casualty insurance companies, group: captive, basis: specification}
+        - {code: LM543061105.Q, sector: Life insurance companies, group: captive, basis: specification}
+        - {code: LM573061105.Q, sector: Private pension funds, group: captive, basis: specification}
+        - {code: LM343061105.Q, sector: Federal government pension funds, group: captive, basis: specification}
+        - {code: LM223061143.Q, sector: State and local government employee defined benefit pension funds, group: captive, basis: specification}
+        - {code: FL633061105.Q, sector: Money market funds, group: price-sensitive, basis: Isaac}
+        - {code: LM653061105.Q, sector: Mutual funds, group: price-sensitive, basis: specification}
+        - {code: LM553061103.Q, sector: Closed-end funds, group: price-sensitive, basis: specification}
+        - {code: LM563061103.Q, sector: Exchange-traded funds, group: price-sensitive, basis: specification}
+        - {code: LM623061103.Q, sector: Hedge funds (domestic), group: price-sensitive, basis: Isaac}
+        - {code: LM403061105.Q, sector: Government-sponsored enterprises, group: price-sensitive, basis: to confirm with Isaac}
+        - {code: FL673061103.Q, sector: Issuers of asset-backed securities, group: price-sensitive, basis: Isaac}
+        - {code: LM663061105.Q, sector: Security brokers and dealers, group: price-sensitive, basis: Isaac}
+        - {code: LM733061103.Q, sector: Holding companies, group: price-sensitive, basis: Isaac}
+        - {code: FL503061123.Q, sector: Other financial business, group: price-sensitive, basis: Isaac}
+        - {code: LM263061105.Q, sector: Rest of the world, group: foreign, basis: not domestic private}
+        - {code: LM903061103.Q, sector: Instrument discrepancies, group: discrepancy, basis: not a holder}
+    retrieval: downloaded by hand (Isaac, 2026-11-11)
+    reuse_terms: to confirm
+    known_limits: >
+      Published about ten weeks after the quarter ends, so the latest
+      quarter is earlier than the starting year's end. Only the split of
+      domestic holders into captive and price-sensitive comes from this
+      table; the size of domestic private holdings does not.
+
   imf_weo:
     name: World Economic Outlook
     publisher: International Monetary Fund
