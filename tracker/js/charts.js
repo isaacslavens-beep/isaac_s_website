@@ -14,7 +14,7 @@
 //   stacked     true to stack the series as filled areas
 //   zones       a list of { year, type }, type "stress" or "dominance"
 //   xMin, xMax  the first and last year shown
-//   rightLabel, leftLabel   axis titles
+//   leftLabel   the title of the left axis, when a series uses it
 
 function drawChart(container, chart) {
   var css = getComputedStyle(document.documentElement);
@@ -39,7 +39,10 @@ function drawChart(container, chart) {
   // Each line becomes two uPlot series: history, then projection. Both
   // include the starting year, so the two parts join up.
   var data = [chart.years];
-  var uSeries = [{ label: "Year" }];
+  var uSeries = [{
+    label: "Year",
+    value: function (u, year) { return year === null ? chart.years[chart.years.length - 1] : year; }
+  }];
   var order = chart.series.map(function (_, n) { return n; });
   if (chart.stacked) order.reverse(); // draw the tallest area first
 
@@ -53,7 +56,8 @@ function drawChart(container, chart) {
     // The legend shows the real value for the year under the pointer,
     // whichever part of the line it is on.
     function legendValue(u, raw, seriesIndex, i) {
-      if (i === null || i === undefined) return "";
+      // With no pointer on the chart, the legend shows the last year.
+      if (i === null || i === undefined) i = chart.years.length - 1;
       var v = s.values[i];
       return v === null ? "no data" : v.toFixed(s.decimals) + (s.unit || "");
     }
@@ -81,8 +85,10 @@ function drawChart(container, chart) {
     };
   }
 
+  var font = "12px system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif";
   var axes = [
     {
+      font: font,
       stroke: color("--muted"),
       grid: { stroke: color("--grid"), width: 1 },
       ticks: { stroke: color("--grid"), width: 1 },
@@ -95,9 +101,8 @@ function drawChart(container, chart) {
       stroke: color("--muted"),
       grid: { stroke: color("--grid"), width: 1 },
       ticks: { stroke: color("--grid"), width: 1 },
-      size: 70,
-      label: chart.rightLabel,
-      labelSize: 18,
+      size: 58,
+      font: font,
       values: percentOrNumber(chart.rightDecimals || 0, chart.rightUnit || "")
     }
   ];
@@ -109,6 +114,8 @@ function drawChart(container, chart) {
       grid: { show: false },
       ticks: { stroke: color("--grid"), width: 1 },
       size: 64,
+      font: font,
+      labelFont: font,
       label: chart.leftLabel,
       labelSize: 18,
       values: percentOrNumber(chart.leftDecimals || 0, chart.leftUnit || "")
@@ -128,6 +135,25 @@ function drawChart(container, chart) {
       ctx.fillStyle = color(zone.type === "dominance" ? "--dominance" : "--stress");
       ctx.fillRect(x0, u.bbox.top, x1 - x0, u.bbox.height);
     });
+    ctx.restore();
+  }
+
+  // A thin vertical line at the starting year, where history ends and the
+  // projection begins.
+  function drawStartLine(u) {
+    var ctx = u.ctx;
+    var ratio = devicePixelRatio || 1;
+    var x = Math.round(u.valToPos(chart.years[start], "x", true));
+    if (x < u.bbox.left || x > u.bbox.left + u.bbox.width) return;
+    ctx.save();
+    ctx.strokeStyle = color("--muted");
+    ctx.globalAlpha = 0.6;
+    ctx.lineWidth = ratio;
+    ctx.setLineDash([3 * ratio, 3 * ratio]);
+    ctx.beginPath();
+    ctx.moveTo(x, u.bbox.top);
+    ctx.lineTo(x, u.bbox.top + u.bbox.height);
+    ctx.stroke();
     ctx.restore();
   }
 
@@ -163,7 +189,10 @@ function drawChart(container, chart) {
     ctx.font = "600 " + 12 * ratio + "px system-ui, sans-serif";
     var width = ctx.measureText(text).width + 10 * ratio;
     ctx.fillStyle = color("--line-" + s.color);
-    ctx.fillRect(x, y - 9 * ratio, width, 18 * ratio);
+    ctx.beginPath();
+    if (ctx.roundRect) ctx.roundRect(x, y - 9 * ratio, width, 18 * ratio, 4 * ratio);
+    else ctx.rect(x, y - 9 * ratio, width, 18 * ratio);   // older browsers: square corners
+    ctx.fill();
     ctx.fillStyle = color("--bg");
     ctx.textBaseline = "middle";
     ctx.textAlign = "left";
@@ -173,7 +202,7 @@ function drawChart(container, chart) {
 
   var options = {
     width: container.clientWidth,
-    height: Math.max(300, Math.min(440, Math.round(window.innerHeight * 0.5))),
+    height: Math.max(280, Math.min(400, Math.round(window.innerHeight * 0.42))),
     scales: {
       x: { time: false, range: [chart.xMin, chart.xMax] },
       right: { range: chart.stacked ? [0, 100] : undefined },
@@ -184,7 +213,10 @@ function drawChart(container, chart) {
     cursor: { x: true, y: true, points: { show: !chart.stacked } }, // the crosshair
     legend: { show: true, live: true },
     hooks: {
-      drawClear: [function (u) { if (!chart.stacked) drawZones(u); }],
+      drawClear: [function (u) {
+        if (!chart.stacked) drawZones(u);
+        drawStartLine(u);
+      }],
       draw: [function (u) {
         if (chart.stacked) {
           drawProjectionVeil(u);

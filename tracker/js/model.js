@@ -294,13 +294,21 @@ function runModel(start, controls) {
     }
 
     // The money supply (M2). It grows at the chosen rate, plus the money
-    // the central bank creates when its holdings rise as a share of GDP
-    // (or less, when they fall). `money` is a share of GDP, so the rise in
-    // holdings divided by it is a percent of the money supply.
+    // the central bank creates when its holdings rise as a share of GDP.
+    // `money` is a share of GDP, so the rise in holdings divided by it is
+    // a percent of the money supply.
+    // Money is destroyed only when the central bank's holdings fall in
+    // money terms. After a burst of inflation they can fall as a share of
+    // GDP while the central bank has sold nothing; that destroys no money.
     var money = null;
     var moneyGrowth = null;
     if (monetary) {
-      moneyGrowth = controls.moneyGrowth + moneyShare * (centralBank - prev.centralBank) / prev.money;
+      var rise = centralBank - prev.centralBank;
+      if (rise < 0) {
+        // The change in money terms, as a share of last year's GDP.
+        rise = Math.min(centralBank * (1 + nominalGrowth) - prev.centralBank, 0);
+      }
+      moneyGrowth = controls.moneyGrowth + moneyShare * rise / prev.money;
       moneyGrowth = Math.max(moneyGrowth, -0.9);   // money cannot fall below zero
       money = prev.money * (1 + moneyGrowth) / (1 + nominalGrowth);
     }

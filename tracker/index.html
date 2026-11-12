@@ -4,51 +4,49 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Sovereign Debt Simulator | Isaac Slavens</title>
-  <meta name="description" content="A scenario tool that projects the real return to a lender holding a government's debt. Not a forecast and not financial advice.">
+  <meta name="description" content="A scenario tool that projects government debt, interest rates and the loss of a currency's purchasing power for the United States, Japan and Canada. Not a forecast and not financial advice.">
   <link rel="stylesheet" href="js/vendor/uPlot.min.css">
   <link rel="stylesheet" href="css/tracker.css">
 </head>
 <body>
 
-  <!-- Top bar: link to the homepage, country tabs, theme toggle -->
+  <!-- Top bar: link to the homepage, the tool's name, country tabs, theme -->
   <header class="topbar">
     <a class="home-link" href="../">&larr; Homepage</a>
-    <nav class="tabs" id="country-tabs" aria-label="Country"></nav>
-    <button type="button" id="theme-toggle">Dark theme</button>
+    <span class="brand">Sovereign Debt Simulator</span>
+    <nav class="tabs segmented" id="country-tabs" aria-label="Country"></nav>
+    <button type="button" class="icon-button" id="theme-toggle" aria-label="Switch to dark theme">
+      <!-- A half-filled circle: light and dark -->
+      <svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true">
+        <circle cx="10" cy="10" r="7.5" fill="none" stroke="currentColor" stroke-width="1.6"/>
+        <path d="M10 2.5a7.5 7.5 0 0 1 0 15z" fill="currentColor"/>
+      </svg>
+    </button>
   </header>
 
   <div class="layout">
 
-    <!-- Main area: header strip, chart, key and source -->
-    <main class="main">
-      <div class="strip">
+    <!-- Results: the country, the headline figures and the two charts -->
+    <main class="results">
+      <div class="title-row">
         <!-- The country's flag and name. Flag images are from Wikimedia Commons. -->
         <h1>
           <img id="flag" class="flag" alt="" hidden>
           <span id="chart-title">Sovereign Debt Simulator</span>
         </h1>
         <p class="meta" id="chart-meta"></p>
-
-        <!-- The central figure: how fast money loses its purchasing power -->
-        <div class="hero">
-          <h2 class="hero-title">Currency Debasement</h2>
-          <p class="hero-number" id="hero-number"></p>
-          <p class="hero-label" id="hero-period"></p>
-          <p class="hero-money" id="hero-money"></p>
-          <p class="hero-label" id="hero-money-note"></p>
-          <details id="how">
-            <summary>How this figure is calculated</summary>
-            <div id="how-body"></div>
-          </details>
-        </div>
-
-        <dl class="headline" id="headline"></dl>
       </div>
+
+      <!-- Shown only if something goes wrong -->
+      <p class="error" id="error" role="alert" hidden></p>
+
+      <!-- The headline figures, one card each. ui.js fills them in. -->
+      <div class="stats" id="stats"></div>
 
       <div class="warning" id="warning" role="status" hidden>
         <p>
           <span id="warning-text"></span>
-          <button type="button" class="why" id="warning-why" aria-expanded="false"
+          <button type="button" class="info" id="warning-why" aria-expanded="false"
                   aria-controls="warning-more" aria-label="What does this mean?">?</button>
         </p>
         <p id="warning-more" hidden></p>
@@ -56,52 +54,73 @@
 
       <!-- The two charts, side by side -->
       <div class="charts">
-        <section>
-          <h2>Debt</h2>
+        <section class="card">
+          <div class="card-head">
+            <h2>Debt</h2>
+            <span class="units">Percent of GDP</span>
+          </div>
           <div id="chart-debt" class="chart"></div>
         </section>
-        <section>
-          <h2>Yields and interest</h2>
+        <section class="card">
+          <div class="card-head">
+            <h2>Yields and interest</h2>
+            <span class="units">Percent</span>
+          </div>
           <div id="chart-yields" class="chart"></div>
         </section>
       </div>
 
-      <p class="key" id="zone-key">
-        <span class="swatch swatch-history"></span> History
-        <span class="swatch swatch-projection"></span> Projection
-        <span class="swatch swatch-stress"></span> Fiscal stress
-        <span class="swatch swatch-dominance"></span> Fiscal dominance
-      </p>
-      <p class="source" id="source-line"></p>
-      <p class="source" id="coverage-line"></p>
-      <div class="chart-tools">
-        <button type="button" id="download">Download CSV</button>
+      <div class="chart-footer">
+        <p class="key" id="zone-key">
+          <span><span class="swatch swatch-history"></span>History</span>
+          <span><span class="swatch swatch-projection"></span>Projection</span>
+          <span><span class="swatch swatch-stress"></span>Fiscal stress</span>
+          <span><span class="swatch swatch-dominance"></span>Fiscal dominance</span>
+        </p>
+        <div class="chart-tools">
+          <button type="button" id="copy-link" hidden>Copy link to this scenario</button>
+          <button type="button" id="download">Download CSV</button>
+        </div>
       </div>
-
-      <!-- Advanced settings sit under the chart, beside the main controls -->
-      <details id="advanced" open>
-        <summary>Advanced settings</summary>
-        <div id="advanced-controls" class="advanced-grid"></div>
-      </details>
     </main>
 
     <!-- Side panel: the controls. ui.js fills it in from data/presets.json -->
-    <aside class="panel" aria-label="Scenario controls">
+    <aside class="panel card" aria-label="Scenario controls">
       <form id="controls" onsubmit="return false">
-        <button type="button" id="reset">Reset to defaults</button>
-
+        <div class="card-head">
+          <h2>Settings</h2>
+          <button type="button" class="quiet" id="reset">Reset</button>
+        </div>
         <div id="main-controls"></div>
 
-        <h2>Scenarios</h2>
+        <h3>Scenarios</h3>
         <div id="scenario-controls"></div>
       </form>
     </aside>
 
+    <!-- Below the charts: the working, the advanced settings and the notes -->
+    <div class="more">
+      <details class="card" id="how">
+        <summary>How the figures are calculated</summary>
+        <div id="how-body"></div>
+      </details>
+
+      <details class="card" id="advanced" open>
+        <summary>Advanced settings</summary>
+        <div id="advanced-controls" class="advanced-grid"></div>
+      </details>
+
+      <section class="card notes">
+        <h2>Data and coverage</h2>
+        <p id="source-line"></p>
+        <p id="coverage-line"></p>
+      </section>
+    </div>
+
   </div>
 
   <footer class="footer">
-    <p>This is a scenario tool with adjustable assumptions. It is not a forecast.</p>
-    <p>Nothing here is financial advice.</p>
+    <p>This is a scenario tool with adjustable assumptions. It is not a forecast. Nothing here is financial advice.</p>
     <p><a href="https://github.com/isaacslavens-beep/isaac_s_website/tree/main/tracker">Code for this tool</a></p>
   </footer>
 

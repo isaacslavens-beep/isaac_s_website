@@ -300,7 +300,11 @@ test("central bank buying creates money, and the money raises inflation the next
   let times = 1;
   result.rows.slice(1).forEach(function (row, index) {
     const prev = result.rows[index];
-    close(row.moneyGrowth, 0.07 + (row.centralBank - prev.centralBank) / prev.money, 1e-12);
+    // A fall as a share of GDP destroys money only if holdings also fall
+    // in money terms.
+    let rise = row.centralBank - prev.centralBank;
+    if (rise < 0) rise = Math.min(row.centralBank * (1 + row.nominalGrowth) - prev.centralBank, 0);
+    close(row.moneyGrowth, 0.07 + rise / prev.money, 1e-12);
     close(row.money, prev.money * (1 + row.moneyGrowth) / (1 + row.nominalGrowth), 1e-12);
     const implied = (1 + prev.moneyGrowth) / ((1 + row.growth) * 1.01) - 1;
     close(row.inflation, implied + controls.persistence * (prev.inflation - implied), 1e-12);
@@ -312,6 +316,28 @@ test("central bank buying creates money, and the money raises inflation the next
   // With no money created by the buying, inflation is lower.
   const none = run(withMoney, Object.assign({}, controls, { moneyShare: 0 }));
   assert.ok(none.headline.purchasingPowerLoss < result.headline.purchasingPowerLoss);
+});
+
+test("holdings that shrink against GDP without any sale destroy no money", function () {
+  // Fast nominal growth and a balanced budget: debt and the central bank's
+  // holdings fall as shares of GDP while both rise in money terms.
+  const withMoney = Object.assign({}, start, { money: 0.8 });
+  const result = run(withMoney, controlsWith({
+    capMode: "off", moneyGrowth: 0.12, moneyTrend: 0, moneyShare: 1, growth: 0.03, primaryBalance: 0
+  }));
+  const falling = result.rows.slice(1).filter(function (row, index) {
+    const prev = result.rows[index];
+    return row.centralBank < prev.centralBank &&
+      row.centralBank * (1 + row.nominalGrowth) >= prev.centralBank;
+  });
+  assert.ok(falling.length > 0, "the test needs years of this kind");
+  falling.forEach(function (row) { close(row.moneyGrowth, 0.12, 1e-12); });
+
+  // Runoff larger than the economy's growth is a real sale: money falls.
+  const runoff = run(withMoney, controlsWith({
+    capMode: "off", moneyGrowth: 0.02, moneyTrend: 0, moneyShare: 1, growth: 0, primaryBalance: 0, runoff: 0.02
+  }));
+  assert.ok(runoff.rows[1].moneyGrowth < 0.02);
 });
 
 test("a selloff adds its own premium to the yield until the central bank buys the debt", function () {

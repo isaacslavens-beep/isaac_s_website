@@ -133,6 +133,10 @@ def method(presets, estimates):
         "    money growth[t] = base money growth",
         "                      + new-money share x (rise in central bank holdings / money supply[t-1])",
         "",
+        "Holdings and money are shares of GDP. When holdings fall as a share of GDP, money is destroyed "
+        "only to the extent they also fall in money terms: after a burst of inflation they shrink against "
+        "GDP with nothing sold, and that destroys no money.",
+        "",
         "Base money growth is the country's average M2 growth (section 2). It is fixed, not a control. The "
         "new-money share is " + f"{share['value']:.2f}" + ": " + share["note"] + ". By country: "
         + ", ".join(f"{key} {item['value']:.2f} ({item['years']} years)"

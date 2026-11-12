@@ -69,27 +69,27 @@ function controlList(country) {
       label: "Money supply growth",
       help: "How fast the money supply (M2) grows each year, before any money the central bank creates by buying debt. Inflation follows it." },
     { key: "stressInterestShare", section: "main", type: "range", format: "percent0",
-      label: "Interest burden that counts as fiscal stress",
-      help: "Fiscal stress starts when interest on the debt takes more than this share of government revenue." },
-    { key: "capMode", section: "main", type: "select",
+      label: "Fiscal stress threshold",
+      help: "A year is in fiscal stress when interest on the debt takes more than this share of government revenue." },
+    { key: "growth", section: "main", type: "range", format: "percent1",
+      label: "Real growth",
+      help: "Yearly growth of the economy, after inflation." },
+    { key: "capMode", section: "main", type: "choice",
       label: "Yield cap",
-      help: "The highest yield the central bank tolerates before it buys debt.",
+      help: "The highest yield the central bank allows before it buys debt. Automatic: set in the first year of fiscal stress, at the yield of the year before. Fixed: a level you choose. Off: the central bank never buys.",
       options: [
-        ["automatic", "Automatic: from the first fiscal stress year"],
-        ["fixed", "Fixed level"],
-        ["off", "Off: never intervenes"]
+        ["automatic", "Automatic"],
+        ["fixed", "Fixed"],
+        ["off", "Off"]
       ] },
-    { key: "centralBankLimit", section: "main", type: "range", format: "percent0",
-      showWhen: function (c) { return c.capMode !== "off"; },
-      label: "Most the central bank will hold",
-      help: "The largest share of the debt the central bank will own. Once it gets there it stops buying, and the yield cap no longer holds." },
     { key: "capLevel", section: "main", type: "range", format: "percent1", indent: true,
       showWhen: function (c) { return c.capMode === "fixed"; },
       label: "Cap level",
-      help: "The yield the central bank holds when the cap is fixed." },
-    { key: "growth", section: "main", type: "range", format: "percent1",
-      label: "Real growth",
-      help: "How fast the economy grows each year, after inflation." }
+      help: "The yield the central bank holds." },
+    { key: "centralBankLimit", section: "main", type: "range", format: "percent0", indent: true,
+      showWhen: function (c) { return c.capMode !== "off"; },
+      label: "Central bank limit",
+      help: "The largest share of the debt the central bank will own. Once there it stops buying, and the cap no longer holds." }
   ];
 
   // A selloff by all holders abroad. Where the data separates foreign
@@ -103,11 +103,7 @@ function controlList(country) {
       label: "Share sold", help: "The share of foreign holdings sold." },
     { key: "selloffYears", section: "scenario", type: "range", format: "years0", indent: true,
       showWhen: function (c) { return c.selloffOn; },
-      label: "Over", help: "The number of years the selling is spread over." },
-    { key: "selloffResponse", section: "scenario", type: "range", format: "basisPoints", indent: true,
-      showWhen: function (c) { return c.selloffOn || c.japanOn; },
-      label: "Yield rise from selling",
-      help: "Extra basis points of yield for each point of GDP of debt sold, until the central bank buys it. A sudden sale moves the yield more than slow new borrowing." }
+      label: "Over", help: "The number of years the selling is spread over." }
   );
   if (country.start.japanHoldings) {
     list.push(
@@ -124,6 +120,14 @@ function controlList(country) {
         label: "Over", help: "The number of years the selling is spread over." }
     );
   }
+
+  // Applies to either kind of selling, so it comes after both.
+  list.push(
+    { key: "selloffResponse", section: "scenario", type: "range", format: "basisPoints",
+      showWhen: function (c) { return c.selloffOn || c.japanOn; },
+      label: "Yield rise from selling",
+      help: "Extra basis points of yield for each point of GDP of debt sold, until the central bank buys it. A sudden sale moves the yield more than slow new borrowing." }
+  );
 
   // Advanced settings: these move the result less.
   list.push(
@@ -203,6 +207,15 @@ function presetFor(control, country) {
     preset.basis = preset.basis + " In " + start.year + " interest takes about " +
       FORMATS.percent0(now) + " of revenue.";
   }
+  if (control.key === "centralBankLimit") {
+    // The limit cannot be set below what the central bank already holds.
+    var share = start.centralBank.value / start.debt.value;
+    while (preset.min < share && preset.min + preset.step <= preset.max) {
+      preset.min = parseFloat((preset.min + preset.step).toFixed(6));
+    }
+    preset.basis = preset.basis + " In " + start.year + " this central bank holds " +
+      FORMATS.percent0(share) + ".";
+  }
   if (control.key === "capMode") preset.default = "automatic";
   if (control.type === "check") preset.default = false;
   return preset;
@@ -225,6 +238,43 @@ function defaultControls(country) {
   return values;
 }
 
+// A small round button and the explanation it shows or hides. Returns
+// both, so the caller can place them.
+function infoButton(text, label) {
+  var button = document.createElement("button");
+  button.type = "button";
+  button.className = "info";
+  button.textContent = "i";
+  button.setAttribute("aria-label", "About: " + label);
+  button.setAttribute("aria-expanded", "false");
+  var tip = document.createElement("p");
+  tip.className = "tip";
+  tip.textContent = text;
+  tip.hidden = true;
+  button.addEventListener("click", function (event) {
+    event.preventDefault();   // inside a label, do not also press its control
+    var show = tip.hidden;
+    closeTips();
+    tip.hidden = !show;
+    button.setAttribute("aria-expanded", String(show));
+  });
+  return { button: button, tip: tip };
+}
+
+// Closes every open explanation.
+function closeTips() {
+  document.querySelectorAll(".tip").forEach(function (tip) { tip.hidden = true; });
+  document.querySelectorAll(".info[aria-expanded]").forEach(function (button) {
+    if (button.id !== "warning-why") button.setAttribute("aria-expanded", "false");
+  });
+}
+
+// Colors the part of a slider's track below its value.
+function fillTrack(input) {
+  var share = (input.value - input.min) / (input.max - input.min);
+  input.style.setProperty("--fill", (share * 100).toFixed(1) + "%");
+}
+
 // Builds the control panel for the current country.
 function buildControls() {
   var country = page.data[page.country];
@@ -245,64 +295,89 @@ function buildControls() {
       (control.key_control ? " key-control" : "");
     box.dataset.key = control.key;
 
+    // The first line: the label, the "i" button and the current value.
+    var head = document.createElement("div");
+    head.className = "control-head";
     var label = document.createElement("label");
     label.htmlFor = id;
-    var input;
+    // The explanation: what the control does, then where its default
+    // comes from.
+    var info = infoButton(control.help + (preset.basis ? " " + preset.basis : ""), control.label);
+    box.append(head, info.tip);
 
     if (control.type === "range") {
-      input = document.createElement("input");
+      var input = document.createElement("input");
       input.type = "range";
+      input.id = id;
       input.min = preset.min;
       input.max = preset.max;
       input.step = preset.step;
       input.value = values[control.key];
+      fillTrack(input);
       var output = document.createElement("output");
       output.htmlFor = id;
       output.textContent = FORMATS[control.format](values[control.key]);
-      label.append(control.label, output);
+      label.textContent = control.label;
+      head.append(label, info.button, output);
       input.addEventListener("input", function () {
         values[control.key] = parseFloat(input.value);
         output.textContent = FORMATS[control.format](values[control.key]);
+        fillTrack(input);
         update();
       });
-    } else if (control.type === "select") {
-      input = document.createElement("select");
+
+      // Under the slider: its lowest value, its default, its highest.
+      var ends = document.createElement("div");
+      ends.className = "range-ends";
+      var defaultValue = snap(preset.default, preset);
+      [FORMATS[control.format](preset.min),
+        "Default " + FORMATS[control.format](defaultValue) + (preset.illustrative ? " (illustrative)" : ""),
+        FORMATS[control.format](preset.max)].forEach(function (text) {
+        var span = document.createElement("span");
+        span.textContent = text;
+        ends.append(span);
+      });
+      box.append(input, ends);
+    } else if (control.type === "choice") {
+      // A row of buttons, one pressed.
+      var group = document.createElement("div");
+      group.className = "segmented";
+      group.id = id;
+      group.setAttribute("role", "group");
+      group.setAttribute("aria-label", control.label);
       control.options.forEach(function (option) {
-        var element = document.createElement("option");
-        element.value = option[0];
-        element.textContent = option[1];
-        input.append(element);
+        var button = document.createElement("button");
+        button.type = "button";
+        button.textContent = option[1];
+        button.setAttribute("aria-pressed", String(values[control.key] === option[0]));
+        button.addEventListener("click", function () {
+          values[control.key] = option[0];
+          group.querySelectorAll("button").forEach(function (other) {
+            other.setAttribute("aria-pressed", String(other === button));
+          });
+          update();
+        });
+        group.append(button);
       });
-      input.value = values[control.key];
-      label.append(control.label);
-      input.addEventListener("change", function () {
-        values[control.key] = input.value;
-        update();
-      });
+      // A group of buttons has no single control for a label to point at.
+      var name = document.createElement("label");
+      name.textContent = control.label;
+      head.append(name, info.button);
+      box.append(group);
     } else {
-      input = document.createElement("input");
-      input.type = "checkbox";
-      input.checked = values[control.key];
-      label.append(input, " " + control.label);
-      input.addEventListener("change", function () {
-        values[control.key] = input.checked;
+      // An on-off switch.
+      var check = document.createElement("input");
+      check.type = "checkbox";
+      check.id = id;
+      check.checked = values[control.key];
+      label.append(check, control.label);
+      head.append(label, info.button);
+      check.addEventListener("change", function () {
+        values[control.key] = check.checked;
         update();
       });
     }
-    input.id = id;
 
-    var help = document.createElement("p");
-    help.className = "help";
-    help.textContent = control.help;
-
-    box.append(label, help);
-    if (control.type !== "check") box.append(input);
-    if (preset.illustrative || preset.showBasis || control.key.indexOf("w_") === 0) {
-      var basis = document.createElement("p");
-      basis.className = "basis";
-      basis.textContent = preset.basis;
-      box.append(basis);
-    }
     box.showWhen = control.showWhen;
     sections[control.section].append(box);
   });
@@ -314,6 +389,11 @@ function showOrHideControls() {
   var values = page.controls[page.country];
   document.querySelectorAll(".control").forEach(function (box) {
     box.hidden = box.showWhen ? !box.showWhen(values) : false;
+  });
+  // Reset has nothing to do while every setting is at its default.
+  var defaults = defaultControls(page.data[page.country]);
+  document.getElementById("reset").disabled = Object.keys(defaults).every(function (key) {
+    return defaults[key] === values[key];
   });
 }
 
@@ -500,7 +580,6 @@ function draw() {
 function fillText() {
   var country = page.data[page.country];
   var h = page.result.headline;
-  var lastYear = page.result.rows[page.result.rows.length - 1].year;
 
   document.getElementById("chart-title").textContent = country.name;
   var flag = document.getElementById("flag");
@@ -510,27 +589,10 @@ function fillText() {
   document.getElementById("chart-meta").textContent =
     "Starting year " + country.start.year +
     " · Data updated " + page.meta.lastSuccessfulRun +
-    " · Frequency: annual";
+    " · Annual";
 
-  fillHero();
-
-  var figures = [
-    ["Debt in " + lastYear, FORMATS.percent0(h.finalDebt) + " of GDP"],
-    ["First year of fiscal stress", h.firstStressYear || "not reached"],
-    ["First year of fiscal dominance", h.firstDominanceYear || "not reached"],
-    ["Peak central bank share of the debt", FORMATS.percent0(h.peakCentralBankShare)]
-  ];
-  var headline = document.getElementById("headline");
-  headline.textContent = "";
-  figures.forEach(function (figure) {
-    var box = document.createElement("div");
-    var term = document.createElement("dt");
-    var detail = document.createElement("dd");
-    term.textContent = figure[0];
-    detail.textContent = figure[1];
-    box.append(term, detail);
-    headline.append(box);
-  });
+  fillStats();
+  fillHow();
 
   var warning = document.getElementById("warning");
   warning.hidden = h.firstCapBrokenYear === null;
@@ -544,12 +606,16 @@ function fillText() {
       "and can no longer hold interest rates down.";
     // The longer explanation, shown when the question mark is pressed.
     document.getElementById("warning-more").textContent =
-      "A central bank holds interest rates down by buying government debt. In this scenario it starts buying in " +
-      firstBought.year + " to keep the yield at " + FORMATS.percent1(broken.cap) +
-      ". Lenders want more than that, so every year it has to buy more. By " + h.firstCapBrokenYear +
-      " it owns " + share + " of the debt, which is the most it will hold (a setting on this page), " +
-      "and it stops buying. From then on the cap has no effect, " +
-      "and the yield in the chart is the rate lenders would ask for.";
+      "A central bank holds interest rates down by buying government debt. " +
+      (firstBought && firstBought.year < h.firstCapBrokenYear
+        ? "In this scenario it starts buying in " + firstBought.year + " to keep the yield at " +
+          FORMATS.percent1(broken.cap) + ". Lenders want more than that, so it has to keep buying. By " +
+          h.firstCapBrokenYear + " it owns " + share + " of the debt, which is the most it will hold " +
+          "(the central bank limit in the settings), and it stops buying. "
+        : "In this scenario, keeping the yield at " + FORMATS.percent1(broken.cap) + " in " +
+          h.firstCapBrokenYear + " would take more buying than it will do: it stops at " + share +
+          " of the debt, the most it will hold (the central bank limit in the settings). ") +
+      "From then on the cap has no effect, and the yield in the chart is the rate lenders ask for.";
   }
 
   // The source line names the publisher and series behind the history of
@@ -568,7 +634,7 @@ function fillText() {
   document.getElementById("coverage-line").textContent =
     country.governmentCovered + " " + country.yearBasis + " " +
     (country.notes || []).join(" ") +
-    " Defaults marked illustrative are starting values, not estimates.";
+    " Defaults marked illustrative are starting values for exploring scenarios, not estimates.";
 }
 
 // A total loss of purchasing power as a steady yearly rate.
@@ -576,8 +642,89 @@ function annualLoss(loss, years) {
   return 1 - Math.pow(1 - loss, 1 / years);
 }
 
-// The central figure and the steps behind it, with this scenario's numbers.
-function fillHero() {
+// The headline figures, one card each.
+function fillStats() {
+  var country = page.data[page.country];
+  var c = page.controls[page.country];
+  var h = page.result.headline;
+  var rows = page.result.rows;
+  var first = rows[0];
+  var last = rows[rows.length - 1];
+  var span = first.year + " to " + last.year;
+  var threshold = country.start.stressThreshold.value;
+
+  var stats = [
+    { kind: "loss", label: "Currency debasement",
+      value: FORMATS.percent1(annualLoss(h.purchasingPowerLoss, rows.length - 1)), unit: "a year",
+      note: FORMATS.percent0(h.purchasingPowerLoss) + " in total by " + last.year,
+      tip: "The projected loss of the currency's purchasing power, " + span +
+        ", as a steady yearly rate. It follows from the settings on this page." },
+    { kind: "money", label: "Money supply expansion",
+      value: FORMATS.percent1(h.annualMoneyGrowth), unit: "a year",
+      note: "M2, " + span,
+      tip: "The projected growth of the money supply (M2), " + span + ", as a steady yearly rate." },
+    { label: "Debt in " + last.year,
+      value: FORMATS.percent0(h.finalDebt), unit: "of GDP",
+      note: FORMATS.percent0(first.debt) + " in " + first.year,
+      tip: country.governmentCovered },
+    { label: "Fiscal stress",
+      value: h.firstStressYear || "Not reached",
+      note: h.firstStressYear ? "first year" : "by " + last.year,
+      tip: "The first year in which interest takes more than " + FORMATS.percent0(c.stressInterestShare) +
+        " of government revenue" +
+        (typeof threshold === "number"
+          ? ", or the primary balance needed to hold the debt steady is above " + FORMATS.percent1(threshold) +
+            " of GDP, the " + country.start.stressThreshold.note + "."
+          : ".") },
+    { label: "Fiscal dominance",
+      value: h.firstDominanceYear || "Not reached",
+      note: h.firstDominanceYear ? "first year" : "by " + last.year,
+      tip: c.capMode === "off"
+        ? "The first year the central bank buys debt to hold the yield at its cap. The cap is off, so it never does."
+        : "The first year the central bank buys debt to hold the yield at its cap." },
+    { label: "Central bank share",
+      value: FORMATS.percent0(h.peakCentralBankShare), unit: "at its peak",
+      note: FORMATS.percent0(first.centralBank / first.debt) + " in " + first.year,
+      tip: "The largest share of the government's debt the central bank holds in any year, " + span + "." }
+  ];
+
+  var box = document.getElementById("stats");
+  box.textContent = "";
+  stats.forEach(function (stat) {
+    var card = document.createElement("div");
+    card.className = "card stat" + (stat.kind ? " " + stat.kind : "");
+    var info = infoButton(stat.tip, stat.label);
+
+    var label = document.createElement("div");
+    label.className = "stat-label";
+    // The button stays on the same line as the label's last word.
+    var cut = stat.label.lastIndexOf(" ") + 1;
+    var lastWord = document.createElement("span");
+    lastWord.className = "together";
+    lastWord.append(stat.label.slice(cut), info.button);
+    label.append(stat.label.slice(0, cut), lastWord);
+
+    var value = document.createElement("div");
+    // Words are set smaller than figures, so "Not reached" fits on one line.
+    value.className = "stat-value" + (typeof stat.value === "string" && !/\d/.test(stat.value) ? " words" : "");
+    value.textContent = stat.value;
+    if (stat.unit) {
+      var unit = document.createElement("small");
+      unit.textContent = stat.unit;
+      value.append(unit);
+    }
+
+    var note = document.createElement("div");
+    note.className = "stat-note";
+    note.textContent = stat.note;
+
+    card.append(label, value, note, info.tip);
+    box.append(card);
+  });
+}
+
+// The steps behind the two central figures, with this scenario's numbers.
+function fillHow() {
   var country = page.data[page.country];
   var c = page.controls[page.country];
   var rows = page.result.rows;
@@ -585,28 +732,11 @@ function fillHero() {
   var years = rows.length - 1;
   var startYear = country.start.year;
   var loss = page.result.headline.purchasingPowerLoss;
-
-  document.getElementById("hero-period").textContent =
-    "Projected loss of purchasing power, " + startYear + " to " + last.year +
-    ", based on the settings on this page. Move a slider and it changes.";
   // The same loss as a steady yearly rate: losing this much every year
   // for the whole period adds up to the total.
   var lossPerYear = annualLoss(loss, years);
-  // The yearly rate is the large figure. The total follows it, smaller.
-  var number = document.getElementById("hero-number");
-  var total = document.createElement("span");
-  total.className = "hero-total";
-  total.textContent = FORMATS.percent0(loss) + " in total";
-  number.textContent = FORMATS.percent1(lossPerYear) + " annually ";
-  number.append(total);
-  // Money supply expansion: the projected growth of M2 in money terms,
-  // as a steady yearly rate.
   var moneyTimes = page.result.headline.moneyTimes;
   var moneyPerYear = page.result.headline.annualMoneyGrowth;
-  document.getElementById("hero-money").textContent =
-    "Money supply expansion: " + FORMATS.percent1(moneyPerYear) + " annually";
-  document.getElementById("hero-money-note").textContent =
-    "Projected growth of the money supply (M2), " + startYear + " to " + last.year + ".";
 
   var lossWithout = lossWithoutNewMoney(country, c);
   var impliedInflation = (1 + c.moneyGrowth) / ((1 + c.growth) * (1 + c.moneyTrend)) - 1;
@@ -631,18 +761,18 @@ function fillHero() {
       FORMATS.percent1(c.moneyTrend) + ")) − 1. Each year inflation moves toward the rate that last year's money growth implies, and " +
       "persistence (" + c.persistence.toFixed(2) + ") is the part of the gap that remains.",
     "4. The central bank keeps its share of the debt, so its holdings rise when debt grows faster than " +
-      "the economy. It buys more in years when the yield would otherwise rise above its cap. " +
+      "the economy. It buys more in years when the yield would otherwise rise above its cap, up to its limit. " +
       "In this scenario its holdings " + (totalRise >= 0 ? "rise" : "fall") + " by " +
       FORMATS.percent0(Math.abs(totalRise)) + " of GDP over the " + years + " years" +
       (capYears.length
         ? ", of which " + FORMATS.percent0(capPurchases) + " of GDP is bought to hold the cap, starting in " +
           capYears[0].year + "."
-        : ". The cap is never reached."),
-    "5. Each unit of debt the central bank adds to its holdings creates " + c.moneyShare.toFixed(2) +
-      " units of new money, on top of the " + FORMATS.percent1(c.moneyGrowth) + " a year. " +
-      "If its buying created no money, the loss would be " + FORMATS.percent0(lossWithout) +
-      ". The money it creates accounts for the remaining " + ((loss - lossWithout) * 100).toFixed(1) +
-      " percentage points.",
+        : c.capMode === "off" ? ". The cap is off." : ". The cap is never reached."),
+    "5. Each unit of debt the central bank adds to its holdings, as a share of GDP, creates " +
+      c.moneyShare.toFixed(2) + " units of new money, on top of the " + FORMATS.percent1(c.moneyGrowth) +
+      " a year. Holdings that only shrink against a growing economy, with nothing sold, destroy no money. " +
+      "If its buying created no money, the loss would be " + FORMATS.percent1(lossWithout) +
+      " instead of " + FORMATS.percent1(loss) + ".",
     "6. Money supply expansion is the growth of M2. It is " + FORMATS.percent0(rows[0].money) +
       " of GDP in " + startYear + " and " + FORMATS.percent0(last.money) + " of GDP in " + last.year +
       ". Over the " + years + " years it becomes " + moneyTimes.toFixed(1) + " times as large: " +
@@ -660,7 +790,7 @@ function fillHero() {
   // Every fifth year, so the steps can be checked against the numbers.
   var table = document.createElement("table");
   var head = table.insertRow();
-  ["Year", "Inflation", "Rise in central bank holdings, share of GDP", "Price level", "What 100 buys"].forEach(function (text) {
+  ["Year", "Inflation", "Money growth", "Central bank holdings, share of GDP", "Price level", "What 100 buys"].forEach(function (text) {
     var cell = document.createElement("th");
     cell.textContent = text;
     head.append(cell);
@@ -668,17 +798,15 @@ function fillHero() {
   rows.forEach(function (row, t) {
     if (t % 5 !== 0) return;
     var line = table.insertRow();
-    [row.year, FORMATS.percent1(row.inflation), FORMATS.percent1(row.buying),
+    [row.year, FORMATS.percent1(row.inflation), FORMATS.percent1(row.moneyGrowth), FORMATS.percent1(row.centralBank),
       row.priceLevel.toFixed(2), (100 / row.priceLevel).toFixed(0)].forEach(function (text) {
       line.insertCell().textContent = text;
     });
   });
-  body.append(table);
-
-  var closing = document.createElement("p");
-  closing.textContent = "Every number in these steps comes from the controls on this page. " +
-    "Change a control and the steps update.";
-  body.append(closing);
+  var scroll = document.createElement("div");
+  scroll.className = "table-scroll";
+  scroll.append(table);
+  body.append(scroll);
 }
 
 // ---------------------------------------------------------------- download
@@ -753,7 +881,21 @@ function writeAddress() {
     var v = values[key];
     params.set(key, typeof v === "boolean" ? (v ? "1" : "0") : v);
   });
-  history.replaceState(null, "", "?" + params.toString());
+  try {
+    history.replaceState(null, "", "?" + params.toString());
+  } catch (error) {
+    // Some browsers refuse when the address changes too often. The page
+    // works without it; only the shareable link is behind.
+  }
+}
+
+// Browsers limit how often the address may change, and a dragged slider
+// changes many times a second. So the address is written once the
+// changes pause.
+var addressTimer = null;
+function writeAddressSoon() {
+  clearTimeout(addressTimer);
+  addressTimer = setTimeout(writeAddress, 250);
 }
 
 function readAddress() {
@@ -772,7 +914,7 @@ function readAddress() {
       if (isFinite(number)) values[control.key] = snap(number, preset);
     } else if (control.type === "check") {
       values[control.key] = text === "1";
-    } else if (control.options.some(function (o) { return o[0] === text; })) {
+    } else if (control.type === "choice" && control.options.some(function (o) { return o[0] === text; })) {
       values[control.key] = text;
     }
   });
@@ -782,13 +924,24 @@ function readAddress() {
 
 // Runs after every change: recompute, redraw, and update the address.
 function update() {
-  var country = page.data[page.country];
-  var inputs = modelInputs(country, page.controls[page.country]);
-  page.result = runModel(inputs.start, inputs.controls);
-  showOrHideControls();
-  fillText();
-  draw();
-  writeAddress();
+  var error = document.getElementById("error");
+  try {
+    var country = page.data[page.country];
+    var inputs = modelInputs(country, page.controls[page.country]);
+    page.result = runModel(inputs.start, inputs.controls);
+    showOrHideControls();
+    fillText();
+    draw();
+    error.hidden = true;
+  } catch (problem) {
+    // Never leave the page showing figures that do not match the settings
+    // without saying so.
+    error.textContent = "These settings could not be calculated (" + problem.message +
+      "). The figures below are from the last settings that worked. Reset to return to the defaults.";
+    error.hidden = false;
+    document.getElementById("reset").disabled = false;
+  }
+  writeAddressSoon();
 }
 
 function showCountry(key) {
@@ -796,13 +949,15 @@ function showCountry(key) {
   document.querySelectorAll("#country-tabs button").forEach(function (button) {
     button.setAttribute("aria-pressed", button.dataset.country === key ? "true" : "false");
   });
+  document.title = page.data[key].name + " | Sovereign Debt Simulator | Isaac Slavens";
   buildControls();
   update();
 }
 
 function setTheme(theme) {
   document.documentElement.dataset.theme = theme;
-  document.getElementById("theme-toggle").textContent = theme === "dark" ? "Light theme" : "Dark theme";
+  document.getElementById("theme-toggle").setAttribute("aria-label",
+    theme === "dark" ? "Switch to light theme" : "Switch to dark theme");
   try {
     localStorage.setItem("tracker-theme", theme); // the only thing the page stores
   } catch (error) {
@@ -849,7 +1004,10 @@ function startPage() {
       button.type = "button";
       button.dataset.country = c.key;
       if (page.data[c.key]) {
-        button.textContent = c.name;
+        var flag = document.createElement("img");
+        flag.src = "img/flag-" + c.key + ".png";
+        flag.alt = "";
+        button.append(flag, c.name);
         button.addEventListener("click", function () { showCountry(c.key); });
       } else {
         button.textContent = c.name + " (unavailable)";
@@ -858,8 +1016,10 @@ function startPage() {
       tabs.append(button);
     });
 
-    page.country = Object.keys(page.data)[0];
-    if (!page.country) throw new Error("No country data is available");
+    // The first country in the list that has data is shown first.
+    var first = COUNTRIES.filter(function (c) { return page.data[c.key]; })[0];
+    if (!first) throw new Error("No country data is available");
+    page.country = first.key;
     readAddress();
     showCountry(page.country);
 
@@ -868,6 +1028,31 @@ function startPage() {
       draw();
     });
     document.getElementById("download").addEventListener("click", downloadCsv);
+
+    // Copies the page address, which holds every setting.
+    var copy = document.getElementById("copy-link");
+    if (navigator.clipboard) {
+      copy.hidden = false;
+      copy.addEventListener("click", function () {
+        clearTimeout(addressTimer);
+        writeAddress();
+        navigator.clipboard.writeText(location.href).then(function () {
+          copy.textContent = "Link copied";
+        }, function () {
+          copy.textContent = "Could not copy";
+        }).then(function () {
+          setTimeout(function () { copy.textContent = "Copy link to this scenario"; }, 1600);
+        });
+      });
+    }
+
+    // An open explanation closes on Escape or a click anywhere else.
+    document.addEventListener("keydown", function (event) {
+      if (event.key === "Escape") closeTips();
+    });
+    document.addEventListener("click", function (event) {
+      if (!event.target.closest(".info, .tip")) closeTips();
+    });
     // The question mark beside the warning shows or hides its explanation.
     document.getElementById("warning-why").addEventListener("click", function () {
       var more = document.getElementById("warning-more");
@@ -890,7 +1075,9 @@ function startPage() {
       });
     });
   }).catch(function (error) {
-    document.getElementById("chart-debt").textContent = "The simulator could not start: " + error.message;
+    var message = document.getElementById("error");
+    message.textContent = "The simulator could not start: " + error.message;
+    message.hidden = false;
   });
 }
 
