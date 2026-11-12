@@ -86,32 +86,23 @@ function controlList(country) {
       help: "How fast the economy grows each year, after inflation." }
   ];
 
-  if (country.start.holdings.foreignOfficial) {
-    list.push(
-      { key: "selloffOn", section: "scenario", type: "check",
-        label: "Foreign official selloff",
-        help: "Foreign central banks and governments sell part of their holdings." },
-      { key: "selloffShare", section: "scenario", type: "range", format: "percent0", indent: true,
-        showWhen: function (c) { return c.selloffOn; },
-        label: "Share sold", help: "The share of foreign official holdings sold." },
-      { key: "selloffYears", section: "scenario", type: "range", format: "years0", indent: true,
-        showWhen: function (c) { return c.selloffOn; },
-        label: "Over", help: "The number of years the selling is spread over." }
-    );
-  }
-  if (country.start.holdings.foreign) {
-    list.push(
-      { key: "selloffOn", section: "scenario", type: "check",
-        label: "Foreign selloff",
-        help: "Holders abroad sell part of their holdings." },
-      { key: "selloffShare", section: "scenario", type: "range", format: "percent0", indent: true,
-        showWhen: function (c) { return c.selloffOn; },
-        label: "Share sold", help: "The share of foreign holdings sold." },
-      { key: "selloffYears", section: "scenario", type: "range", format: "years0", indent: true,
-        showWhen: function (c) { return c.selloffOn; },
-        label: "Over", help: "The number of years the selling is spread over." }
-    );
-  }
+  // A selloff by all holders abroad. Where the data separates foreign
+  // official from foreign private holders, both sell the same share.
+  list.push(
+    { key: "selloffOn", section: "scenario", type: "check",
+      label: "Foreign selloff",
+      help: "Holders abroad sell part of their holdings." },
+    { key: "selloffShare", section: "scenario", type: "range", format: "percent0", indent: true,
+      showWhen: function (c) { return c.selloffOn; },
+      label: "Share sold", help: "The share of foreign holdings sold." },
+    { key: "selloffYears", section: "scenario", type: "range", format: "years0", indent: true,
+      showWhen: function (c) { return c.selloffOn; },
+      label: "Over", help: "The number of years the selling is spread over." },
+    { key: "selloffResponse", section: "scenario", type: "range", format: "basisPoints", indent: true,
+      showWhen: function (c) { return c.selloffOn || c.japanOn; },
+      label: "Yield rise from selling",
+      help: "Extra basis points of yield for each point of GDP of debt sold, until the central bank buys it. A sudden sale moves the yield more than slow new borrowing." }
+  );
   if (country.start.japanHoldings) {
     list.push(
       { key: "japanOn", section: "scenario", type: "check",
@@ -337,10 +328,12 @@ function modelInputs(country, c) {
 
   var selloffs = [];
   if (c.selloffOn) {
-    // The group that sells: foreign official holders where the data
-    // separates them, all foreign holders where it does not.
-    var seller = holdings.foreignOfficial !== undefined ? "foreignOfficial" : "foreign";
-    selloffs.push({ group: seller, total: c.selloffShare * holdings[seller], years: c.selloffYears });
+    // Every foreign group sells the same share of its holdings.
+    Object.keys(holdings).forEach(function (group) {
+      if (group.indexOf("foreign") === 0) {
+        selloffs.push({ group: group, total: c.selloffShare * holdings[group], years: c.selloffYears });
+      }
+    });
   }
   if (c.japanOn) {
     Object.keys(s.japanHoldings.split).forEach(function (group) {
@@ -382,7 +375,8 @@ function modelInputs(country, c) {
       foreignInflation: page.presets.controls.foreignInflation.default, // only moves the exchange rate, which no chart shows
       maturity: c.maturity,
       runoff: c.runoff,
-      selloffs: selloffs
+      selloffs: selloffs,
+      selloffResponse: c.selloffResponse
     }
   };
 }

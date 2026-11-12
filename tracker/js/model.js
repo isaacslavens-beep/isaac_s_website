@@ -63,6 +63,11 @@
 //                          Its captive and price-sensitive holdings shrink
 //                          in proportion, and the remaining price-sensitive
 //                          holders must absorb what it sold.
+//   selloffResponse        optional: extra yield for each unit of debt sold
+//                          in a selloff that the central bank has not yet
+//                          bought, on top of yieldResponse. A selloff is a
+//                          sudden supply of debt, which moves the yield
+//                          more than the same amount of slow new borrowing.
 
 function runModel(start, controls) {
   checkInputs(start, controls);
@@ -85,6 +90,7 @@ function runModel(start, controls) {
   var monetary = usesMoney(start, controls);
   var moneyTrend = monetary && isNumber(controls.moneyTrend) ? controls.moneyTrend : 0;
   var moneyShare = monetary && isNumber(controls.moneyShare) ? controls.moneyShare : 1;
+  var phi = isNumber(controls.selloffResponse) ? controls.selloffResponse : 0;
 
   // Starting holdings. The data may be off from the debt by a rounding gap
   // (the pipeline allows up to 1%), so the groups are scaled to fit exactly.
@@ -108,6 +114,7 @@ function runModel(start, controls) {
     inflation: pi0,
     purchases: 0,
     buying: 0,
+    selloffOverhang: 0,
     money: monetary ? start.money : null,
     // Money growth in the starting year is taken to be the chosen rate.
     moneyGrowth: monetary ? controls.moneyGrowth : null,
@@ -196,8 +203,10 @@ function runModel(start, controls) {
     var base = {};
     var totalCaptive = 0;
     var W = 0;
+    var soldThisYear = 0;
     groups.forEach(function (k) {
       var sold = Math.min(selloffSoFar(controls.selloffs, k, t), h0[k]);
+      soldThisYear += sold - Math.min(selloffSoFar(controls.selloffs, k, t - 1), h0[k]);
       captive[k] = Math.max((1 - w[k]) * (h0[k] * debt / d0 - sold), 0);
       base[k] = w[k] * (h0[k] - sold);
       totalCaptive += captive[k];
@@ -212,9 +221,13 @@ function runModel(start, controls) {
     var passiveCentralBank = Math.min(Math.max(lastShare * debt - q, 0), debt);
     var passiveAbsorb = debt - passiveCentralBank - totalCaptive - W;
 
+    // The selloff overhang: debt sold in selloffs that the central bank
+    // has not bought to hold its cap. Each unit of it adds phi to the yield.
+    var overhang = prev.selloffOverhang + soldThisYear;
+
     // 6. The market yield, then intervention.
     var inflationChange = inflation - pi0;
-    var marketYield = i0 + inflationChange + theta * passiveAbsorb;
+    var marketYield = i0 + inflationChange + theta * passiveAbsorb + phi * overhang;
 
     var absorb = passiveAbsorb; // M: what price-sensitive holders end up absorbing
     var yieldNow = marketYield;
@@ -222,22 +235,27 @@ function runModel(start, controls) {
     var capBroken = false;
 
     if (cap !== null && marketYield > cap) {
-      // What price-sensitive holders will absorb at the cap.
-      var wanted = (cap - i0 - inflationChange) / theta;
-      // The lowest M can go: the central bank holds the entire debt.
-      var lowest = -(W + totalCaptive);
-      if (wanted < lowest - 1e-12) {
+      // How much the central bank must buy to bring the yield down to the
+      // cap. Each unit bought lowers the yield by theta, and by phi as
+      // well while there is overhang left to buy.
+      var needed = (marketYield - cap) / (theta + phi);
+      if (needed > overhang) {
+        needed = overhang + (marketYield - (theta + phi) * overhang - cap) / theta;
+      }
+      // The most it can buy: everything it does not already hold.
+      var most = passiveAbsorb + W + totalCaptive;
+      if (needed > most + 1e-12) {
         // Even owning all the debt does not bring the yield down to the
         // cap. The central bank holds everything and the yield stays
         // above the cap.
-        absorb = lowest;
-        yieldNow = i0 + inflationChange + theta * lowest;
+        purchases = most;
         capBroken = true;
       } else {
-        absorb = Math.max(wanted, lowest);
-        yieldNow = cap;
+        purchases = Math.max(needed, 0);
       }
-      purchases = passiveAbsorb - absorb;
+      absorb = passiveAbsorb - purchases;
+      overhang = Math.max(overhang - purchases, 0);
+      yieldNow = capBroken ? i0 + inflationChange + theta * absorb + phi * overhang : cap;
     }
     var centralBank = passiveCentralBank + purchases;
 
@@ -295,6 +313,7 @@ function runModel(start, controls) {
       // The rise in holdings as a share of GDP, for whatever reason:
       // keeping its share of a growing debt, or holding the cap.
       buying: centralBank - prev.centralBank,
+      selloffOverhang: overhang,
       money: money,
       moneyGrowth: moneyGrowth,
       growth: growth,

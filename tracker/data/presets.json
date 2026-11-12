@@ -42,6 +42,10 @@
       "min": 0, "max": 1, "step": 0.05, "default": 0.25, "illustrative": true,
       "basis": "Illustrative assumption."
     },
+    "selloffResponse": {
+      "min": 0, "max": 0.5, "step": 0.01, "default": 0.15, "illustrative": true,
+      "basis": "Illustrative assumption, five times the usual yield response. To be confirmed against published estimates before publishing."
+    },
     "selloffYears": {
       "min": 1, "max": 10, "step": 1, "default": 5, "illustrative": true,
       "basis": "Illustrative assumption."

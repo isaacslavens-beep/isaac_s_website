@@ -314,6 +314,39 @@ test("central bank buying creates money, and the money raises inflation the next
   assert.ok(none.headline.purchasingPowerLoss < result.headline.purchasingPowerLoss);
 });
 
+test("a selloff adds its own premium to the yield until the central bank buys the debt", function () {
+  const group = Object.keys(start.holdings)[0];
+  const selloffs = [{ group: group, total: 0.04, years: 2 }];
+
+  // With no cap: the premium is selloffResponse x the debt sold so far.
+  const plain = run(start, controlsWith({ capMode: "off", selloffs: selloffs }));
+  const shock = run(start, controlsWith({ capMode: "off", selloffs: selloffs, selloffResponse: 0.2 }));
+  close(shock.rows[1].selloffOverhang, 0.02, 1e-12);
+  close(shock.rows[1].marketYield - plain.rows[1].marketYield, 0.2 * 0.02, 1e-12);
+  close(shock.rows[2].selloffOverhang, 0.04, 1e-12);
+  close(shock.rows[10].selloffOverhang, 0.04, 1e-12);
+
+  // With a cap a little under that yield: the central bank buys, the
+  // yield is held at the cap, and what it buys comes off the overhang.
+  const capLevel = shock.rows[1].marketYield - 0.002;
+  const capped = run(start, controlsWith({
+    capMode: "fixed", capLevel: capLevel, selloffs: selloffs, selloffResponse: 0.2
+  }));
+  const row = capped.rows[1];
+  const theta = controlsWith({}).yieldResponse;
+  close(row.purchases, 0.002 / (theta + 0.2), 1e-12);
+  close(row.yield, capLevel, 1e-12);
+  close(row.selloffOverhang, 0.02 - row.purchases, 1e-12);
+
+  // A cap far under it: the central bank buys all of the overhang, and
+  // beyond that each unit bought lowers the yield by theta alone.
+  const deep = run(start, controlsWith({
+    capMode: "fixed", capLevel: shock.rows[1].marketYield - 0.006, selloffs: selloffs, selloffResponse: 0.2
+  })).rows[1];
+  close(deep.purchases, 0.02 + (0.006 - (theta + 0.2) * 0.02) / theta, 1e-12);
+  assert.strictEqual(deep.selloffOverhang, 0);
+});
+
 test("reactive mode moves the primary balance with debt", function () {
   const controls = controlsWith({ capMode: "off", primaryBalanceMode: "reactive", gamma: 0.03 });
   const result = run(start, controls);
