@@ -313,3 +313,36 @@ series:
     frequency: annual, calendar year
     annual_rule: average of the five years after the starting year
     feeds: baseline real growth
+
+  - key: us_real_gdp
+    country: united-states
+    source: bea_gdp
+    service: fred
+    id: GDPC1
+    title: Real Gross Domestic Product
+    units: billions of chained 2017 dollars, at an annual rate, seasonally adjusted
+    frequency: quarterly
+    annual_rule: average of the four quarters of the fiscal year, then the average yearly growth since 1972
+    feeds: the default for real growth
+
+  - key: uk_real_gdp
+    country: united-kingdom
+    source: ons_gdp
+    service: fred
+    id: NGDPRSAXDCGBQ
+    title: Real Gross Domestic Product (GDP) for United Kingdom
+    units: millions of pounds at constant prices, seasonally adjusted
+    frequency: quarterly
+    annual_rule: average of the four quarters of the fiscal year, then the average yearly growth since 1972
+    feeds: the default for real growth
+
+  - key: ca_real_gdp
+    country: canada
+    source: imf_ifs_gdp
+    service: fred
+    id: NGDPRSAXDCCAQ
+    title: Real Gross Domestic Product (GDP) for Canada
+    units: millions of dollars at constant prices, seasonally adjusted
+    frequency: quarterly
+    annual_rule: average of the four quarters of the fiscal year, then the average yearly growth since 1972
+    feeds: the default for real growth

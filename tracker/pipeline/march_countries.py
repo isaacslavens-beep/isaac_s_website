@@ -12,7 +12,7 @@ which is the same for all three.
 
 import os
 
-from helpers import MANUAL, baseline_inflation, first_unbroken_year, largest_five_year_average, last_values, load, stop
+from helpers import (MANUAL, baseline_balance, baseline_growth, baseline_inflation, first_unbroken_year, largest_five_year_average, last_values, load, stop)
 from parsers import (ca_boc_debt, ca_statcan_gfs, ca_statcan_holdings, jp_boj_fof, jp_mof_debt,
                      jp_mof_general_bonds, jp_mof_maturity, jp_mof_table4, jp_mof_table20,
                      uk_dmo_gilt_holdings, uk_dmo_portfolio, uk_ons_psa6, uk_ons_tbill_holdings)
@@ -127,6 +127,7 @@ def build_japan(sources):
 
     return assemble(country, sources, {
         "prefix": "jp",
+        "growth_from_imf": True,
         "gdp_rule": "average",
         "gdp_source": "cao_gdp",
         "government": ("Central government only: government bonds, including Fiscal Investment and Loan "
@@ -309,8 +310,32 @@ def assemble(country, sources, given):
     start_year = min(max(values) for name, (values, _) in history.items() if name not in budget_series)
     start_year = min(start_year, max(given["maturity"]))
 
-    # The largest five-year average primary balance, from actual years only.
-    threshold, threshold_years = largest_five_year_average(primary_balance, min(start_year, max(primary_balance)))
+    # The largest five-year average primary balance, and the average
+    # primary balance, from actual years only.
+    last_budget_year = min(start_year, max(primary_balance))
+    threshold, threshold_years = largest_five_year_average(primary_balance, last_budget_year)
+    average_balance = baseline_balance(primary_balance, last_budget_year, fiscal)
+
+    # Real GDP by fiscal year, for average growth. Japan's quarterly series
+    # starts in 1994, so the IMF's yearly growth rates, which start in
+    # 1980, are used for Japan instead.
+    if given.get("growth_from_imf"):
+        level, real_gdp = 1.0, {}
+        for year in sorted(growth):
+            if int(year) < start_year:            # later years are projections
+                level *= 1 + growth[year] / 100
+                real_gdp[int(year)] = level
+        real_gdp[min(real_gdp) - 1] = 1.0
+        average_growth = baseline_growth(real_gdp, start_year - 1, ["imf_weo"])
+        average_growth["note"] += ". Calendar years"
+    else:
+        real_quarters = load(prefix + "_real_gdp")
+        real_gdp = {}
+        for year in range(1900, last_year + 1):
+            quarters = last_values(real_quarters, f"{year}-01-01", 4, step_months=3)
+            if quarters:
+                real_gdp[year] = sum(quarters) / 4
+        average_growth = baseline_growth(real_gdp, start_year, [gdp_source])
 
     # Budget figures are settled later than the rest. If one stops a year
     # short of the starting year, its latest value is carried into the
@@ -343,6 +368,8 @@ def assemble(country, sources, given):
     start["averageRate"] = item(average_rate[start_year], given["rate_source"], rate_note)
     start["maturity"] = item(given["maturity"][start_year], given["maturity_source"], given.get("maturity_note"))
     start["baselineInflation"] = baseline_inflation(inflation, start_year, ["bis_cpi"])
+    start["baselineGrowth"] = average_growth
+    start["baselinePrimaryBalance"] = average_balance
     start["growth"] = item(sum(growth[year] for year in growth_years) / 5 / 100, ["imf_weo"],
                            "average of IMF projections for " + growth_years[0] + " to " + growth_years[-1])
     start["stressThreshold"] = item(

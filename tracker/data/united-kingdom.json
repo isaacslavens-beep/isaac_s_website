@@ -75,6 +75,21 @@
       ],
       "note": "average inflation from 1972 to 2026, the years since the United States ended the dollar's convertibility into gold in August 1971"
     },
+    "baselineGrowth": {
+      "value": 0.020355333151570676,
+      "source": [
+        "ons_gdp"
+      ],
+      "note": "average real growth from 1972 to 2026, the years since the United States ended the dollar's convertibility into gold in August 1971"
+    },
+    "baselinePrimaryBalance": {
+      "value": -0.014799359698617941,
+      "source": [
+        "ons_psf",
+        "ons_gdp"
+      ],
+      "note": "average primary balance from 1998 to 2026. The data starts in 1998, so the average cannot start in 1972 as it does for inflation"
+    },
     "growth": {
       "value": 0.014199999999999999,
       "source": [

@@ -6,11 +6,13 @@
   "controls": {
     "growth": {
       "min": -0.01, "max": 0.04, "step": 0.001, "default": null,
-      "basis": "Country baseline: the average of the IMF's projections for the five years after the starting year."
+      "showBasis": true,
+      "basis": "The country's average real growth since 1972, as historical precedent."
     },
     "primaryBalance": {
       "min": -0.08, "max": 0.04, "step": 0.001, "default": null,
-      "basis": "The latest full-year value in the country's data."
+      "showBasis": true,
+      "basis": "The country's average primary balance since 1972, as historical precedent."
     },
     "capLevel": {
       "min": 0, "max": 0.12, "step": 0.001, "default": null,

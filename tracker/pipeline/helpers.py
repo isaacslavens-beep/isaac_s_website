@@ -87,6 +87,18 @@ def stop(message):
 BASELINE_FROM = 1972   # the first full year after the dollar's link to gold ended
 
 
+SINCE_GOLD = ("the years since the United States ended the dollar's convertibility into gold "
+              "in August 1971")
+
+
+def period_note(first_year, last_year):
+    """Says which years an average covers, and why."""
+    if first_year == BASELINE_FROM:
+        return f"from {BASELINE_FROM} to {last_year}, {SINCE_GOLD}"
+    return (f"from {first_year} to {last_year}. The data starts in {first_year}, so the average cannot "
+            f"start in {BASELINE_FROM} as it does for inflation")
+
+
 def baseline_inflation(inflation, last_year, source):
     """Average inflation from 1972 to the starting year, as the item
     written to the data file. The United States ended the dollar's
@@ -102,8 +114,36 @@ def baseline_inflation(inflation, last_year, source):
     return {
         "value": level ** (1 / years) - 1,
         "source": source,
-        "note": f"average inflation from {BASELINE_FROM} to {last_year}, the years since the United States "
-                "ended the dollar's convertibility into gold in August 1971",
+        "note": "average inflation " + period_note(BASELINE_FROM, last_year),
+    }
+
+
+def baseline_growth(levels, last_year, source):
+    """Average yearly real growth since 1972, or since the data starts,
+    as the item written to the data file. `levels` holds real GDP by
+    year. The average is compounded."""
+    first_year = max(BASELINE_FROM, first_unbroken_year(levels, last_year) + 1)
+    years = last_year - first_year + 1
+    if years < 10:
+        stop(f"fewer than ten years of real GDP before {last_year}")
+    return {
+        "value": (levels[last_year] / levels[first_year - 1]) ** (1 / years) - 1,
+        "source": source,
+        "note": "average real growth " + period_note(first_year, last_year),
+    }
+
+
+def baseline_balance(balances, last_year, source):
+    """The average primary balance since 1972, or since the data starts,
+    as the item written to the data file."""
+    first_year = max(BASELINE_FROM, first_unbroken_year(balances, last_year))
+    years = range(first_year, last_year + 1)
+    if len(years) < 10:
+        stop(f"fewer than ten years of primary balance before {last_year}")
+    return {
+        "value": sum(balances[year] for year in years) / len(years),
+        "source": source,
+        "note": "average primary balance " + period_note(first_year, last_year),
     }
 
 

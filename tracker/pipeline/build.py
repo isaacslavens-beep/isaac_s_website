@@ -17,7 +17,8 @@ import sys
 import yaml
 
 import march_countries
-from helpers import (CACHE, DATA, HERE, MANUAL, baseline_inflation, by_year, first_unbroken_year, largest_five_year_average,
+from helpers import (CACHE, DATA, HERE, MANUAL, baseline_balance, baseline_growth, baseline_inflation, by_year,
+                     first_unbroken_year, largest_five_year_average,
                      last_on_or_before, last_values, load, quarter_start, stop, write_json)
 from parsers import us_fed_f32s, us_tic_history, us_tic_table5
 
@@ -87,12 +88,17 @@ def build_united_states(sources):
         if year >= 2015:
             interest[year] = value / 1e6   # dollars to millions
 
+    real_quarters = load("us_real_gdp")
     gdp = {}       # billions of dollars
+    real_gdp = {}  # billions of chained dollars
     cpi = {}       # average index level over the fiscal year
     for year, end in year_end.items():
         quarters = last_values(gdp_quarters, quarter_start(end), 4, step_months=3)
         if quarters:
             gdp[year] = sum(quarters) / 4
+        quarters = last_values(real_quarters, quarter_start(end), 4, step_months=3)
+        if quarters:
+            real_gdp[year] = sum(quarters) / 4
         # The October 2025 index was never published, so a fiscal year may
         # be averaged over eleven months instead of twelve.
         months = last_values(cpi_months, end[:8] + "01", 12, step_months=1, may_miss=1)
@@ -145,7 +151,7 @@ def build_united_states(sources):
     for year in growth_years:
         if year not in growth:
             stop(f"us_growth_baseline has no projection for {year}")
-    baseline_growth = sum(growth[year] for year in growth_years) / 5 / 100
+    projected_growth = sum(growth[year] for year in growth_years) / 5 / 100
 
     threshold, threshold_years = largest_five_year_average(primary_balance, start_year)
 
@@ -155,8 +161,11 @@ def build_united_states(sources):
             start[name] = {"value": values[start_year], "source": source}
     start["maturity"] = {"value": maturity[start_end], "source": ["us_treasury_mspd"]}
     start["baselineInflation"] = baseline_inflation(inflation, start_year, ["bls_cpi"])
+    start["baselineGrowth"] = baseline_growth(real_gdp, start_year, ["bea_gdp"])
+    start["baselinePrimaryBalance"] = baseline_balance(
+        primary_balance, start_year, ["omb_budget", "us_treasury_mts", "bea_gdp"])
     start["growth"] = {
-        "value": baseline_growth,
+        "value": projected_growth,
         "source": ["imf_weo"],
         "note": "average of IMF projections for " + growth_years[0] + " to " + growth_years[-1],
     }
@@ -407,8 +416,9 @@ def validate(country, sources):
         for offset, value in enumerate(series["values"]):
             check_value(f"history.{name} {series['firstYear'] + offset}", value)
 
-    if "baselineInflation" not in start:
-        problems.append("start.baselineInflation is missing")
+    for name in ("baselineInflation", "baselineGrowth", "baselinePrimaryBalance"):
+        if name not in start:
+            problems.append(f"start.{name} is missing")
     if not (start["maturity"]["value"] >= 1):
         problems.append("start.maturity must be at least 1 year")
 

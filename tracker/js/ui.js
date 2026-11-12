@@ -168,8 +168,13 @@ function presetFor(control, country) {
   }
   var preset = Object.assign({}, page.presets.controls[control.preset || control.key] || {});
   var start = country.start;
-  if (control.key === "growth") preset.default = start.growth.value;
-  if (control.key === "primaryBalance") preset.default = start.primaryBalance.value;
+  // Growth, the primary balance and baseline inflation all start at the
+  // country's historical average. The data file says which years.
+  var averages = { growth: "baselineGrowth", primaryBalance: "baselinePrimaryBalance" };
+  if (averages[control.key]) {
+    preset.default = start[averages[control.key]].value;
+    preset.basis = "Default: " + start[averages[control.key]].note + ".";
+  }
   if (control.key === "capLevel") preset.default = start.yield.value;
   if (control.key === "maturity") preset.default = start.maturity.value;
   if (control.key === "passThrough") {
