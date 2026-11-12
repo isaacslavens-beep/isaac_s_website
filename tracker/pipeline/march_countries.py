@@ -392,9 +392,19 @@ def assemble(country, sources, given):
     start["baselinePrimaryBalance"] = average_balance
     start["growth"] = item(sum(growth[year] for year in growth_years) / 5 / 100, ["imf_weo"],
                            "average of IMF projections for " + growth_years[0] + " to " + growth_years[-1])
-    start["stressThreshold"] = item(
-        threshold, balance_source,
-        f"largest five-year average primary balance, years to March {threshold_years[0]} to {threshold_years[1]}")
+    if threshold > 0:
+        start["stressThreshold"] = item(
+            threshold, balance_source,
+            f"largest five-year average primary balance, years to March {threshold_years[0]} to {threshold_years[1]}")
+    else:
+        # A country that has never averaged a surplus over five years has
+        # nothing to compare against. Its fiscal stress comes from the
+        # interest test alone (Isaac, 2026-11-12, for Japan).
+        first = first_unbroken_year(primary_balance, last_budget_year)
+        start["stressThreshold"] = item(
+            None, balance_source,
+            f"not used: the primary balance never averaged a surplus over five years from {first} to "
+            f"{last_budget_year}, so fiscal stress comes from the interest test alone")
     holders_source = given["holders_source"] + given["debt_source"] + [gdp_source]
     # The money supply: M2 in March, the last month of each fiscal year.
     # The United Kingdom has no M2 series among those fetched.

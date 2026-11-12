@@ -365,6 +365,17 @@ test("the central bank stops buying at its limit, and the cap then fails", funct
   assert.ok(free.rows[1].centralBank > first.centralBank);
 });
 
+test("with no stress threshold, only the interest test can cause fiscal stress", function () {
+  const japanLike = Object.assign({}, start, { stressThreshold: null });
+  const none = run(japanLike, controlsWith({}));
+  none.rows.forEach(function (row) { assert.strictEqual(row.stress, false); });
+
+  const first = none.rows[1].interestToRevenue;
+  const some = run(japanLike, controlsWith({ stressInterestShare: first - 0.01 }));
+  assert.strictEqual(some.rows[1].stressFromBalance, false);
+  assert.strictEqual(some.rows[1].stress, true);
+});
+
 test("reactive mode moves the primary balance with debt", function () {
   const controls = controlsWith({ capMode: "off", primaryBalanceMode: "reactive", gamma: 0.03 });
   const result = run(start, controls);

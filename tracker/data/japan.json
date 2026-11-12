@@ -101,12 +101,12 @@
       "note": "average of IMF projections for 2027 to 2031"
     },
     "stressThreshold": {
-      "value": -0.00845488750634076,
+      "value": null,
       "source": [
         "mof_general_account",
         "cao_gdp"
       ],
-      "note": "largest five-year average primary balance, years to March 1995 to 1999"
+      "note": "not used: the primary balance never averaged a surplus over five years from 1995 to 2025, so fiscal stress comes from the interest test alone"
     },
     "money": {
       "value": 1.9020895720303406,

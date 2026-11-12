@@ -20,7 +20,9 @@
 //   inflation         pi   inflation
 //   revenue           tau  government revenue
 //   stressThreshold        the largest five-year average primary balance in
-//                          the country's history
+//                          the country's history. Left out (null) for a
+//                          country with no surplus to compare against:
+//                          the balance test is then not used.
 //   money                  optional: the money supply (M2)
 //
 // Inflation is worked out in one of two ways. When start.money and
@@ -187,7 +189,7 @@ function runModel(start, controls) {
     // Fiscal stress, for either of two reasons: the balance needed to hold
     // debt steady is more than the country has ever sustained, or interest
     // takes more of the government's revenue than the chosen share.
-    var stressFromBalance = stabilizingBalance > start.stressThreshold;
+    var stressFromBalance = isNumber(start.stressThreshold) && stabilizingBalance > start.stressThreshold;
     var stressFromInterest = isNumber(controls.stressInterestShare) &&
       interestToRevenue > controls.stressInterestShare;
     var stress = stressFromBalance || stressFromInterest;
@@ -441,7 +443,7 @@ function usesMoney(start, controls) {
 // Stops with a clear message if an input is missing or not a number.
 function checkInputs(start, controls) {
   var startNumbers = ["year", "debt", "centralBank", "yield", "averageRate",
-    "inflation", "revenue", "stressThreshold"];
+    "inflation", "revenue"];
   var controlNumbers = ["years", "yieldResponse", "persistence", "foreignInflation", "maturity", "runoff"];
   if (usesMoney(start, controls)) {
     if (!(start.money > 0)) throw new Error("start.money must be above zero");

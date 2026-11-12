@@ -62,7 +62,7 @@ function controlList(country) {
   var list = [
     { key: "primaryBalance", section: "main", type: "range", format: "percent1", key_control: true,
       label: "Primary balance",
-      help: "The budget balance before interest, as a share of GDP. Negative is a deficit. This is the setting that matters most: it decides how fast the debt grows." },
+      help: "The budget balance before interest, as a share of GDP." },
     // Not shown as a slider: the money supply reacts to what the central
     // bank buys, so its starting rate is fixed at the country's past average.
     { key: "moneyGrowth", section: "main", type: "range", format: "percent1", fixed: true,

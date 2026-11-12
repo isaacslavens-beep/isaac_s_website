@@ -17,6 +17,7 @@ import sys
 import yaml
 
 import march_countries
+import sources_doc
 from helpers import (CACHE, DATA, HERE, MANUAL, baseline_balance, baseline_growth, baseline_inflation, by_year,
                      first_unbroken_year, largest_five_year_average,
                      last_on_or_before, last_values, load, quarter_start, stop, write_json, money_supply)
@@ -51,6 +52,9 @@ def main():
                 print("  - " + item)
     write_json(os.path.join(DATA, "meta.json"), build_meta(series_list, sources, countries))
     write_json(os.path.join(DATA, "estimates.json"), {"moneyShare": estimate_money_share(countries)})
+
+    # Isaac's private reference, written beside the data and never committed.
+    sources_doc.main()
 
     to_confirm = [key for key, entry in sources.items() if "to confirm" in json.dumps(entry)]
     if to_confirm:
@@ -410,7 +414,8 @@ def validate(country, sources):
     items.pop("start.holdings", None)
     for label, item in items.items():
         check_sources(label, item.get("source"))
-        if label != "start.maturity":
+        # A stress threshold of None means the balance test is not used.
+        if label != "start.maturity" and not (label == "start.stressThreshold" and item["value"] is None):
             check_value(label, item["value"])
 
     for name, series in country["history"].items():
