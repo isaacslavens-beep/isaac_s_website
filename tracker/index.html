@@ -22,7 +22,11 @@
     <!-- Main area: header strip, chart, key and source -->
     <main class="main">
       <div class="strip">
-        <h1 id="chart-title">Sovereign Debt Simulator</h1>
+        <!-- The country's flag and name. Flag images are from Wikimedia Commons. -->
+        <h1>
+          <img id="flag" class="flag" alt="" hidden>
+          <span id="chart-title">Sovereign Debt Simulator</span>
+        </h1>
         <p class="meta" id="chart-meta"></p>
 
         <!-- The central figure: how fast money loses its purchasing power -->
@@ -30,7 +34,6 @@
           <h2 class="hero-title">Currency Debasement</h2>
           <p class="hero-number" id="hero-number"></p>
           <p class="hero-label" id="hero-period"></p>
-          <p class="hero-line" id="hero-line"></p>
           <details id="how">
             <summary>How this figure is calculated</summary>
             <div id="how-body"></div>

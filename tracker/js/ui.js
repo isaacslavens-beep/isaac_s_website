@@ -7,9 +7,11 @@
 var COUNTRIES = [
   { key: "united-states", code: "us", name: "United States" },
   { key: "japan", code: "jp", name: "Japan" },
-  { key: "united-kingdom", code: "uk", name: "United Kingdom" },
   { key: "canada", code: "ca", name: "Canada" }
 ];
+// The United Kingdom is left out for now. Its data file is still built;
+// to show it again, add this line back to the list above:
+//   { key: "united-kingdom", code: "uk", name: "United Kingdom" },
 
 var GROUP_LABELS = {
   domesticPrivate: "Domestic private",
@@ -478,6 +480,10 @@ function fillText() {
   var lastYear = page.result.rows[page.result.rows.length - 1].year;
 
   document.getElementById("chart-title").textContent = country.name;
+  var flag = document.getElementById("flag");
+  flag.src = "img/flag-" + country.country + ".png";
+  flag.alt = "Flag of " + (country.country === "united-states" ? "the " : "") + country.name;
+  flag.hidden = false;
   document.getElementById("chart-meta").textContent =
     "Starting year " + country.start.year +
     " · Data updated " + page.meta.lastSuccessfulRun +
@@ -546,7 +552,8 @@ function fillHero() {
   var loss = page.result.headline.purchasingPowerLoss;
 
   document.getElementById("hero-period").textContent =
-    "Loss of purchasing power, " + startYear + " to " + last.year;
+    "Projected loss of purchasing power, " + startYear + " to " + last.year +
+    ", based on the settings on this page. Move a slider and it changes.";
   // The same loss as a steady yearly rate: losing this much every year
   // for the whole period adds up to the total.
   var lossPerYear = annualLoss(loss, years);
@@ -555,12 +562,8 @@ function fillHero() {
   var total = document.createElement("span");
   total.className = "hero-total";
   total.textContent = FORMATS.percent0(loss) + " in total";
-  number.textContent = FORMATS.percent1(lossPerYear) + " a year ";
+  number.textContent = FORMATS.percent1(lossPerYear) + " annually ";
   number.append(total);
-  document.getElementById("hero-line").textContent =
-    "What costs 100 in " + startYear + " costs " + (last.priceLevel * 100).toFixed(0) + " in " + last.year +
-    ". Money that buys 100 today buys " + (100 / last.priceLevel).toFixed(0) + " then.";
-
   var without = pricesWithoutPurchases(country, c);
   var lossWithout = 1 - 1 / without[years];
   var averageInflation = Math.pow(last.priceLevel, 1 / years) - 1;
@@ -573,7 +576,7 @@ function fillHero() {
     "1. Currency debasement is the loss of purchasing power: 1 − 1 ÷ price level. The price level in " + last.year + " is " +
       last.priceLevel.toFixed(2) + " times its " + startYear + " level, so the loss is 1 − 1 ÷ " +
       last.priceLevel.toFixed(2) + " = " + FORMATS.percent0(loss) + ". As a steady yearly rate that is " +
-      FORMATS.percent1(lossPerYear) + " a year: 1 − (1 − " + FORMATS.percent0(loss) + ") ^ (1 ÷ " + years + ").",
+      FORMATS.percent1(lossPerYear) + " annually: 1 − (1 − " + FORMATS.percent0(loss) + ") ^ (1 ÷ " + years + ").",
     "2. The price level is each year's inflation compounded. Inflation averages " +
       FORMATS.percent1(averageInflation) + " a year over the " + years + " years.",
     "3. Inflation in a year = baseline inflation (" + FORMATS.percent1(c.baselineInflation) +
