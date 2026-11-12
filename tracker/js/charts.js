@@ -14,8 +14,6 @@
 //   stacked     true to stack the series as filled areas
 //   zones       a list of { year, type }, type "stress" or "dominance"
 //   xMin, xMax  the first and last year shown
-//   endLabels   true to write each line's name and last value at its end,
-//               so the lines can be told apart without their colors
 //   rightLabel, leftLabel   axis titles
 
 function drawChart(container, chart) {
@@ -173,55 +171,9 @@ function drawChart(container, chart) {
     ctx.restore();
   }
 
-  // Each line's name and last value, written at the line's end.
-  function drawEndLabels(u) {
-    var ctx = u.ctx;
-    var ratio = devicePixelRatio || 1;
-    var labels = [];
-    chart.series.forEach(function (s) {
-      var last = null;
-      var lastYear = null;
-      for (var i = 0; i < chart.years.length; i++) {
-        if (chart.years[i] <= chart.xMax && s.values[i] !== null) {
-          last = s.values[i];
-          lastYear = chart.years[i];
-        }
-      }
-      if (last === null) return;
-      labels.push({
-        text: s.label + " " + last.toFixed(s.decimals) + (s.unit || ""),
-        color: color("--line-" + s.color),
-        x: u.valToPos(lastYear, "x", true),
-        y: u.valToPos(last, "right", true) - 9 * ratio
-      });
-    });
-    // Labels that would overlap are moved apart, keeping their order.
-    labels.sort(function (a, b) { return a.y - b.y; });
-    var gap = 15 * ratio;
-    for (var n = 1; n < labels.length; n++) {
-      if (labels[n].y - labels[n - 1].y < gap) labels[n].y = labels[n - 1].y + gap;
-    }
-    var bottom = u.bbox.top + u.bbox.height - 6 * ratio;
-    var overflow = labels.length ? labels[labels.length - 1].y - bottom : 0;
-    ctx.save();
-    ctx.font = "600 " + 12 * ratio + "px system-ui, sans-serif";
-    ctx.textAlign = "right";
-    ctx.textBaseline = "middle";
-    ctx.lineJoin = "round";
-    labels.forEach(function (label) {
-      var y = Math.max(u.bbox.top + 8 * ratio, label.y - Math.max(0, overflow));
-      ctx.lineWidth = 4 * ratio;
-      ctx.strokeStyle = color("--bg"); // a halo so the text stays readable over lines
-      ctx.strokeText(label.text, label.x - 6 * ratio, y);
-      ctx.fillStyle = label.color;
-      ctx.fillText(label.text, label.x - 6 * ratio, y);
-    });
-    ctx.restore();
-  }
-
   var options = {
     width: container.clientWidth,
-    height: Math.max(300, Math.min(520, Math.round(window.innerHeight * 0.55))),
+    height: Math.max(300, Math.min(440, Math.round(window.innerHeight * 0.5))),
     scales: {
       x: { time: false, range: [chart.xMin, chart.xMax] },
       right: { range: chart.stacked ? [0, 100] : undefined },
@@ -238,8 +190,7 @@ function drawChart(container, chart) {
           drawProjectionVeil(u);
           drawZones(u);
         }
-        if (chart.endLabels) drawEndLabels(u);
-        else drawLastValueTag(u);
+        drawLastValueTag(u);
       }]
     }
   };

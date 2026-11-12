@@ -27,10 +27,8 @@ var page = {
   data: {},        // country key -> its data file
   controls: {},    // country key -> that country's current control values
   country: null,   // the country being shown
-  chart: "purchasing-power",
-  compare: false,  // true while the chart overlays all the countries
   range: 30,
-  plot: null,      // the uPlot object on screen
+  plots: [],       // the uPlot objects on screen, one per chart
   result: null     // the latest model result
 };
 
@@ -373,14 +371,10 @@ function historyValue(country, name, year) {
   return index >= 0 && index < series.values.length ? series.values[index] : null;
 }
 
-function shareOfDebt(amount, debt) {
-  return amount === null || debt === null || debt <= 0 ? null : amount / debt * 100;
-}
-
-// The charts. Each line says where its history comes from (`history`, a
-// function of the year), where its projection comes from (`projection`, a
-// function of the model's row for that year), and which data series its
-// source line should name.
+// The two charts, shown side by side. Each line says where its history
+// comes from (`history`, a function of the year), where its projection
+// comes from (`projection`, a function of the model's row for that year),
+// and which data series its source line should name.
 function chartList(country) {
   function history(name, scale) {
     return function (year) {
@@ -388,39 +382,8 @@ function chartList(country) {
       return v === null ? null : v * scale;
     };
   }
-  function debtShareHistory(name) {
-    return function (year) {
-      return shareOfDebt(historyValue(country, name, year), historyValue(country, "debt", year));
-    };
-  }
-  var none = function () { return null; };
-
-  // Purchasing power of money, with the starting year at 100. History is
-  // worked backward from past inflation.
-  function purchasingPowerHistory(year) {
-    var level = 100;
-    for (var y = country.start.year; y > year; y--) {
-      var inflation = historyValue(country, "inflation", y);
-      if (inflation === null) return null;
-      level *= 1 + inflation;
-    }
-    return level;
-  }
-  var withoutPurchases = pricesWithoutPurchases(country, page.controls[country.country]);
 
   return [
-    { key: "purchasing-power", title: "Purchasing power", units: "Index, starting year = 100",
-      rightLabel: "Index, starting year = 100",
-      sources: ["inflation"],
-      series: [
-        { label: "Purchasing power of money", color: 1, decimals: 1,
-          history: purchasingPowerHistory,
-          projection: function (row) { return 100 / row.priceLevel; } },
-        { label: "If central bank holdings stayed level", color: 2, decimals: 1,
-          history: none,
-          projection: function (row) { return 100 / withoutPurchases[row.year - country.start.year]; } }
-      ] },
-
     { key: "debt", title: "Debt", units: "Percent of GDP",
       rightLabel: "Percent of GDP", rightUnit: "%",
       sources: ["debt"],
@@ -441,20 +404,6 @@ function chartList(country) {
         { label: "Interest as a share of revenue (left axis)", color: 3, unit: "%", decimals: 1, axis: "left",
           history: history("interestToRevenue", 100),
           projection: function (row) { return row.interestToRevenue === null ? null : row.interestToRevenue * 100; } }
-      ] },
-
-    { key: "central-bank", title: "Central bank", units: "Percent of the debt",
-      rightLabel: "Percent of the debt", rightUnit: "%",
-      leftLabel: "Percent of GDP", leftUnit: "%", leftDecimals: 1,
-      sources: ["centralBank", "debt"],
-      series: [
-        { label: "Central bank holdings, share of the debt", color: 1, unit: "%", decimals: 1,
-          history: debtShareHistory("centralBank"),
-          projection: function (row) { return shareOfDebt(row.centralBank, row.debt); } },
-        { label: "Rise in holdings in the year, share of GDP (left axis)", color: 2, unit: "%", decimals: 2, axis: "left",
-          history: none, projection: function (row) { return row.buying * 100; } },
-        { label: "Central bank holdings, share of GDP (left axis)", color: 3, unit: "%", decimals: 1, axis: "left",
-          history: history("centralBank", 100), projection: function (row) { return row.centralBank * 100; } }
       ] }
   ];
 }
@@ -471,15 +420,10 @@ function pricesWithoutPurchases(country, c) {
   return levels;
 }
 
-function currentChart() {
-  var list = chartList(page.data[page.country]);
-  return list.filter(function (chart) { return chart.key === page.chart; })[0] || list[0];
-}
-
-// The years and values of the current chart, ready to plot or download.
-function chartTable(definition, country, rows) {
-  country = country || page.data[page.country];
-  rows = rows || page.result.rows;
+// The years and values of one chart, ready to plot or download.
+function chartTable(definition) {
+  var country = page.data[page.country];
+  var rows = page.result.rows;
   var startYear = country.start.year;
 
   // History starts at the first year any line has data.
@@ -505,74 +449,8 @@ function chartTable(definition, country, rows) {
   return { years: years, startIndex: startIndex, series: series };
 }
 
-// ---------------------------------------------------------------- compare view
-
-// Runs the model for one country with that country's own control values.
-function resultFor(key) {
-  var inputs = modelInputs(page.data[key], page.controls[key]);
-  return runModel(inputs.start, inputs.controls);
-}
-
-// The countries that have data, in the order of the tabs.
-function loadedCountries() {
-  return COUNTRIES.map(function (c) { return c.key; }).filter(function (key) { return page.data[key]; });
-}
-
-// The first line of the current chart for every country, on one set of
-// years. Each country keeps its own control values.
-function compareTable() {
-  var tables = loadedCountries().map(function (key) {
-    var country = page.data[key];
-    var definition = chartList(country).filter(function (chart) { return chart.key === page.chart; })[0];
-    var result = resultFor(key);
-    var one = Object.assign({}, definition, { series: [definition.series[0]] });
-    return { country: country, definition: definition, result: result, table: chartTable(one, country, result.rows) };
-  });
-
-  var firstYear = Math.min.apply(null, tables.map(function (t) { return t.table.years[0]; }));
-  var lastYear = Math.max.apply(null, tables.map(function (t) { return t.table.years[t.table.years.length - 1]; }));
-  var startYear = Math.min.apply(null, tables.map(function (t) { return t.country.start.year; }));
-  var years = [];
-  for (var y = firstYear; y <= lastYear; y++) years.push(y);
-
-  var series = tables.map(function (t, n) {
-    var line = t.table.series[0];
-    var offset = t.table.years[0] - firstYear;
-    return Object.assign({}, line, {
-      label: t.country.name,
-      color: n + 1,
-      axis: "right",
-      values: years.map(function (year, i) {
-        var v = line.values[i - offset];
-        return v === undefined ? null : v;
-      })
-    });
-  });
-  return { years: years, startIndex: startYear - firstYear, series: series, tables: tables };
-}
-
+// Draws both charts, each in its own box.
 function draw() {
-  var definition = currentChart();
-  var container = document.getElementById("chart");
-  if (page.plot) page.plot.destroy();
-
-  if (page.compare) {
-    var compared = compareTable();
-    var first = definition.series[0];
-    page.plot = drawChart(container, {
-      years: compared.years, startIndex: compared.startIndex, series: compared.series,
-      zones: [], endLabels: true,
-      rightLabel: first.axis === "left" ? definition.leftLabel : definition.rightLabel,
-      rightUnit: first.unit || "", rightDecimals: definition.rightDecimals,
-      xMin: Math.max(compared.years[0], compared.years[compared.startIndex] - page.range / 2),
-      xMax: compared.years[compared.startIndex] + page.range
-    });
-    return;
-  }
-
-  var table = chartTable(definition);
-  var startYear = table.years[table.startIndex];
-
   var zones = [];
   page.result.rows.forEach(function (row, t) {
     if (t === 0) return;
@@ -580,44 +458,32 @@ function draw() {
     else if (row.stress) zones.push({ year: row.year, type: "stress" });
   });
 
-  page.plot = drawChart(container, Object.assign({}, definition, table, {
-    zones: zones,
-    xMin: Math.max(table.years[0], startYear - page.range / 2),
-    xMax: startYear + page.range
-  }));
+  page.plots.forEach(function (plot) { plot.destroy(); });
+  page.plots = chartList(page.data[page.country]).map(function (definition) {
+    var table = chartTable(definition);
+    var startYear = table.years[table.startIndex];
+    return drawChart(document.getElementById("chart-" + definition.key), Object.assign({}, definition, table, {
+      zones: zones,
+      xMin: Math.max(table.years[0], startYear - page.range / 2),
+      xMax: startYear + page.range
+    }));
+  });
 }
 
 // ---------------------------------------------------------------- the text around the chart
 
 function fillText() {
   var country = page.data[page.country];
-  var definition = currentChart();
-  var table = chartTable(definition);
-  var first = table.series[0];
-  var startValue = first.values[table.startIndex];
   var h = page.result.headline;
   var lastYear = page.result.rows[page.result.rows.length - 1].year;
-  var years = page.result.rows.length - 1;
 
-  document.getElementById("chart-title").textContent =
-    (page.compare ? "All countries: " + first.label : country.name + ": " + definition.title);
+  document.getElementById("chart-title").textContent = country.name;
   document.getElementById("chart-meta").textContent =
-    (page.compare
-      ? "Each country uses its own control values. The controls shown are for " + country.name + "; " +
-        "choose another country above to change its controls"
-      : first.label + " in " + country.start.year + ": " +
-        (startValue === null ? "no data" : startValue.toFixed(first.decimals) + (first.unit || ""))) +
+    "Starting year " + country.start.year +
     " · Data updated " + page.meta.lastSuccessfulRun +
-    " · Units: " + (first.axis === "left" && page.compare ? definition.leftLabel : definition.units) +
     " · Frequency: annual";
 
-  // In the compare view the central figure is a table of all countries,
-  // and the zones and single-country figures are hidden.
-  document.getElementById("hero-single").hidden = page.compare;
-  document.getElementById("compare-table").hidden = !page.compare;
-  document.getElementById("headline").hidden = page.compare;
-  document.querySelectorAll(".zone-only").forEach(function (element) { element.hidden = page.compare; });
-  if (page.compare) fillCompare(); else fillHero();
+  fillHero();
 
   var figures = [
     ["Real return to the lender, per year", FORMATS.percent1(h.annualRealReturn)],
@@ -639,60 +505,29 @@ function fillText() {
   });
 
   var warning = document.getElementById("warning");
-  warning.hidden = page.compare || h.firstCapBrokenYear === null;
+  warning.hidden = h.firstCapBrokenYear === null;
   if (h.firstCapBrokenYear !== null) {
     warning.textContent = "The cap cannot be held. From " + h.firstCapBrokenYear +
       " the central bank holds all of the debt and the yield rises above the cap.";
   }
 
-  // The source line names the publisher and series behind the history.
-  // In the compare view it names the sources of every country's line.
+  // The source line names the publisher and series behind the history of
+  // both charts.
   var labels = [];
-  (page.compare ? loadedCountries() : [page.country]).forEach(function (key) {
-    var names = page.compare ? definition.sources.slice(0, 1) : definition.sources;
-    names.forEach(function (name) {
-      var series = page.data[key].history[name];
-      (series ? series.source : []).forEach(function (source) {
+  chartList(country).forEach(function (definition) {
+    definition.sources.forEach(function (name) {
+      (country.history[name] ? country.history[name].source : []).forEach(function (source) {
         var label = page.meta.sources[source].label;
         if (labels.indexOf(label) === -1) labels.push(label);
       });
     });
   });
   document.getElementById("source-line").textContent =
-    (labels.length ? "Sources: " + labels.join("; ") + ". " : "") + "Projection: this tool's model.";
+    "Sources: " + labels.join("; ") + ". Projection: this tool's model.";
   document.getElementById("coverage-line").textContent =
-    (page.compare ? country.name + ": " : "") +
     country.governmentCovered + " " + country.yearBasis + " " +
     (country.notes || []).join(" ") +
     " Defaults marked illustrative are starting values, not estimates.";
-}
-
-// The compare view's table: the main figures for every country.
-function fillCompare() {
-  var compared = compareTable();
-  var table = document.getElementById("compare-table");
-  table.textContent = "";
-  var lastYear = compared.tables[0].result.rows[compared.tables[0].result.rows.length - 1].year;
-
-  var head = table.insertRow();
-  ["Country", "Loss of purchasing power to " + lastYear, "Loss per year", "Real return per year",
-    "Debt in " + lastYear + ", share of GDP", "First year of fiscal stress",
-    "First year of fiscal dominance"].forEach(function (text) {
-    var cell = document.createElement("th");
-    cell.textContent = text;
-    head.append(cell);
-  });
-  compared.tables.forEach(function (t) {
-    var h = t.result.headline;
-    var line = table.insertRow();
-    [t.country.name, FORMATS.percent0(h.purchasingPowerLoss),
-      FORMATS.percent1(annualLoss(h.purchasingPowerLoss, t.result.rows.length - 1)),
-      FORMATS.percent1(h.annualRealReturn),
-      FORMATS.percent0(h.finalDebt), h.firstStressYear || "not reached",
-      h.firstDominanceYear || "not reached"].forEach(function (text) {
-      line.insertCell().textContent = text;
-    });
-  });
 }
 
 // A total loss of purchasing power as a steady yearly rate.
@@ -710,17 +545,18 @@ function fillHero() {
   var startYear = country.start.year;
   var loss = page.result.headline.purchasingPowerLoss;
 
-  document.getElementById("hero-label").textContent =
+  document.getElementById("hero-period").textContent =
     "Loss of purchasing power, " + startYear + " to " + last.year;
   // The same loss as a steady yearly rate: losing this much every year
   // for the whole period adds up to the total.
   var lossPerYear = annualLoss(loss, years);
+  // The yearly rate is the large figure. The total follows it, smaller.
   var number = document.getElementById("hero-number");
-  var perYear = document.createElement("span");
-  perYear.className = "hero-per-year";
-  perYear.textContent = FORMATS.percent1(lossPerYear) + " a year";
-  number.textContent = FORMATS.percent0(loss) + " ";
-  number.append(perYear);
+  var total = document.createElement("span");
+  total.className = "hero-total";
+  total.textContent = FORMATS.percent0(loss) + " in total";
+  number.textContent = FORMATS.percent1(lossPerYear) + " a year ";
+  number.append(total);
   document.getElementById("hero-line").textContent =
     "What costs 100 in " + startYear + " costs " + (last.priceLevel * 100).toFixed(0) + " in " + last.year +
     ". Money that buys 100 today buys " + (100 / last.priceLevel).toFixed(0) + " then.";
@@ -734,7 +570,7 @@ function fillHero() {
   var totalRise = last.centralBank - rows[0].centralBank;
 
   var steps = [
-    "1. Loss of purchasing power = 1 − 1 ÷ price level. The price level in " + last.year + " is " +
+    "1. Currency debasement is the loss of purchasing power: 1 − 1 ÷ price level. The price level in " + last.year + " is " +
       last.priceLevel.toFixed(2) + " times its " + startYear + " level, so the loss is 1 − 1 ÷ " +
       last.priceLevel.toFixed(2) + " = " + FORMATS.percent0(loss) + ". As a steady yearly rate that is " +
       FORMATS.percent1(lossPerYear) + " a year: 1 − (1 − " + FORMATS.percent0(loss) + ") ^ (1 ÷ " + years + ").",
@@ -790,41 +626,54 @@ function fillHero() {
 
 // ---------------------------------------------------------------- download
 
+// One file with every line of both charts.
 function downloadCsv() {
   var country = page.data[page.country];
-  var definition = currentChart();
-  var table = page.compare ? compareTable() : chartTable(definition);
   var values = page.controls[page.country];
+  var tables = chartList(country).map(chartTable);
 
   function cell(text) {
     text = String(text);
     return /[",\n]/.test(text) ? '"' + text.replace(/"/g, '""') + '"' : text;
   }
 
+  // The two charts can start their history in different years.
+  var startYear = country.start.year;
+  var firstYear = Math.min.apply(null, tables.map(function (table) { return table.years[0]; }));
+  var lastYear = tables[0].years[tables[0].years.length - 1];
+
   var lines = [
     "# Sovereign debt simulator. A scenario tool, not a forecast and not financial advice.",
-    "# " + (page.compare ? "All countries: " + definition.series[0].label : country.name + ": " + definition.title),
+    "# " + country.name,
     "# Control values that produced these series:"
   ];
-  (page.compare ? loadedCountries() : [page.country]).forEach(function (key) {
-    Object.keys(page.controls[key]).forEach(function (name) {
-      lines.push("# " + (page.compare ? page.data[key].name + "," : "") + name + "," + page.controls[key][name]);
+  Object.keys(values).forEach(function (key) {
+    lines.push("# " + key + "," + values[key]);
+  });
+
+  var header = ["year", "history or projection"];
+  tables.forEach(function (table) {
+    table.series.forEach(function (s) {
+      header.push(s.label.replace(" (left axis)", "") + (s.unit === "%" ? " (%)" : ""));
     });
   });
-  lines.push(["year", "history or projection"].concat(table.series.map(function (s) {
-    return s.label + (s.unit === "%" ? " (%)" : "");
-  })).map(cell).join(","));
-  table.years.forEach(function (year, i) {
-    var row = [year, i <= table.startIndex ? "history" : "projection"];
-    table.series.forEach(function (s) {
-      row.push(s.values[i] === null ? "" : s.values[i].toFixed(4));
+  lines.push(header.map(cell).join(","));
+
+  for (var year = firstYear; year <= lastYear; year++) {
+    var row = [year, year <= startYear ? "history" : "projection"];
+    tables.forEach(function (table) {
+      var i = year - table.years[0];
+      table.series.forEach(function (s) {
+        var v = i >= 0 ? s.values[i] : null;
+        row.push(v === null ? "" : v.toFixed(4));
+      });
     });
     lines.push(row.join(","));
-  });
+  }
 
   var link = document.createElement("a");
   link.href = URL.createObjectURL(new Blob([lines.join("\n") + "\n"], { type: "text/csv" }));
-  link.download = (page.compare ? "all-countries" : page.country) + "-" + definition.key + ".csv";
+  link.download = page.country + ".csv";
   document.body.append(link);
   link.click();
   link.remove();
@@ -839,24 +688,11 @@ function writeAddress() {
   var params = new URLSearchParams();
   var code = COUNTRIES.filter(function (c) { return c.key === page.country; })[0].code;
   params.set("c", code);
-  params.set("chart", page.chart);
   params.set("range", page.range);
-  if (page.compare) params.set("compare", "1");
-  function text(v) {
-    return typeof v === "boolean" ? (v ? "1" : "0") : v;
-  }
   var values = page.controls[page.country];
   Object.keys(values).forEach(function (key) {
-    params.set(key, text(values[key]));
-  });
-  // Other countries' controls are written only where they differ from
-  // their defaults, with the country's code in front: jp.growth=0.01
-  COUNTRIES.forEach(function (c) {
-    if (c.key === page.country || !page.data[c.key]) return;
-    var defaults = defaultControls(page.data[c.key]);
-    Object.keys(page.controls[c.key]).forEach(function (key) {
-      if (page.controls[c.key][key] !== defaults[key]) params.set(c.code + "." + key, text(page.controls[c.key][key]));
-    });
+    var v = values[key];
+    params.set(key, typeof v === "boolean" ? (v ? "1" : "0") : v);
   });
   history.replaceState(null, "", "?" + params.toString());
 }
@@ -865,30 +701,22 @@ function readAddress() {
   var params = new URLSearchParams(location.search);
   var match = COUNTRIES.filter(function (c) { return c.code === params.get("c"); })[0];
   if (match && page.data[match.key]) page.country = match.key;
-  if (params.get("chart")) page.chart = params.get("chart");
   if (["10", "20", "30"].indexOf(params.get("range")) !== -1) page.range = Number(params.get("range"));
-  page.compare = params.get("compare") === "1";
 
-  // The current country's controls have plain names. The other
-  // countries' have the country's code in front.
-  COUNTRIES.forEach(function (c) {
-    var country = page.data[c.key];
-    if (!country) return;
-    var values = page.controls[c.key];
-    var prefix = c.key === page.country ? "" : c.code + ".";
-    controlList(country).forEach(function (control) {
-      var text = params.get(prefix + control.key);
-      if (text === null) return;
-      var preset = presetFor(control, country);
-      if (control.type === "range") {
-        var number = parseFloat(text);
-        if (isFinite(number)) values[control.key] = snap(number, preset);
-      } else if (control.type === "check") {
-        values[control.key] = text === "1";
-      } else if (control.options.some(function (o) { return o[0] === text; })) {
-        values[control.key] = text;
-      }
-    });
+  var country = page.data[page.country];
+  var values = page.controls[page.country];
+  controlList(country).forEach(function (control) {
+    var text = params.get(control.key);
+    if (text === null) return;
+    var preset = presetFor(control, country);
+    if (control.type === "range") {
+      var number = parseFloat(text);
+      if (isFinite(number)) values[control.key] = snap(number, preset);
+    } else if (control.type === "check") {
+      values[control.key] = text === "1";
+    } else if (control.options.some(function (o) { return o[0] === text; })) {
+      values[control.key] = text;
+    }
   });
 }
 
@@ -910,16 +738,6 @@ function showCountry(key) {
   document.querySelectorAll("#country-tabs button").forEach(function (button) {
     button.setAttribute("aria-pressed", button.dataset.country === key ? "true" : "false");
   });
-  var select = document.getElementById("chart-select");
-  select.textContent = "";
-  chartList(page.data[key]).forEach(function (chart) {
-    var option = document.createElement("option");
-    option.value = chart.key;
-    option.textContent = chart.title;
-    select.append(option);
-  });
-  page.chart = currentChart().key;
-  select.value = page.chart;
   buildControls();
   update();
 }
@@ -995,10 +813,6 @@ function startPage() {
     setRange(page.range);
     showCountry(page.country);
 
-    document.getElementById("chart-select").addEventListener("change", function (event) {
-      page.chart = event.target.value;
-      update();
-    });
     document.querySelectorAll(".range button").forEach(function (button) {
       button.addEventListener("click", function () {
         setRange(Number(button.dataset.range));
@@ -1010,13 +824,6 @@ function startPage() {
       draw();
     });
     document.getElementById("download").addEventListener("click", downloadCsv);
-    var compare = document.getElementById("compare-toggle");
-    compare.setAttribute("aria-pressed", page.compare ? "true" : "false");
-    compare.addEventListener("click", function () {
-      page.compare = !page.compare;
-      compare.setAttribute("aria-pressed", page.compare ? "true" : "false");
-      update();
-    });
     document.getElementById("reset").addEventListener("click", function () {
       page.controls[page.country] = defaultControls(page.data[page.country]);
       buildControls();
@@ -1033,7 +840,7 @@ function startPage() {
       });
     });
   }).catch(function (error) {
-    document.getElementById("chart").textContent = "The simulator could not start: " + error.message;
+    document.getElementById("chart-debt").textContent = "The simulator could not start: " + error.message;
   });
 }
 

@@ -108,10 +108,17 @@ button:disabled {
   border-bottom: 1px solid var(--border);
 }
 
-.site-name {
-  font-weight: 600;
-  color: var(--text);
+/* A plain link, set apart from the country buttons */
+.home-link {
+  margin-right: 28px;
+  font-size: 14px;
+  color: var(--muted);
   text-decoration: none;
+}
+
+.home-link:hover {
+  color: var(--accent);
+  text-decoration: underline;
 }
 
 .tabs {
@@ -119,13 +126,6 @@ button:disabled {
   flex-wrap: wrap;
   gap: 4px;
   flex: 1;
-}
-
-.chart-picker {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  color: var(--muted);
 }
 
 /* ---------- Layout: chart beside a narrow panel ---------- */
@@ -193,13 +193,19 @@ button:disabled {
   font-size: 13px;
 }
 
+.hero .hero-title {
+  margin: 0 0 2px;
+  font-size: 26px;
+  font-weight: 700;
+}
+
 .hero-number {
-  font-size: 40px;
+  font-size: 44px;
   font-weight: 700;
   line-height: 1.15;
 }
 
-.hero-per-year {
+.hero-total {
   font-size: 22px;
   font-weight: 600;
   color: var(--muted);
@@ -226,48 +232,22 @@ button:disabled {
   max-width: 70ch;
 }
 
-#how-body table,
-#compare-table {
+#how-body table {
   border-collapse: collapse;
   margin: 8px 0;
   font-size: 13.5px;
 }
 
 #how-body th,
-#how-body td,
-#compare-table th,
-#compare-table td {
+#how-body td {
   padding: 3px 14px 3px 0;
   text-align: right;
   border-bottom: 1px solid var(--border);
 }
 
-#how-body th,
-#compare-table th {
+#how-body th {
   color: var(--muted);
   font-weight: 600;
-}
-
-/* The compare table: country names on the left, the first figure large */
-#compare-table {
-  display: block;
-  overflow-x: auto;
-  font-size: 14px;
-}
-
-#compare-table[hidden] {
-  display: none;
-}
-
-#compare-table th:first-child,
-#compare-table td:first-child {
-  text-align: left;
-  font-weight: 600;
-}
-
-#compare-table td:nth-child(2) {
-  font-size: 22px;
-  font-weight: 700;
 }
 
 .headline {
@@ -315,6 +295,29 @@ button:disabled {
   gap: 4px;
 }
 
+/* Two charts side by side; one under the other on a narrow screen */
+.charts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px 24px;
+}
+
+@media (max-width: 1100px) {
+  .charts {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.charts section {
+  min-width: 0;
+}
+
+.charts h2 {
+  margin: 0 0 4px;
+  font-size: 15px;
+  font-weight: 600;
+}
+
 .chart {
   width: 100%;
   min-height: 300px;
@@ -342,10 +345,6 @@ button:disabled {
 
 .swatch:first-child {
   margin-left: 0;
-}
-
-.zone-only .swatch:first-child {
-  margin-left: 10px;
 }
 
 .swatch-history {

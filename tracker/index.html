@@ -10,15 +10,10 @@
 </head>
 <body>
 
-  <!-- Top bar: site name, country tabs, chart selector, compare and theme toggles -->
+  <!-- Top bar: link to the homepage, country tabs, theme toggle -->
   <header class="topbar">
-    <a class="site-name" href="../">Isaac Slavens</a>
+    <a class="home-link" href="../">&larr; Homepage</a>
     <nav class="tabs" id="country-tabs" aria-label="Country"></nav>
-    <label class="chart-picker">
-      Chart
-      <select id="chart-select"></select>
-    </label>
-    <button type="button" id="compare-toggle" aria-pressed="false">Compare countries</button>
     <button type="button" id="theme-toggle">Dark theme</button>
   </header>
 
@@ -30,19 +25,16 @@
         <h1 id="chart-title">Sovereign Debt Simulator</h1>
         <p class="meta" id="chart-meta"></p>
 
-        <!-- The central figure: how much purchasing power is lost -->
+        <!-- The central figure: how fast money loses its purchasing power -->
         <div class="hero">
-          <div id="hero-single">
-            <p class="hero-label" id="hero-label"></p>
-            <p class="hero-number" id="hero-number"></p>
-            <p class="hero-line" id="hero-line"></p>
-            <details id="how">
-              <summary>How this figure is calculated</summary>
-              <div id="how-body"></div>
-            </details>
-          </div>
-          <!-- Shown instead when all countries are compared -->
-          <table id="compare-table" hidden></table>
+          <h2 class="hero-title">Currency Debasement</h2>
+          <p class="hero-number" id="hero-number"></p>
+          <p class="hero-label" id="hero-period"></p>
+          <p class="hero-line" id="hero-line"></p>
+          <details id="how">
+            <summary>How this figure is calculated</summary>
+            <div id="how-body"></div>
+          </details>
         </div>
 
         <dl class="headline" id="headline"></dl>
@@ -59,13 +51,23 @@
         <button type="button" id="download">Download CSV</button>
       </div>
 
-      <div id="chart" class="chart"></div>
+      <!-- The two charts, side by side -->
+      <div class="charts">
+        <section>
+          <h2>Debt</h2>
+          <div id="chart-debt" class="chart"></div>
+        </section>
+        <section>
+          <h2>Yields and interest</h2>
+          <div id="chart-yields" class="chart"></div>
+        </section>
+      </div>
 
       <p class="key" id="zone-key">
         <span class="swatch swatch-history"></span> History
         <span class="swatch swatch-projection"></span> Projection
-        <span class="zone-only"><span class="swatch swatch-stress"></span> Fiscal stress</span>
-        <span class="zone-only"><span class="swatch swatch-dominance"></span> Fiscal dominance</span>
+        <span class="swatch swatch-stress"></span> Fiscal stress
+        <span class="swatch swatch-dominance"></span> Fiscal dominance
       </p>
       <p class="source" id="source-line"></p>
       <p class="source" id="coverage-line"></p>
