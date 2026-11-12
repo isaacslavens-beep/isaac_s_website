@@ -44,7 +44,7 @@
     },
     "selloffResponse": {
       "min": 0, "max": 0.5, "step": 0.01, "default": 0.15, "illustrative": true,
-      "basis": "Illustrative assumption, five times the usual yield response. To be confirmed against published estimates before publishing."
+      "basis": "Illustrative assumption, five times the usual yield response."
     },
     "selloffYears": {
       "min": 1, "max": 10, "step": 1, "default": 5, "illustrative": true,
@@ -64,7 +64,7 @@
     },
     "yieldResponse": {
       "min": 0.005, "max": 0.1, "step": 0.005, "default": 0.03, "illustrative": true,
-      "basis": "Illustrative assumption: about 3 basis points of yield for each point of GDP of debt, one value for all four countries. To be confirmed against Laubach (2009) and Gamber and Seliski (2019) before publishing."
+      "basis": "Illustrative assumption: about 3 basis points of yield for each point of GDP of debt, one value for every country."
     },
     "maturity": {
       "min": 1, "max": 20, "step": 0.1, "default": null,
