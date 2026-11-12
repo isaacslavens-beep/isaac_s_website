@@ -275,32 +275,8 @@ function buildControls() {
     help.className = "help";
     help.textContent = control.help;
 
-    // A small button that puts this one control back to its default. It
-    // is shown only while the control is away from its default.
-    var defaultValue = control.type === "range" ? snap(preset.default, preset) : preset.default;
-    var reset = document.createElement("button");
-    reset.type = "button";
-    reset.className = "reset-one";
-    reset.textContent = "Reset";
-    reset.setAttribute("aria-label", "Reset " + control.label + " to its default");
-    reset.addEventListener("click", function () {
-      values[control.key] = defaultValue;
-      if (control.type === "check") {
-        input.checked = defaultValue;
-      } else {
-        input.value = defaultValue;
-      }
-      if (control.type === "range") {
-        box.querySelector("output").textContent = FORMATS[control.format](defaultValue);
-      }
-      update();
-    });
-    box.defaultValue = defaultValue;
-    box.resetButton = reset;
-
     box.append(label, help);
     if (control.type !== "check") box.append(input);
-    box.append(reset);
     if (preset.illustrative || preset.showBasis || control.key.indexOf("w_") === 0) {
       var basis = document.createElement("p");
       basis.className = "basis";
@@ -318,7 +294,6 @@ function showOrHideControls() {
   var values = page.controls[page.country];
   document.querySelectorAll(".control").forEach(function (box) {
     box.hidden = box.showWhen ? !box.showWhen(values) : false;
-    box.resetButton.hidden = values[box.dataset.key] === box.defaultValue;
   });
 }
 
