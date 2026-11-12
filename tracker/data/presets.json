@@ -14,6 +14,10 @@
       "showBasis": true,
       "basis": "The country's average primary balance since 2015, to reflect the current environment."
     },
+    "stressInterestShare": {
+      "min": 0.1, "max": 1, "step": 0.01, "default": 0.3, "illustrative": true,
+      "basis": "Illustrative assumption."
+    },
     "capLevel": {
       "min": 0, "max": 0.12, "step": 0.001, "default": null,
       "basis": "Used only when the cap is fixed. Starts at the country's current yield."

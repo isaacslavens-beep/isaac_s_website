@@ -29,6 +29,8 @@
 //                          per year, or a function (see primaryBalanceFor)
 //   primaryBalanceMode     "fixed" or "reactive"
 //   gamma                  reactive mode: response of the balance to debt
+//   stressInterestShare    optional: a year is also in fiscal stress when
+//                          interest is more than this share of revenue
 //   capMode                "automatic", "fixed" or "off"
 //   capLevel               the cap when capMode is "fixed"
 //   priceSensitive    w_k  share of each group's holdings that is
@@ -99,6 +101,8 @@ function runModel(start, controls) {
     exchangeRate: 1,
     cap: null,
     stress: false,
+    stressFromBalance: false,
+    stressFromInterest: false,
     dominance: false,
     capBroken: false,
     debtRepaid: false
@@ -131,9 +135,18 @@ function runModel(start, controls) {
       debtRepaid = true;
     }
 
-    // Fiscal stress: the balance needed to hold debt steady is more than
-    // the country has ever sustained.
-    var stress = stabilizingBalance > start.stressThreshold;
+    // Interest on the debt. Last year's debt is divided by (1 + nominal
+    // growth) to express it as a share of this year's GDP.
+    var interest = averageRate * prev.debt / (1 + nominalGrowth);
+    var interestToRevenue = interest / start.revenue;
+
+    // Fiscal stress, for either of two reasons: the balance needed to hold
+    // debt steady is more than the country has ever sustained, or interest
+    // takes more of the government's revenue than the chosen share.
+    var stressFromBalance = stabilizingBalance > start.stressThreshold;
+    var stressFromInterest = isNumber(controls.stressInterestShare) &&
+      interestToRevenue > controls.stressInterestShare;
+    var stress = stressFromBalance || stressFromInterest;
 
     // Automatic cap: switched on in the first stress year, at last year's
     // yield, and kept from then on.
@@ -221,9 +234,7 @@ function runModel(start, controls) {
         " but debt is " + debt);
     }
 
-    // Derived outputs. Last year's debt is divided by (1 + nominal growth)
-    // to express it as a share of this year's GDP.
-    var interest = averageRate * prev.debt / (1 + nominalGrowth);
+    // Debt that comes due this year, as a share of this year's GDP.
     var maturing = prev.debt / m / (1 + nominalGrowth);
 
     rows.push({
@@ -244,13 +255,15 @@ function runModel(start, controls) {
       primaryBalance: primaryBalance,
       stabilizingBalance: stabilizingBalance,
       interest: interest,
-      interestToRevenue: interest / start.revenue,
+      interestToRevenue: interestToRevenue,
       financingNeed: interest - primaryBalance + maturing,
       priceLevel: prev.priceLevel * (1 + inflation),
       realReturn: prev.realReturn * (1 + averageRate) / (1 + inflation),
       exchangeRate: prev.exchangeRate * (1 + piF) / (1 + inflation),
       cap: cap,
       stress: stress,
+      stressFromBalance: stressFromBalance,
+      stressFromInterest: stressFromInterest,
       // Fiscal dominance: the central bank is buying to hold the cap, or
       // already holds all the debt and still cannot hold it.
       dominance: purchases > 0 || capBroken,

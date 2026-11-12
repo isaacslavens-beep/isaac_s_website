@@ -61,6 +61,9 @@ function controlList(country) {
     { key: "baselineInflation", section: "main", type: "range", format: "percent1",
       label: "Baseline inflation",
       help: "The inflation rate the economy returns to when the central bank is not buying debt." },
+    { key: "stressInterestShare", section: "main", type: "range", format: "percent0",
+      label: "Interest burden that counts as fiscal stress",
+      help: "Fiscal stress starts when interest on the debt takes more than this share of government revenue." },
     { key: "capMode", section: "main", type: "select",
       label: "Yield cap",
       help: "The highest yield the central bank tolerates before it buys debt.",
@@ -184,6 +187,13 @@ function presetFor(control, country) {
   if (control.key === "baselineInflation") {
     preset.default = start.baselineInflation.value;
     preset.basis = "Default: " + start.baselineInflation.note + ".";
+  }
+  if (control.key === "stressInterestShare") {
+    // Shown beside the assumption so the reader can place it: what the
+    // country pays now, as average rate x debt / revenue.
+    var now = start.averageRate.value * start.debt.value / start.revenue.value;
+    preset.basis = preset.basis + " In " + start.year + " interest takes about " +
+      FORMATS.percent0(now) + " of revenue.";
   }
   if (control.key === "capMode") preset.default = "automatic";
   if (control.type === "check") preset.default = false;
@@ -347,6 +357,7 @@ function modelInputs(country, c) {
       growth: c.growth,
       primaryBalance: c.primaryBalance,
       primaryBalanceMode: "fixed",
+      stressInterestShare: c.stressInterestShare,
       capMode: c.capMode,
       capLevel: c.capLevel,
       priceSensitive: priceSensitive,

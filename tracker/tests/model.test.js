@@ -241,6 +241,29 @@ test("the stress zone marks years when the stabilizing balance is above the thre
   });
 });
 
+test("interest above the chosen share of revenue is fiscal stress, and switches on the automatic cap", function () {
+  // The invented country pays about 18% of its revenue in interest in the
+  // first year, and never reaches stress by the balance test alone here.
+  const without = run(start, controlsWith({ stressThreshold: 1 }));
+  const first = without.rows[1];
+  close(first.interestToRevenue, first.interest / start.revenue, 1e-15);
+
+  const calm = Object.assign({}, start, { stressThreshold: 1 });
+  const low = run(calm, controlsWith({ stressInterestShare: first.interestToRevenue - 0.01 }));
+  assert.strictEqual(low.rows[1].stress, true);
+  assert.strictEqual(low.rows[1].stressFromInterest, true);
+  assert.strictEqual(low.rows[1].stressFromBalance, false);
+  assert.strictEqual(low.rows[1].cap, start.yield);
+  assert.strictEqual(low.headline.firstStressYear, start.year + 1);
+
+  const high = run(calm, controlsWith({ stressInterestShare: first.interestToRevenue + 0.01 }));
+  assert.strictEqual(high.rows[1].stress, false);
+
+  // Left out, the control changes nothing.
+  const none = run(calm, controlsWith({}));
+  none.rows.forEach(function (row) { assert.strictEqual(row.stressFromInterest, false); });
+});
+
 test("reactive mode moves the primary balance with debt", function () {
   const controls = controlsWith({ capMode: "off", primaryBalanceMode: "reactive", gamma: 0.03 });
   const result = run(start, controls);
