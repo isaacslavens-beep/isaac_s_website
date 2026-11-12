@@ -86,12 +86,12 @@
       "note": "average real growth from 2015 to 2025, recent years that reflect the current environment. Calendar years"
     },
     "baselinePrimaryBalance": {
-      "value": -0.038417828490853394,
+      "value": -0.04398774412857357,
       "source": [
         "mof_general_account",
         "cao_gdp"
       ],
-      "note": "average primary balance from 2015 to 2025, recent years that reflect the current environment"
+      "note": "average primary balance from 2022 to 2025, recent years that reflect the current environment"
     },
     "growth": {
       "value": 0.006199999999999999,

@@ -83,12 +83,12 @@
       "note": "average real growth from 2015 to 2026, recent years that reflect the current environment"
     },
     "baselinePrimaryBalance": {
-      "value": -0.02096893686707715,
+      "value": -0.017194872207210193,
       "source": [
         "ons_psf",
         "ons_gdp"
       ],
-      "note": "average primary balance from 2015 to 2026, recent years that reflect the current environment"
+      "note": "average primary balance from 2022 to 2026, recent years that reflect the current environment"
     },
     "growth": {
       "value": 0.014199999999999999,

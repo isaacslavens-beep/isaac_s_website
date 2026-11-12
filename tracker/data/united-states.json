@@ -76,13 +76,13 @@
       "note": "average real growth from 2015 to 2026, recent years that reflect the current environment"
     },
     "baselinePrimaryBalance": {
-      "value": -0.04158661155542994,
+      "value": -0.03227739108627806,
       "source": [
         "omb_budget",
         "us_treasury_mts",
         "bea_gdp"
       ],
-      "note": "average primary balance from 2015 to 2026, recent years that reflect the current environment"
+      "note": "average primary balance from 2022 to 2026, recent years that reflect the current environment"
     },
     "growth": {
       "value": 0.019799999999999998,

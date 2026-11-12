@@ -114,7 +114,7 @@ def baseline_inflation(inflation, last_year, source):
     }
 
 
-RECENT_FROM = 2015     # growth and budgets are averaged over recent years only
+RECENT_FROM = 2015     # real growth is averaged from this year
 
 
 def recent_note(first_year, last_year):
@@ -135,16 +135,19 @@ def baseline_growth(levels, last_year, source):
     }
 
 
+BALANCE_FROM = 2022    # the primary balance is averaged from this year
+
+
 def baseline_balance(balances, last_year, source):
-    """The average primary balance since 2015, as the item written to the
-    data file."""
-    if first_unbroken_year(balances, last_year) > RECENT_FROM:
-        stop(f"the primary balance does not cover every year from {RECENT_FROM} to {last_year}")
-    years = range(RECENT_FROM, last_year + 1)
+    """The average primary balance since 2022, as the item written to the
+    data file. Isaac chose 2022 on 2026-11-12."""
+    if first_unbroken_year(balances, last_year) > BALANCE_FROM:
+        stop(f"the primary balance does not cover every year from {BALANCE_FROM} to {last_year}")
+    years = range(BALANCE_FROM, last_year + 1)
     return {
         "value": sum(balances[year] for year in years) / len(years),
         "source": source,
-        "note": "average primary balance " + recent_note(RECENT_FROM, last_year),
+        "note": "average primary balance " + recent_note(BALANCE_FROM, last_year),
     }
 
 

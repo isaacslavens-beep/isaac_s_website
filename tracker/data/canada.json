@@ -85,12 +85,12 @@
       "note": "average real growth from 2015 to 2026, recent years that reflect the current environment"
     },
     "baselinePrimaryBalance": {
-      "value": 0.004287078206055248,
+      "value": 0.005371693210548039,
       "source": [
         "statcan_gfs",
         "imf_ifs_gdp"
       ],
-      "note": "average primary balance from 2015 to 2026, recent years that reflect the current environment"
+      "note": "average primary balance from 2022 to 2026, recent years that reflect the current environment"
     },
     "growth": {
       "value": 0.0172,
