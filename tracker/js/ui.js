@@ -138,8 +138,10 @@ function controlList(country) {
       label: "Money supply growth beyond GDP",
       help: "How much faster than GDP the money supply (M2) grows each year." }
   );
+  // The controls marked `fixed` are not shown: they change the result
+  // very little. The model still uses their default values.
   Object.keys(country.start.holdings).forEach(function (group) {
-    list.push({ key: "w_" + group, section: "advanced", type: "range", format: "percent0",
+    list.push({ key: "w_" + group, section: "advanced", type: "range", format: "percent0", fixed: true,
       label: "Price-sensitive share: " + GROUP_LABELS[group].toLowerCase(),
       help: "The share of these holders that asks for a higher yield to hold more debt." });
   });
@@ -147,10 +149,10 @@ function controlList(country) {
     { key: "yieldResponse", section: "advanced", type: "range", format: "basisPoints",
       label: "Yield response",
       help: "Basis points of yield for each point of GDP that price-sensitive holders must absorb." },
-    { key: "runoff", section: "advanced", type: "range", format: "percent1",
+    { key: "runoff", section: "advanced", type: "range", format: "percent1", fixed: true,
       label: "Central bank runoff",
       help: "How much the central bank lets its holdings shrink each year, as a share of GDP." },
-    { key: "maturity", section: "advanced", type: "range", format: "years1",
+    { key: "maturity", section: "advanced", type: "range", format: "years1", fixed: true,
       label: "Average maturity",
       help: "The average number of years until the debt is repaid. With a shorter maturity, a change in yields reaches the interest bill sooner." }
   );
@@ -236,6 +238,7 @@ function buildControls() {
   Object.keys(sections).forEach(function (name) { sections[name].textContent = ""; });
 
   controlList(country).forEach(function (control) {
+    if (control.fixed) return;
     var preset = presetFor(control, country);
     var id = "control-" + control.key;
     var box = document.createElement("div");
@@ -741,7 +744,10 @@ function writeAddress() {
   params.set("c", code);
   params.set("range", page.range);
   var values = page.controls[page.country];
+  var fixed = {};
+  controlList(page.data[page.country]).forEach(function (control) { fixed[control.key] = control.fixed; });
   Object.keys(values).forEach(function (key) {
+    if (fixed[key]) return;
     var v = values[key];
     params.set(key, typeof v === "boolean" ? (v ? "1" : "0") : v);
   });
@@ -758,7 +764,7 @@ function readAddress() {
   var values = page.controls[page.country];
   controlList(country).forEach(function (control) {
     var text = params.get(control.key);
-    if (text === null) return;
+    if (text === null || control.fixed) return;
     var preset = presetFor(control, country);
     if (control.type === "range") {
       var number = parseFloat(text);
