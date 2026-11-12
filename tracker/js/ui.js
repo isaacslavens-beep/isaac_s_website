@@ -31,7 +31,6 @@ var page = {
   data: {},        // country key -> its data file
   controls: {},    // country key -> that country's current control values
   country: null,   // the country being shown
-  range: 30,
   plots: [],       // the uPlot objects on screen, one per chart
   result: null     // the latest model result
 };
@@ -45,6 +44,7 @@ function percent(decimals) {
 var FORMATS = {
   percent0: percent(0),
   percent1: percent(1),
+  percent2: percent(2),
   basisPoints: function (v) { return (v * 100).toFixed(1) + " bp"; },
   years0: function (v) { return v.toFixed(0) + (v === 1 ? " year" : " years"); },
   years1: function (v) { return v.toFixed(1) + " years"; },
@@ -69,6 +69,9 @@ function controlList(country) {
     { key: "moneyGrowth", section: "main", type: "range", format: "percent1", fixed: true,
       label: "Money supply growth",
       help: "How fast the money supply (M2) grows each year, before any money the central bank creates by buying debt. Inflation follows it." },
+    { key: "ageing", section: "main", type: "range", format: "percent2", key_control: true,
+      label: "Ageing: yearly worsening",
+      help: "How much the primary balance worsens each year as the population ages, as a share of GDP. Pensions and health care cost more every year." },
     { key: "stressInterestShare", section: "main", type: "range", format: "percent0",
       label: "Interest burden that counts as fiscal stress",
       help: "Fiscal stress starts when interest on the debt takes more than this share of government revenue." },
@@ -320,6 +323,16 @@ function value(item) {
   return item.value;
 }
 
+// The primary balance for each projected year: the chosen balance, made
+// worse each year by the ageing setting.
+function balanceByYear(c) {
+  var balances = [];
+  for (var t = 1; t <= page.presets.years; t++) {
+    balances.push(c.primaryBalance - c.ageing * t);
+  }
+  return balances;
+}
+
 // Turns a country's data and control values into the model's two inputs.
 function modelInputs(country, c) {
   var s = country.start;
@@ -365,7 +378,7 @@ function modelInputs(country, c) {
     controls: {
       years: page.presets.years,
       growth: c.growth,
-      primaryBalance: c.primaryBalance,
+      primaryBalance: balanceByYear(c),
       primaryBalanceMode: "fixed",
       stressInterestShare: c.stressInterestShare,
       capMode: c.capMode,
@@ -484,8 +497,9 @@ function draw() {
     var startYear = table.years[table.startIndex];
     return drawChart(document.getElementById("chart-" + definition.key), Object.assign({}, definition, table, {
       zones: zones,
-      xMin: Math.max(table.years[0], startYear - page.range / 2),
-      xMax: startYear + page.range
+      // Half as many years of history as years projected
+      xMin: Math.max(table.years[0], startYear - page.presets.years / 2),
+      xMax: startYear + page.presets.years
     }));
   });
 }
@@ -738,7 +752,6 @@ function writeAddress() {
   var params = new URLSearchParams();
   var code = COUNTRIES.filter(function (c) { return c.key === page.country; })[0].code;
   params.set("c", code);
-  params.set("range", page.range);
   var values = page.controls[page.country];
   var fixed = {};
   controlList(page.data[page.country]).forEach(function (control) { fixed[control.key] = control.fixed; });
@@ -754,7 +767,6 @@ function readAddress() {
   var params = new URLSearchParams(location.search);
   var match = COUNTRIES.filter(function (c) { return c.code === params.get("c"); })[0];
   if (match && page.data[match.key]) page.country = match.key;
-  if (["10", "20", "30"].indexOf(params.get("range")) !== -1) page.range = Number(params.get("range"));
 
   var country = page.data[page.country];
   var values = page.controls[page.country];
@@ -803,13 +815,6 @@ function setTheme(theme) {
   } catch (error) {
     // Storage can be blocked. The theme then lasts until the page closes.
   }
-}
-
-function setRange(range) {
-  page.range = range;
-  document.querySelectorAll(".range button").forEach(function (button) {
-    button.setAttribute("aria-pressed", Number(button.dataset.range) === range ? "true" : "false");
-  });
 }
 
 function getJson(path) {
@@ -863,15 +868,8 @@ function startPage() {
     page.country = Object.keys(page.data)[0];
     if (!page.country) throw new Error("No country data is available");
     readAddress();
-    setRange(page.range);
     showCountry(page.country);
 
-    document.querySelectorAll(".range button").forEach(function (button) {
-      button.addEventListener("click", function () {
-        setRange(Number(button.dataset.range));
-        update();
-      });
-    });
     document.getElementById("theme-toggle").addEventListener("click", function () {
       setTheme(document.documentElement.dataset.theme === "dark" ? "light" : "dark");
       draw();

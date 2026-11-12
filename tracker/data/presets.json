@@ -9,6 +9,10 @@
       "showBasis": true,
       "basis": "The country's average real growth since 2015, to reflect the current environment."
     },
+    "ageing": {
+      "min": 0, "max": 0.003, "step": 0.0001, "default": 0.0005, "illustrative": true,
+      "basis": "Illustrative assumption: 0.05% of GDP a year, or 1.5% of GDP over 30 years. To be confirmed against official long-term budget projections before publishing."
+    },
     "primaryBalance": {
       "min": -0.08, "max": 0.04, "step": 0.001, "default": null,
       "showBasis": true,

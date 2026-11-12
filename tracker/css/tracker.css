@@ -325,14 +325,9 @@ button:disabled {
 .chart-tools {
   display: flex;
   flex-wrap: wrap;
-  justify-content: space-between;
+  justify-content: flex-end;
   gap: 8px;
   margin: 10px 0 6px;
-}
-
-.range {
-  display: flex;
-  gap: 4px;
 }
 
 /* Two charts side by side; one under the other on a narrow screen */
