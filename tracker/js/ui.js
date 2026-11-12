@@ -57,9 +57,13 @@ var FORMATS = {
 // goes: main, scenario or advanced. The one-line descriptions are shown
 // under each label.
 function controlList(country) {
-  // The main controls, in order of how much they move the loss of
-  // purchasing power: the largest first.
+  // The main controls. The primary balance comes first and is marked
+  // `key_control`, which sets it apart on the page: it is the setting that
+  // matters most.
   var list = [
+    { key: "primaryBalance", section: "main", type: "range", format: "percent1", key_control: true,
+      label: "Primary balance",
+      help: "The budget balance before interest, as a share of GDP. Negative is a deficit. This is the setting that matters most: it decides how fast the debt grows." },
     // Not shown as a slider: the money supply reacts to what the central
     // bank buys, so its starting rate is fixed at the country's past average.
     { key: "moneyGrowth", section: "main", type: "range", format: "percent1", fixed: true,
@@ -80,9 +84,6 @@ function controlList(country) {
       showWhen: function (c) { return c.capMode === "fixed"; },
       label: "Cap level",
       help: "The yield the central bank holds when the cap is fixed." },
-    { key: "primaryBalance", section: "main", type: "range", format: "percent1",
-      label: "Primary balance",
-      help: "The budget balance before interest, as a share of GDP. Negative is a deficit." },
     { key: "growth", section: "main", type: "range", format: "percent1",
       label: "Real growth",
       help: "How fast the economy grows each year, after inflation." }
@@ -237,7 +238,8 @@ function buildControls() {
     var preset = presetFor(control, country);
     var id = "control-" + control.key;
     var box = document.createElement("div");
-    box.className = "control" + (control.type === "check" ? " check" : "") + (control.indent ? " indent" : "");
+    box.className = "control" + (control.type === "check" ? " check" : "") + (control.indent ? " indent" : "") +
+      (control.key_control ? " key-control" : "");
     box.dataset.key = control.key;
 
     var label = document.createElement("label");

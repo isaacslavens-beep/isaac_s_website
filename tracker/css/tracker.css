@@ -422,6 +422,25 @@ button:disabled {
   margin-bottom: 14px;
 }
 
+/* The setting that matters most, set apart from the others */
+.control.key-control {
+  margin: 0 -8px 18px;
+  padding: 10px 8px 8px;
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--accent);
+  border-radius: 4px;
+  background: var(--bg);
+}
+
+.control.key-control label {
+  font-size: 17px;
+}
+
+.control.key-control output {
+  font-weight: 700;
+  color: var(--accent);
+}
+
 .control label {
   display: flex;
   justify-content: space-between;
