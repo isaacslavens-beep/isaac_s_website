@@ -334,7 +334,7 @@ series:
     title: Real Gross Domestic Product
     units: billions of chained 2017 dollars, at an annual rate, seasonally adjusted
     frequency: quarterly
-    annual_rule: average of the four quarters of the fiscal year, then the average yearly growth since 2015
+    annual_rule: average of the four quarters of the fiscal year, then the average yearly growth since 1972
     feeds: the default for real growth
 
   - key: uk_real_gdp
@@ -345,7 +345,7 @@ series:
     title: Real Gross Domestic Product (GDP) for United Kingdom
     units: millions of pounds at constant prices, seasonally adjusted
     frequency: quarterly
-    annual_rule: average of the four quarters of the fiscal year, then the average yearly growth since 2015
+    annual_rule: average of the four quarters of the fiscal year, then the average yearly growth since 1972
     feeds: the default for real growth
 
   - key: ca_real_gdp
@@ -356,7 +356,7 @@ series:
     title: Real Gross Domestic Product (GDP) for Canada
     units: millions of dollars at constant prices, seasonally adjusted
     frequency: quarterly
-    annual_rule: average of the four quarters of the fiscal year, then the average yearly growth since 2015
+    annual_rule: average of the four quarters of the fiscal year, then the average yearly growth since 1972
     feeds: the default for real growth
 
   - key: us_m2

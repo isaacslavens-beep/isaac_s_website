@@ -7,16 +7,20 @@
     "growth": {
       "min": -0.01, "max": 0.04, "step": 0.001, "default": null,
       "showBasis": true,
-      "basis": "The country's average real growth since 2015, to reflect the current environment."
+      "basis": "The country's average real growth since 1972."
     },
     "primaryBalance": {
       "min": -0.08, "max": 0.04, "step": 0.001, "default": null,
       "showBasis": true,
-      "basis": "The country's average primary balance since 2015, to reflect the current environment."
+      "basis": "The country's average primary balance from 2022."
     },
     "stressInterestShare": {
       "min": 0.1, "max": 1, "step": 0.01, "default": 0.3, "illustrative": true,
       "basis": "Illustrative assumption."
+    },
+    "centralBankLimit": {
+      "min": 0.2, "max": 1, "step": 0.05, "default": 0.5, "illustrative": true,
+      "basis": "Illustrative assumption. The highest in this data is the Bank of Japan's 47% in 2024."
     },
     "capLevel": {
       "min": 0, "max": 0.12, "step": 0.001, "default": null,
@@ -34,10 +38,6 @@
       "min": -0.02, "max": 0.05, "step": 0.001, "default": null, "showBasis": true,
       "basis": "The country's past average."
     },
-    "passThrough": {
-      "min": 0, "max": 1, "step": 0.01, "default": null, "showBasis": true,
-      "basis": "Estimated by the build from the four countries' history. See data/estimates.json."
-    },
     "selloffShare": {
       "min": 0, "max": 1, "step": 0.05, "default": 0.25, "illustrative": true,
       "basis": "Illustrative assumption."
@@ -53,10 +53,6 @@
     "persistence": {
       "min": 0, "max": 0.95, "step": 0.05, "default": 0.5, "illustrative": true,
       "basis": "Illustrative assumption."
-    },
-    "baselineInflation": {
-      "min": 0, "max": 0.06, "step": 0.001, "default": null, "showBasis": true,
-      "basis": "The country's average inflation since 1972, as historical precedent: the years since the United States ended the dollar's convertibility into gold in August 1971."
     },
     "foreignInflation": {
       "min": 0, "max": 0.06, "step": 0.001, "default": 0.02, "illustrative": true,
@@ -86,12 +82,5 @@
       "domestic": { "default": 0.5, "illustrative": true, "basis": "Illustrative assumption." },
       "foreign": { "default": 0.6, "illustrative": true, "basis": "Illustrative assumption for countries whose data cannot separate foreign official from foreign private holders." }
     }
-  },
-
-  "passThroughPresets": [
-    { "key": "liquidity-trap", "label": "Liquidity trap", "episode": "Japan, 2013 to 2019", "value": null },
-    { "key": "post-crisis", "label": "Post-crisis", "episode": "United States, 2009 to 2014", "value": null },
-    { "key": "pandemic", "label": "Pandemic", "episode": "United States and United Kingdom, 2020 to 2022", "value": null },
-    { "key": "yield-peg", "label": "Yield peg", "episode": "United States, 1942 to 1951", "value": null }
-  ]
+  }
 }

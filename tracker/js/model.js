@@ -63,6 +63,9 @@
 //                          Its captive and price-sensitive holdings shrink
 //                          in proportion, and the remaining price-sensitive
 //                          holders must absorb what it sold.
+//   centralBankLimit       optional: the largest share of the debt the
+//                          central bank will hold. Once there it stops
+//                          buying, and the cap no longer holds.
 //   selloffResponse        optional: extra yield for each unit of debt sold
 //                          in a selloff that the central bank has not yet
 //                          bought, on top of yieldResponse. A selloff is a
@@ -91,6 +94,7 @@ function runModel(start, controls) {
   var moneyTrend = monetary && isNumber(controls.moneyTrend) ? controls.moneyTrend : 0;
   var moneyShare = monetary && isNumber(controls.moneyShare) ? controls.moneyShare : 1;
   var phi = isNumber(controls.selloffResponse) ? controls.selloffResponse : 0;
+  var limit = isNumber(controls.centralBankLimit) ? controls.centralBankLimit : 1;
 
   // Starting holdings. The data may be off from the debt by a rounding gap
   // (the pipeline allows up to 1%), so the groups are scaled to fit exactly.
@@ -227,7 +231,8 @@ function runModel(start, controls) {
 
     // 6. The market yield, then intervention.
     var inflationChange = inflation - pi0;
-    var marketYield = i0 + inflationChange + theta * passiveAbsorb + phi * overhang;
+    // A yield is not allowed below zero.
+    var marketYield = Math.max(i0 + inflationChange + theta * passiveAbsorb + phi * overhang, 0);
 
     var absorb = passiveAbsorb; // M: what price-sensitive holders end up absorbing
     var yieldNow = marketYield;
@@ -242,12 +247,13 @@ function runModel(start, controls) {
       if (needed > overhang) {
         needed = overhang + (marketYield - (theta + phi) * overhang - cap) / theta;
       }
-      // The most it can buy: everything it does not already hold.
-      var most = passiveAbsorb + W + totalCaptive;
+      // The most it can buy: up to its limit, a share of the debt (all of
+      // the debt when no limit is given).
+      var most = Math.max(Math.min(passiveAbsorb + W + totalCaptive, limit * debt - passiveCentralBank), 0);
       if (needed > most + 1e-12) {
-        // Even owning all the debt does not bring the yield down to the
-        // cap. The central bank holds everything and the yield stays
-        // above the cap.
+        // Even buying up to its limit does not bring the yield down to
+        // the cap. The central bank stops there and the yield stays above
+        // the cap.
         purchases = most;
         capBroken = true;
       } else {
@@ -255,7 +261,7 @@ function runModel(start, controls) {
       }
       absorb = passiveAbsorb - purchases;
       overhang = Math.max(overhang - purchases, 0);
-      yieldNow = capBroken ? i0 + inflationChange + theta * absorb + phi * overhang : cap;
+      yieldNow = capBroken ? Math.max(i0 + inflationChange + theta * absorb + phi * overhang, 0) : cap;
     }
     var centralBank = passiveCentralBank + purchases;
 

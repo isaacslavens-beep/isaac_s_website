@@ -519,3 +519,12 @@ summary {
 .headline[hidden] {
   display: none;
 }
+
+/* On a phone the homepage link takes its own line, so the country
+   buttons stay in one row. */
+@media (max-width: 600px) {
+  .home-link {
+    flex-basis: 100%;
+    margin-right: 0;
+  }
+}

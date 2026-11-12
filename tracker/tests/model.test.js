@@ -347,6 +347,24 @@ test("a selloff adds its own premium to the yield until the central bank buys th
   assert.strictEqual(deep.selloffOverhang, 0);
 });
 
+test("the central bank stops buying at its limit, and the cap then fails", function () {
+  const controls = controlsWith({ capMode: "fixed", capLevel: 0.001, centralBankLimit: 0.4 });
+  const result = run(start, controls);
+  result.rows.slice(1).forEach(function (row) {
+    assert.ok(row.centralBank <= 0.4 * row.debt + 1e-12);
+    assert.ok(row.yield >= 0);
+  });
+  const first = result.rows[1];
+  close(first.centralBank, 0.4 * first.debt, 1e-12);
+  assert.strictEqual(first.capBroken, true);
+  assert.ok(first.yield > 0.001);
+  assert.strictEqual(result.headline.firstCapBrokenYear, start.year + 1);
+
+  // With no limit it buys more.
+  const free = run(start, controlsWith({ capMode: "fixed", capLevel: 0.001 }));
+  assert.ok(free.rows[1].centralBank > first.centralBank);
+});
+
 test("reactive mode moves the primary balance with debt", function () {
   const controls = controlsWith({ capMode: "off", primaryBalanceMode: "reactive", gamma: 0.03 });
   const result = run(start, controls);

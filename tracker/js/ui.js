@@ -79,6 +79,10 @@ function controlList(country) {
         ["fixed", "Fixed level"],
         ["off", "Off: never intervenes"]
       ] },
+    { key: "centralBankLimit", section: "main", type: "range", format: "percent0",
+      showWhen: function (c) { return c.capMode !== "off"; },
+      label: "Most the central bank will hold",
+      help: "The largest share of the debt the central bank will own. Once it gets there it stops buying, and the yield cap no longer holds." },
     { key: "capLevel", section: "main", type: "range", format: "percent1", indent: true,
       showWhen: function (c) { return c.capMode === "fixed"; },
       label: "Cap level",
@@ -369,6 +373,7 @@ function modelInputs(country, c) {
       stressInterestShare: c.stressInterestShare,
       capMode: c.capMode,
       capLevel: c.capLevel,
+      centralBankLimit: c.centralBankLimit,
       priceSensitive: priceSensitive,
       yieldResponse: c.yieldResponse,
       moneyGrowth: c.moneyGrowth,
@@ -510,7 +515,6 @@ function fillText() {
   fillHero();
 
   var figures = [
-    ["Real return to the lender, per year", FORMATS.percent1(h.annualRealReturn)],
     ["Debt in " + lastYear, FORMATS.percent0(h.finalDebt) + " of GDP"],
     ["First year of fiscal stress", h.firstStressYear || "not reached"],
     ["First year of fiscal dominance", h.firstDominanceYear || "not reached"],
@@ -534,14 +538,17 @@ function fillText() {
     var rows = page.result.rows;
     var firstBought = rows.filter(function (row) { return row.purchases > 0; })[0];
     var broken = rows.filter(function (row) { return row.year === h.firstCapBrokenYear; })[0];
+    var share = FORMATS.percent0(broken.centralBank / broken.debt);
     document.getElementById("warning-text").textContent = "From " + h.firstCapBrokenYear +
-      " the central bank owns all of the government's debt and can no longer hold interest rates down.";
+      " the central bank owns " + share + " of the government's debt, the most it will hold, " +
+      "and can no longer hold interest rates down.";
     // The longer explanation, shown when the question mark is pressed.
     document.getElementById("warning-more").textContent =
       "A central bank holds interest rates down by buying government debt. In this scenario it starts buying in " +
       firstBought.year + " to keep the yield at " + FORMATS.percent1(broken.cap) +
       ". Lenders want more than that, so every year it has to buy more. By " + h.firstCapBrokenYear +
-      " it owns all of the debt and there is none left to buy. From then on the cap has no effect, " +
+      " it owns " + share + " of the debt, which is the most it will hold (a setting on this page), " +
+      "and it stops buying. From then on the cap has no effect, " +
       "and the yield in the chart is the rate lenders would ask for.";
   }
 

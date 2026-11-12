@@ -114,24 +114,21 @@ def baseline_inflation(inflation, last_year, source):
     }
 
 
-RECENT_FROM = 2015     # real growth is averaged from this year
-
-
-def recent_note(first_year, last_year):
-    # Isaac chose 2015 on 2026-11-11.
-    return f"from {first_year} to {last_year}, recent years that reflect the current environment"
-
-
 def baseline_growth(levels, last_year, source):
-    """Average yearly real growth since 2015, as the item written to the
-    data file. `levels` holds real GDP by year. The average is compounded."""
-    if RECENT_FROM - 1 not in levels or first_unbroken_year(levels, last_year) > RECENT_FROM - 1:
-        stop(f"real GDP does not cover every year from {RECENT_FROM - 1} to {last_year}")
-    years = last_year - RECENT_FROM + 1
+    """Average yearly real growth since 1972, or since the figures begin
+    if that is later, as the item written to the data file. `levels` holds
+    real GDP by year. The average is compounded. (Isaac chose 1972, to
+    match money growth, on 2026-11-12.)"""
+    first = max(first_unbroken_year(levels, last_year) + 1, BASELINE_FROM)
+    years = last_year - first + 1
+    if years < 10:
+        stop("fewer than ten years of real GDP history")
+    period = period_note(first, last_year) if first == BASELINE_FROM \
+        else f"from {first} to {last_year}, the years the figures cover"
     return {
-        "value": (levels[last_year] / levels[RECENT_FROM - 1]) ** (1 / years) - 1,
+        "value": (levels[last_year] / levels[first - 1]) ** (1 / years) - 1,
         "source": source,
-        "note": "average real growth " + recent_note(RECENT_FROM, last_year),
+        "note": "average real growth " + period,
     }
 
 
@@ -186,7 +183,7 @@ def baseline_balance(balances, last_year, source):
     return {
         "value": sum(balances[year] for year in years) / len(years),
         "source": source,
-        "note": "average primary balance " + recent_note(BALANCE_FROM, last_year),
+        "note": f"average primary balance from {BALANCE_FROM} to {last_year}, recent years that reflect the current environment",
     }
 
 

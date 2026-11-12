@@ -50,10 +50,7 @@ def main():
             for item in country["missing"]:
                 print("  - " + item)
     write_json(os.path.join(DATA, "meta.json"), build_meta(series_list, sources, countries))
-    write_json(os.path.join(DATA, "estimates.json"), {
-        "passThrough": estimate_pass_through(countries),
-        "moneyShare": estimate_money_share(countries),
-    })
+    write_json(os.path.join(DATA, "estimates.json"), {"moneyShare": estimate_money_share(countries)})
 
     to_confirm = [key for key, entry in sources.items() if "to confirm" in json.dumps(entry)]
     if to_confirm:
@@ -340,53 +337,6 @@ def us_ownership(sources, start_year, gdp, debt, central_bank):
 
 
 # ---------------------------------------------------------------- estimates
-
-def estimate_pass_through(countries):
-    """How much inflation has followed a rise in central bank holdings, in
-    the history of the countries built here.
-
-    The model says: inflation this year = baseline + pass-through x last
-    year's rise in central bank holdings (as a share of GDP) + persistence
-    x last year's gap between inflation and the baseline. With the
-    baseline from each country's data file and the persistence default
-    from presets.json, pass-through is the one unknown. It is fitted by
-    least squares to every year of every country at once.
-    """
-    with open(os.path.join(DATA, "presets.json")) as f:
-        persistence = json.load(f)["controls"]["persistence"]["default"]
-
-    def fit(points):
-        return sum(x * y for x, y in points) / sum(x * x for x, _ in points)
-
-    pooled, each = [], {}
-    for country in countries:
-        if "start" not in country:
-            continue
-        holdings, inflation = country["history"]["centralBank"], country["history"]["inflation"]
-        baseline = country["start"]["baselineInflation"]["value"]
-
-        def value(series, year):
-            return series["values"][year - series["firstYear"]]
-
-        points = []
-        for year in range(max(holdings["firstYear"], inflation["firstYear"]) + 2, country["start"]["year"] + 1):
-            rise = value(holdings, year - 1) - value(holdings, year - 2)
-            unexplained = (value(inflation, year) - baseline) - persistence * (value(inflation, year - 1) - baseline)
-            points.append((rise, unexplained))
-        if points:
-            each[country["country"]] = {"value": fit(points), "years": len(points)}
-            pooled += points
-    if len(pooled) < 20:
-        stop("too few years of central bank history to estimate pass-through")
-
-    return {
-        "value": fit(pooled),
-        "years": len(pooled),
-        "byCountry": each,
-        "note": f"estimated from {len(pooled)} years of history in the four countries: the inflation that "
-                "followed each rise in central bank holdings, beyond what the baseline and persistence explain",
-    }
-
 
 def estimate_money_share(countries):
     """How much new money has appeared for each unit of debt the central
