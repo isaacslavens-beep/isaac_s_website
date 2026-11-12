@@ -264,40 +264,54 @@ test("interest above the chosen share of revenue is fiscal stress, and switches 
   none.rows.forEach(function (row) { assert.strictEqual(row.stressFromInterest, false); });
 });
 
-test("the money supply grows with GDP, its trend and cap purchases", function () {
-  // Without a starting money supply the model leaves it out.
-  const without = run(start, controlsWith({}));
-  assert.strictEqual(without.rows[5].money, null);
-  assert.strictEqual(without.headline.annualMoneyGrowth, null);
+test("without a money supply, inflation follows central bank holdings as before", function () {
+  const result = run(start, controlsWith({}));
+  assert.strictEqual(result.rows[5].money, null);
+  assert.strictEqual(result.headline.annualMoneyGrowth, null);
+});
 
-  // With no trend and no cap, money keeps its share of GDP, so it grows
-  // at the same rate as GDP in money terms.
+test("with a money supply, inflation settles at money growth less real growth less the trend", function () {
   const withMoney = Object.assign({}, start, { money: 0.8 });
-  const flat = run(withMoney, controlsWith({ capMode: "off", moneyTrend: 0 }));
-  flat.rows.slice(1).forEach(function (row) {
-    close(row.money, 0.8, 1e-12);
-    close(row.moneyGrowth, row.nominalGrowth, 1e-12);
-  });
+  const controls = controlsWith({ capMode: "off", moneyGrowth: 0.07, moneyTrend: 0.01, moneyShare: 0, growth: 0.02 });
+  const result = run(withMoney, controls);
+  const implied = 1.07 / (1.02 * 1.01) - 1;
 
-  // A trend of 1% a year raises the share by 1% a year.
-  const trend = run(withMoney, controlsWith({ capMode: "off", moneyTrend: 0.01 }));
-  close(trend.rows[1].money, 0.8 * 1.01, 1e-12);
-  close(trend.rows[1].moneyGrowth, 1.01 * (1 + trend.rows[1].nominalGrowth) - 1, 1e-12);
+  // The first year, by hand: part of the way from starting inflation.
+  close(result.rows[1].inflation, implied + controls.persistence * (start.inflation - implied), 1e-12);
+  // In the long run inflation is the implied rate, and money rises against
+  // GDP at the trend.
+  close(result.rows[30].inflation, implied, 1e-6);
+  close(result.rows[30].money / result.rows[29].money, 1.01, 1e-6);
+  result.rows.slice(1).forEach(function (row) { close(row.moneyGrowth, 0.07, 1e-12); });
+  close(result.headline.annualMoneyGrowth, 0.07, 1e-12);
 
-  // Purchases to hold the cap are added one for one, and the headline
-  // rate compounds to the total.
-  const capped = run(withMoney, controlsWith({ capMode: "fixed", capLevel: 0.01, moneyTrend: 0.01 }));
+  // Faster money growth means more inflation.
+  const faster = run(withMoney, Object.assign({}, controls, { moneyGrowth: 0.10 }));
+  assert.ok(faster.headline.purchasingPowerLoss > result.headline.purchasingPowerLoss);
+  // A faster rise in money against GDP means less.
+  const drift = run(withMoney, Object.assign({}, controls, { moneyTrend: 0.03 }));
+  assert.ok(drift.headline.purchasingPowerLoss < result.headline.purchasingPowerLoss);
+});
+
+test("central bank buying creates money, and the money raises inflation the next year", function () {
+  const withMoney = Object.assign({}, start, { money: 0.8 });
+  const controls = controlsWith({ capMode: "fixed", capLevel: 0.01, moneyGrowth: 0.07, moneyTrend: 0.01, moneyShare: 1 });
+  const result = run(withMoney, controls);
   let times = 1;
-  let bought = false;
-  capped.rows.slice(1).forEach(function (row, index) {
-    const prev = capped.rows[index];
-    close(row.money, prev.money * 1.01 + row.purchases, 1e-12);
-    if (row.purchases > 0) bought = true;
+  result.rows.slice(1).forEach(function (row, index) {
+    const prev = result.rows[index];
+    close(row.moneyGrowth, 0.07 + (row.centralBank - prev.centralBank) / prev.money, 1e-12);
+    close(row.money, prev.money * (1 + row.moneyGrowth) / (1 + row.nominalGrowth), 1e-12);
+    const implied = (1 + prev.moneyGrowth) / ((1 + row.growth) * 1.01) - 1;
+    close(row.inflation, implied + controls.persistence * (prev.inflation - implied), 1e-12);
     times *= 1 + row.moneyGrowth;
   });
-  assert.ok(bought);
-  close(capped.headline.moneyTimes, times, 1e-9);
-  close(capped.headline.annualMoneyGrowth, Math.pow(times, 1 / 30) - 1, 1e-12);
+  assert.ok(result.rows[1].purchases > 0);
+  close(result.headline.moneyTimes, times, 1e-9);
+
+  // With no money created by the buying, inflation is lower.
+  const none = run(withMoney, Object.assign({}, controls, { moneyShare: 0 }));
+  assert.ok(none.headline.purchasingPowerLoss < result.headline.purchasingPowerLoss);
 });
 
 test("reactive mode moves the primary balance with debt", function () {

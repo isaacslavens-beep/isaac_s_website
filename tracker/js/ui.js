@@ -12,6 +12,8 @@ var COUNTRIES = [
 // The United Kingdom is left out for now. Its data file is still built;
 // to show it again, add this line back to the list above:
 //   { key: "united-kingdom", code: "uk", name: "United Kingdom" },
+// (The United Kingdom also needs an M2 series in its data file first:
+// inflation on this page follows the money supply.)
 
 var GROUP_LABELS = {
   domesticPrivate: "Domestic private",
@@ -58,9 +60,9 @@ function controlList(country) {
   // The main controls, in order of how much they move the loss of
   // purchasing power: the largest first.
   var list = [
-    { key: "baselineInflation", section: "main", type: "range", format: "percent1",
-      label: "Baseline inflation",
-      help: "The inflation rate the economy returns to when the central bank is not buying debt." },
+    { key: "moneyGrowth", section: "main", type: "range", format: "percent1",
+      label: "Money supply growth",
+      help: "How fast the money supply (M2) grows each year, before any money the central bank creates by buying debt. Inflation follows it." },
     { key: "stressInterestShare", section: "main", type: "range", format: "percent0",
       label: "Interest burden that counts as fiscal stress",
       help: "Fiscal stress starts when interest on the debt takes more than this share of government revenue." },
@@ -130,13 +132,13 @@ function controlList(country) {
   list.push(
     { key: "persistence", section: "advanced", type: "range", format: "number2",
       label: "Inflation persistence",
-      help: "How much of last year's gap between inflation and its baseline carries into this year." },
-    { key: "passThrough", section: "advanced", type: "range", format: "number2",
-      label: "Pass-through",
-      help: "Points of inflation the next year for each point of GDP by which central bank holdings rise." },
+      help: "How slowly inflation catches up with money growth: the part of last year's gap that remains this year." },
+    { key: "moneyShare", section: "advanced", type: "range", format: "number2",
+      label: "New money from central bank buying",
+      help: "Units of new money for each unit of government debt the central bank adds to its holdings." },
     { key: "moneyTrend", section: "advanced", type: "range", format: "percent1",
-      label: "Money supply growth beyond GDP",
-      help: "How much faster than GDP the money supply (M2) grows each year." }
+      label: "Money growth that does not raise prices",
+      help: "How much faster than the economy the money supply can grow each year without causing inflation." }
   );
   // The controls marked `fixed` are not shown: they change the result
   // very little. The model still uses their default values.
@@ -189,13 +191,13 @@ function presetFor(control, country) {
     preset.default = start.moneyTrend.value;
     preset.basis = "Default: " + start.moneyTrend.note + ".";
   }
-  if (control.key === "passThrough") {
-    preset.default = page.estimates.passThrough.value;
-    preset.basis = "Default: " + page.estimates.passThrough.note + ".";
+  if (control.key === "moneyShare") {
+    preset.default = page.estimates.moneyShare.value;
+    preset.basis = "Default: " + page.estimates.moneyShare.note + ".";
   }
-  if (control.key === "baselineInflation") {
-    preset.default = start.baselineInflation.value;
-    preset.basis = "Default: " + start.baselineInflation.note + ".";
+  if (control.key === "moneyGrowth") {
+    preset.default = start.moneyGrowth.value;
+    preset.basis = "Default: " + start.moneyGrowth.note + ".";
   }
   if (control.key === "stressInterestShare") {
     // Shown beside the assumption so the reader can place it: what the
@@ -373,10 +375,10 @@ function modelInputs(country, c) {
       capLevel: c.capLevel,
       priceSensitive: priceSensitive,
       yieldResponse: c.yieldResponse,
-      passThrough: c.passThrough,
+      moneyGrowth: c.moneyGrowth,
+      moneyShare: c.moneyShare,
       moneyTrend: c.moneyTrend,
       persistence: c.persistence,
-      baselineInflation: c.baselineInflation,
       foreignInflation: page.presets.controls.foreignInflation.default, // only moves the exchange rate, which no chart shows
       maturity: c.maturity,
       runoff: c.runoff,
@@ -433,16 +435,11 @@ function chartList(country) {
   ];
 }
 
-// The price level each year if the central bank never bought debt:
-// inflation only drifts from its starting value back to the baseline.
-function pricesWithoutPurchases(country, c) {
-  var levels = [1];
-  var inflation = country.start.inflation.value;
-  for (var t = 1; t <= page.presets.years; t++) {
-    inflation = c.baselineInflation + c.persistence * (inflation - c.baselineInflation);
-    levels.push(levels[t - 1] * (1 + inflation));
-  }
-  return levels;
+// The loss of purchasing power if the central bank's buying created no
+// money: the same scenario run again with that one setting at zero.
+function lossWithoutNewMoney(country, c) {
+  var inputs = modelInputs(country, Object.assign({}, c, { moneyShare: 0 }));
+  return runModel(inputs.start, inputs.controls).headline.purchasingPowerLoss;
 }
 
 // The years and values of one chart, ready to plot or download.
@@ -599,8 +596,6 @@ function fillHero() {
   number.append(total);
   // Money supply expansion: the projected growth of M2 in money terms,
   // as a steady yearly rate.
-  var gdpGrowth = 1;
-  rows.slice(1).forEach(function (row) { gdpGrowth *= 1 + row.nominalGrowth; });
   var moneyTimes = page.result.headline.moneyTimes;
   var moneyPerYear = page.result.headline.annualMoneyGrowth;
   document.getElementById("hero-money").textContent =
@@ -608,8 +603,8 @@ function fillHero() {
   document.getElementById("hero-money-note").textContent =
     "Projected growth of the money supply (M2), " + startYear + " to " + last.year + ".";
 
-  var without = pricesWithoutPurchases(country, c);
-  var lossWithout = 1 - 1 / without[years];
+  var lossWithout = lossWithoutNewMoney(country, c);
+  var impliedInflation = (1 + c.moneyGrowth) / ((1 + c.growth) * (1 + c.moneyTrend)) - 1;
   var averageInflation = Math.pow(last.priceLevel, 1 / years) - 1;
   var capYears = rows.filter(function (row) { return row.purchases > 0; });
   var capPurchases = 0;
@@ -623,9 +618,12 @@ function fillHero() {
       FORMATS.percent1(lossPerYear) + " annually: 1 − (1 − " + FORMATS.percent0(loss) + ") ^ (1 ÷ " + years + ").",
     "2. The price level is each year's inflation compounded. Inflation averages " +
       FORMATS.percent1(averageInflation) + " a year over the " + years + " years.",
-    "3. Inflation in a year = baseline inflation (" + FORMATS.percent1(c.baselineInflation) +
-      ") + pass-through (" + c.passThrough.toFixed(2) + ") × the rise in central bank holdings the year before, as a share of GDP" +
-      " + persistence (" + c.persistence.toFixed(2) + ") × last year's gap between inflation and the baseline.",
+    "3. Inflation follows the money supply. Money growing at " + FORMATS.percent1(c.moneyGrowth) +
+      " a year, with real growth of " + FORMATS.percent1(c.growth) + " and " + FORMATS.percent1(c.moneyTrend) +
+      " of money growth that does not raise prices, implies inflation of " + FORMATS.percent1(impliedInflation) +
+      ": (1 + " + FORMATS.percent1(c.moneyGrowth) + ") ÷ ((1 + " + FORMATS.percent1(c.growth) + ") × (1 + " +
+      FORMATS.percent1(c.moneyTrend) + ")) − 1. Each year inflation moves toward the rate that last year's money growth implies, and " +
+      "persistence (" + c.persistence.toFixed(2) + ") is the part of the gap that remains.",
     "4. The central bank keeps its share of the debt, so its holdings rise when debt grows faster than " +
       "the economy. It buys more in years when the yield would otherwise rise above its cap. " +
       "In this scenario its holdings " + (totalRise >= 0 ? "rise" : "fall") + " by " +
@@ -634,15 +632,14 @@ function fillHero() {
         ? ", of which " + FORMATS.percent0(capPurchases) + " of GDP is bought to hold the cap, starting in " +
           capYears[0].year + "."
         : ". The cap is never reached."),
-    "5. If central bank holdings stayed level as a share of GDP, the loss would be " + FORMATS.percent0(lossWithout) +
-      ". The change in its holdings accounts for the remaining " + ((loss - lossWithout) * 100).toFixed(1) +
+    "5. Each unit of debt the central bank adds to its holdings creates " + c.moneyShare.toFixed(2) +
+      " units of new money, on top of the " + FORMATS.percent1(c.moneyGrowth) + " a year. " +
+      "If its buying created no money, the loss would be " + FORMATS.percent0(lossWithout) +
+      ". The money it creates accounts for the remaining " + ((loss - lossWithout) * 100).toFixed(1) +
       " percentage points.",
-    "6. Money supply expansion is the growth of M2 in money terms. M2 is " + FORMATS.percent0(rows[0].money) +
-      " of GDP in " + startYear + ". Each year that share rises by " + FORMATS.percent1(c.moneyTrend) +
-      " of itself, " + country.start.moneyTrend.note + ", and by whatever the central bank buys to hold the cap (" +
-      FORMATS.percent0(capPurchases) + " of GDP in this scenario). That brings M2 to " +
-      FORMATS.percent0(last.money) + " of GDP in " + last.year + ". GDP in money terms is " +
-      gdpGrowth.toFixed(2) + " times as large, so M2 is " + moneyTimes.toFixed(1) + " times as large: " +
+    "6. Money supply expansion is the growth of M2. It is " + FORMATS.percent0(rows[0].money) +
+      " of GDP in " + startYear + " and " + FORMATS.percent0(last.money) + " of GDP in " + last.year +
+      ". Over the " + years + " years it becomes " + moneyTimes.toFixed(1) + " times as large: " +
       FORMATS.percent1(moneyPerYear) + " annually."
   ];
 

@@ -21,5 +21,24 @@
       }
     },
     "note": "estimated from 79 years of history in the four countries: the inflation that followed each rise in central bank holdings, beyond what the baseline and persistence explain"
+  },
+  "moneyShare": {
+    "value": 0.722923096792803,
+    "years": 63,
+    "byCountry": {
+      "united-states": {
+        "value": 0.9098431810445959,
+        "years": 23
+      },
+      "japan": {
+        "value": 0.18060041695440174,
+        "years": 4
+      },
+      "canada": {
+        "value": 0.559523790608254,
+        "years": 36
+      }
+    },
+    "note": "estimated from 63 years of history in 3 countries: how much faster the money supply grew in years when the central bank's holdings of government debt rose"
   }
 }

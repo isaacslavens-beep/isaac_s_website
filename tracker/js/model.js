@@ -21,6 +21,13 @@
 //   revenue           tau  government revenue
 //   stressThreshold        the largest five-year average primary balance in
 //                          the country's history
+//   money                  optional: the money supply (M2)
+//
+// Inflation is worked out in one of two ways. When start.money and
+// controls.moneyGrowth are both given, inflation follows the money supply:
+// money growth, less real growth, less the yearly rise in money as a share
+// of GDP. Otherwise inflation follows the rise in central bank holdings
+// through passThrough, around baselineInflation.
 //
 // controls: the scenario
 //   years                  how many years to project
@@ -29,8 +36,12 @@
 //                          per year, or a function (see primaryBalanceFor)
 //   primaryBalanceMode     "fixed" or "reactive"
 //   gamma                  reactive mode: response of the balance to debt
-//   moneyTrend             optional: yearly rise in the money supply as a
-//                          share of GDP (used when start.money is given)
+//   moneyGrowth            yearly growth of the money supply when the
+//                          central bank's holdings are level as a share of GDP
+//   moneyTrend             how much faster than GDP the money supply has
+//                          grown each year without causing inflation
+//   moneyShare             how much new money each unit of central bank
+//                          buying creates (1 means one for one)
 //   stressInterestShare    optional: a year is also in fiscal stress when
 //                          interest is more than this share of revenue
 //   capMode                "automatic", "fixed" or "off"
@@ -40,8 +51,9 @@
 //   yieldResponse     theta
 //   passThrough       lambda: points of inflation next year for each point
 //                          of GDP by which central bank holdings rise
-//   persistence       kappa
-//   baselineInflation pi_base
+//                          (not used when inflation follows money)
+//   persistence       kappa: how much of last year's gap carries over
+//   baselineInflation pi_base (not used when inflation follows money)
 //   foreignInflation  pi_f
 //   maturity          m    average maturity in years
 //   runoff            q    central bank runoff per year. With no runoff the
@@ -69,6 +81,11 @@ function runModel(start, controls) {
   var m = controls.maturity;
   var q = controls.runoff;
 
+  // Inflation follows the money supply when both of these are given.
+  var monetary = usesMoney(start, controls);
+  var moneyTrend = monetary && isNumber(controls.moneyTrend) ? controls.moneyTrend : 0;
+  var moneyShare = monetary && isNumber(controls.moneyShare) ? controls.moneyShare : 1;
+
   // Starting holdings. The data may be off from the debt by a rounding gap
   // (the pipeline allows up to 1%), so the groups are scaled to fit exactly.
   var h0 = scaleToFit(start.holdings, d0 - start.centralBank);
@@ -91,8 +108,9 @@ function runModel(start, controls) {
     inflation: pi0,
     purchases: 0,
     buying: 0,
-    money: isNumber(start.money) ? start.money : null,
-    moneyGrowth: null,
+    money: monetary ? start.money : null,
+    // Money growth in the starting year is taken to be the chosen rate.
+    moneyGrowth: monetary ? controls.moneyGrowth : null,
     growth: null,
     nominalGrowth: null,
     primaryBalance: null,
@@ -115,11 +133,22 @@ function runModel(start, controls) {
   for (var t = 1; t <= controls.years; t++) {
     var prev = rows[t - 1];
 
-    // 1. Inflation, from last year's rise in central bank holdings.
-    var inflation = piBase + lambda * prev.buying + kappa * (prev.inflation - piBase);
+    var growth = valueForYear(controls.growth, t);
+
+    // 1. Inflation. With money: the inflation that last year's money
+    // growth implies is money growth, less real growth, less the yearly
+    // rise in money as a share of GDP. Inflation moves toward that rate,
+    // and persistence is the part of last year's gap that remains.
+    // Without money: from last year's rise in central bank holdings.
+    var inflation;
+    if (monetary) {
+      var impliedInflation = (1 + prev.moneyGrowth) / ((1 + growth) * (1 + moneyTrend)) - 1;
+      inflation = impliedInflation + kappa * (prev.inflation - impliedInflation);
+    } else {
+      inflation = piBase + lambda * prev.buying + kappa * (prev.inflation - piBase);
+    }
 
     // 2. Nominal growth.
-    var growth = valueForYear(controls.growth, t);
     var nominalGrowth = (1 + growth) * (1 + inflation) - 1;
 
     // The average interest rate for this year was set at the end of last
@@ -238,16 +267,16 @@ function runModel(start, controls) {
         " but debt is " + debt);
     }
 
-    // The money supply (M2), as a share of GDP. It keeps drifting against
-    // GDP at its past rate, and each unit of debt the central bank buys to
-    // hold the cap adds one unit of money. Its growth in money terms is
-    // the change in the share on top of the growth of GDP in money terms.
+    // The money supply (M2). It grows at the chosen rate, plus the money
+    // the central bank creates when its holdings rise as a share of GDP
+    // (or less, when they fall). `money` is a share of GDP, so the rise in
+    // holdings divided by it is a percent of the money supply.
     var money = null;
     var moneyGrowth = null;
-    if (prev.money !== null) {
-      var moneyTrend = isNumber(controls.moneyTrend) ? controls.moneyTrend : 0;
-      money = prev.money * (1 + moneyTrend) + purchases;
-      moneyGrowth = prev.money > 0 ? money / prev.money * (1 + nominalGrowth) - 1 : null;
+    if (monetary) {
+      moneyGrowth = controls.moneyGrowth + moneyShare * (centralBank - prev.centralBank) / prev.money;
+      moneyGrowth = Math.max(moneyGrowth, -0.9);   // money cannot fall below zero
+      money = prev.money * (1 + moneyGrowth) / (1 + nominalGrowth);
     }
 
     // Debt that comes due this year, as a share of this year's GDP.
@@ -361,9 +390,9 @@ function headlineFigures(rows) {
 
   // The money supply's growth in money terms as a steady yearly rate.
   var moneyTimes = null;
-  if (rows[0].money > 0 && years > 0) {
-    moneyTimes = last.money / rows[0].money;
-    rows.forEach(function (row, t) { if (t > 0) moneyTimes *= 1 + row.nominalGrowth; });
+  if (rows[0].money !== null && years > 0) {
+    moneyTimes = 1;
+    rows.forEach(function (row, t) { if (t > 0) moneyTimes *= 1 + row.moneyGrowth; });
   }
 
   return {
@@ -379,12 +408,21 @@ function headlineFigures(rows) {
   };
 }
 
+// True when inflation is to follow the money supply.
+function usesMoney(start, controls) {
+  return isNumber(start.money) && isNumber(controls.moneyGrowth);
+}
+
 // Stops with a clear message if an input is missing or not a number.
 function checkInputs(start, controls) {
   var startNumbers = ["year", "debt", "centralBank", "yield", "averageRate",
     "inflation", "revenue", "stressThreshold"];
-  var controlNumbers = ["years", "yieldResponse", "passThrough", "persistence",
-    "baselineInflation", "foreignInflation", "maturity", "runoff"];
+  var controlNumbers = ["years", "yieldResponse", "persistence", "foreignInflation", "maturity", "runoff"];
+  if (usesMoney(start, controls)) {
+    if (!(start.money > 0)) throw new Error("start.money must be above zero");
+  } else {
+    controlNumbers.push("passThrough", "baselineInflation");
+  }
 
   startNumbers.forEach(function (name) {
     if (!isNumber(start[name])) throw new Error("start." + name + " must be a number");

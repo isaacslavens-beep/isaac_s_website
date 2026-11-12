@@ -22,6 +22,14 @@
       "min": 0, "max": 0.12, "step": 0.001, "default": null,
       "basis": "Used only when the cap is fixed. Starts at the country's current yield."
     },
+    "moneyGrowth": {
+      "min": 0, "max": 0.2, "step": 0.001, "default": null, "showBasis": true,
+      "basis": "The country's past average."
+    },
+    "moneyShare": {
+      "min": 0, "max": 1.5, "step": 0.01, "default": null, "showBasis": true,
+      "basis": "Estimated by the build from the countries' history. See data/estimates.json."
+    },
     "moneyTrend": {
       "min": -0.02, "max": 0.05, "step": 0.001, "default": null, "showBasis": true,
       "basis": "The country's past average."

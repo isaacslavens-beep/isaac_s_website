@@ -400,9 +400,11 @@ def assemble(country, sources, given):
     if "money_source" in given:
         money_source = [given["money_source"], gdp_source]
         m2 = {int(date[:4]): value for date, value in load(prefix + "_m2") if date[5:7] == "03"}
-        money, start["money"], start["moneyTrend"] = money_supply(
-            m2, gdp, start_year, given["money_per_gdp_unit"], money_source)
+        money, money_growth, items = money_supply(
+            m2, gdp, start_year, given["money_per_gdp_unit"], [given["money_source"]], [gdp_source])
+        start.update(items)
         history["money"] = (money, money_source)
+        history["moneyGrowth"] = (money_growth, [given["money_source"]])
 
     start["holdings"] = {
         "domestic": item(domestic[start_year], holders_source,

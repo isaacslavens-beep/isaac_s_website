@@ -50,7 +50,10 @@ def main():
             for item in country["missing"]:
                 print("  - " + item)
     write_json(os.path.join(DATA, "meta.json"), build_meta(series_list, sources, countries))
-    write_json(os.path.join(DATA, "estimates.json"), {"passThrough": estimate_pass_through(countries)})
+    write_json(os.path.join(DATA, "estimates.json"), {
+        "passThrough": estimate_pass_through(countries),
+        "moneyShare": estimate_money_share(countries),
+    })
 
     to_confirm = [key for key, entry in sources.items() if "to confirm" in json.dumps(entry)]
     if to_confirm:
@@ -178,8 +181,10 @@ def build_united_states(sources):
     # The money supply: M2 in the last month of each fiscal year.
     m2_months = dict(load("us_m2"))
     m2 = {year: m2_months[end[:8] + "01"] for year, end in year_end.items() if end[:8] + "01" in m2_months}
-    money, start["money"], start["moneyTrend"] = money_supply(m2, gdp, start_year, 1, ["fed_h6", "bea_gdp"])
+    money, money_growth, items = money_supply(m2, gdp, start_year, 1, ["fed_h6"], ["bea_gdp"])
+    start.update(items)
     history["money"] = (money, ["fed_h6", "bea_gdp"])
+    history["moneyGrowth"] = (money_growth, ["fed_h6"])
 
     # Ownership comes from the files Isaac downloads by hand. If one is
     # missing, the country is marked unavailable.
@@ -380,6 +385,50 @@ def estimate_pass_through(countries):
         "byCountry": each,
         "note": f"estimated from {len(pooled)} years of history in the four countries: the inflation that "
                 "followed each rise in central bank holdings, beyond what the baseline and persistence explain",
+    }
+
+
+def estimate_money_share(countries):
+    """How much new money has appeared for each unit of debt the central
+    bank bought, in the history of the countries built here.
+
+    The model says: money growth this year = the country's average money
+    growth + share x the rise in central bank holdings (as a share of GDP)
+    divided by last year's money supply (as a share of GDP). The share is
+    the one unknown. It is fitted by least squares to every year of every
+    country at once.
+    """
+    def fit(points):
+        return sum(x * y for x, y in points) / sum(x * x for x, _ in points)
+
+    pooled, each = [], {}
+    for country in countries:
+        if "start" not in country or "money" not in country["history"]:
+            continue
+        history = country["history"]
+        holdings, money, growth = history["centralBank"], history["money"], history["moneyGrowth"]
+        average = country["start"]["moneyGrowth"]["value"]
+
+        def value(series, year):
+            return series["values"][year - series["firstYear"]]
+
+        first = max(holdings["firstYear"], money["firstYear"], growth["firstYear"] - 1) + 1
+        points = []
+        for year in range(first, country["start"]["year"] + 1):
+            rise = (value(holdings, year) - value(holdings, year - 1)) / value(money, year - 1)
+            points.append((rise, value(growth, year) - average))
+        if points:
+            each[country["country"]] = {"value": fit(points), "years": len(points)}
+            pooled += points
+    if len(pooled) < 20:
+        stop("too few years of history to estimate how much money central bank buying creates")
+
+    return {
+        "value": fit(pooled),
+        "years": len(pooled),
+        "byCountry": each,
+        "note": f"estimated from {len(pooled)} years of history in {len(each)} countries: how much faster the "
+                "money supply grew in years when the central bank's holdings of government debt rose",
     }
 
 
