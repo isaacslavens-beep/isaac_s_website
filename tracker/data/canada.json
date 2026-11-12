@@ -9,7 +9,8 @@
     "Foreign holders are one group: the data does not separate foreign official from foreign private holders.",
     "The yield and the average maturity are the federal government's, used for provincial debt as well: no current provincial series is published.",
     "Each group's share of the debt is measured at market value and applied to the debt at book value. The holders of provincial short-term paper are not published, so it is spread over the groups in the same proportions as the rest.",
-    "Revenue adds federal and provincial revenue, so federal transfers to provinces are counted twice."
+    "Revenue adds federal and provincial revenue, so federal transfers to provinces are counted twice.",
+    "The primary balance is the International Monetary Fund's figure for all of government, including local governments and the public pension plans, by calendar year. Each calendar year is shown under the fiscal year that ends the following March."
   ],
   "start": {
     "year": 2026,
@@ -49,10 +50,9 @@
       ]
     },
     "primaryBalance": {
-      "value": 0.0011646863432425419,
+      "value": -0.018978774254242,
       "source": [
-        "statcan_gfs",
-        "imf_ifs_gdp"
+        "imf_fiscal_monitor"
       ]
     },
     "averageRate": {
@@ -85,10 +85,9 @@
       "note": "average real growth from 2015 to 2026, recent years that reflect the current environment"
     },
     "baselinePrimaryBalance": {
-      "value": 0.005371693210548039,
+      "value": -0.015084812543886305,
       "source": [
-        "statcan_gfs",
-        "imf_ifs_gdp"
+        "imf_fiscal_monitor"
       ],
       "note": "average primary balance from 2022 to 2026, recent years that reflect the current environment"
     },
@@ -100,12 +99,11 @@
       "note": "average of IMF projections for 2027 to 2031"
     },
     "stressThreshold": {
-      "value": 0.08088098798311774,
+      "value": 0.048633983538645995,
       "source": [
-        "statcan_gfs",
-        "imf_ifs_gdp"
+        "imf_fiscal_monitor"
       ],
-      "note": "largest five-year average primary balance, years to March 1997 to 2001"
+      "note": "largest five-year average primary balance, years to March 1998 to 2002"
     },
     "holdings": {
       "domestic": {
@@ -618,47 +616,46 @@
     },
     "primaryBalance": {
       "source": [
-        "statcan_gfs",
-        "imf_ifs_gdp"
+        "imf_fiscal_monitor"
       ],
       "firstYear": 1991,
       "values": [
-        0.02119619953995641,
-        0.006738710605251263,
-        -0.007041475824864513,
-        0.001708705942675757,
-        0.02201662274276498,
-        0.04049935459195869,
-        0.06667744995807134,
-        0.08325686923658682,
-        0.07246832613691945,
-        0.09124870112749887,
-        0.09075359345651218,
-        0.055944684064664324,
-        0.04979384426199863,
-        0.045384153097382175,
-        0.0520365459426073,
-        0.05053375662137005,
-        0.05404632655473405,
-        0.044262907723323704,
-        0.023900062613582566,
-        -0.011302332530253591,
-        -0.01857678594258278,
-        0.0007092851108676196,
-        0.003595943194300327,
-        0.018246799857996703,
-        0.025025123618201,
-        0.025663863717175425,
-        0.01871385935232647,
-        0.022386870728601967,
-        0.024465425456302953,
-        0.010625279564377772,
-        -0.1022939500170628,
-        0.0003084923874069518,
-        0.022088435181651222,
-        -0.002976465628964435,
-        0.006273317769403918,
-        0.0011646863432425419
+        -0.008575113479348,
+        -0.031664085110142,
+        -0.039734924196449,
+        -0.037260537296011,
+        -0.018668589293561,
+        0.0008465394693015201,
+        0.021406457525521998,
+        0.04719899969788,
+        0.047978412585003995,
+        0.057605362293103,
+        0.056585879206669,
+        0.033801263910574,
+        0.022558545154787998,
+        0.016446343366431998,
+        0.022584637176198,
+        0.025324460639143,
+        0.024105909111561998,
+        0.023679992089555003,
+        0.0046552861395705,
+        -0.027760488858510998,
+        -0.039001877496927004,
+        -0.027008623707275,
+        -0.018215292132612,
+        -0.0099356182451595,
+        0.004506997350240499,
+        0.0058826159629951,
+        0.0013073089331954,
+        0.00089365755397565,
+        0.0046245541055833,
+        0.0010360642869889,
+        -0.10454770421616001,
+        -0.036999106402747,
+        0.0020760020655278,
+        -0.00037535398106233,
+        -0.021146830146908,
+        -0.018978774254242
       ]
     },
     "interestToRevenue": {

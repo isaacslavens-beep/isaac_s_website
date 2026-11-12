@@ -302,6 +302,18 @@ series:
     annual_rule: average of the twelve months from April to March, then the change from the year before
     feeds: inflation
 
+  - key: ca_primary_balance
+    country: canada
+    source: imf_fiscal_monitor
+    service: imf_datamapper
+    indicator: GGXONLB_G01_GDP_PT
+    area: CAN
+    title: Primary net lending/borrowing (also referred as primary balance)
+    units: percent of GDP
+    frequency: annual, calendar year
+    annual_rule: each calendar year is given to the fiscal year that ends the following March; projections are left out
+    feeds: primary balance
+
   - key: ca_growth_baseline
     country: canada
     source: imf_weo

@@ -173,12 +173,21 @@ def build_canada(sources):
                 totals[group] += groups[group]
         holders[year] = totals
 
-    revenue, interest, primary = {}, {}, {}
+    revenue, interest = {}, {}
     for year, row in accounts.items():
         federal, provincial = row["federal"], row["provincial"]
         revenue[year] = federal["revenue"] + provincial["revenue"]
         interest[year] = federal["interest"] + provincial["interest"]
-        primary[year] = federal["net_lending"] + provincial["net_lending"] + interest[year]
+
+    # The primary balance is the IMF's, already a share of GDP. It is by
+    # calendar year: each is given to the fiscal year ending the next
+    # March, which covers nine of its months. Years the IMF has not yet
+    # seen end are projections and are left out.
+    last_debt_year = max(debt)
+    primary_share = {}
+    for year, percent in load("ca_primary_balance"):
+        if int(year) + 1 <= last_debt_year:
+            primary_share[int(year) + 1] = percent / 100
 
     return assemble(country, sources, {
         "prefix": "ca",
@@ -194,10 +203,14 @@ def build_canada(sources):
             "The holders of provincial short-term paper are not published, so it is spread over the groups "
             "in the same proportions as the rest.",
             "Revenue adds federal and provincial revenue, so federal transfers to provinces are counted twice.",
+            "The primary balance is the International Monetary Fund's figure for all of government, "
+            "including local governments and the public pension plans, by calendar year. Each calendar "
+            "year is shown under the fiscal year that ends the following March.",
         ],
         "debt": debt, "debt_source": ["statcan_nbsa"],
         "holders": holders, "holders_source": ["statcan_nbsa"],
-        "revenue": revenue, "interest": interest, "primary": primary, "fiscal_source": ["statcan_gfs"],
+        "revenue": revenue, "interest": interest, "fiscal_source": ["statcan_gfs"],
+        "primary_share": primary_share, "primary_source": ["imf_fiscal_monitor"],
         "average_rate": interest_over_average_debt(interest, debt),
         "rate_source": ["statcan_gfs", "statcan_nbsa"],
         "rate_note": "interest expense in the year divided by the average of the debt at its start and end",
@@ -273,7 +286,11 @@ def assemble(country, sources, given):
     yields = {int(date[:4]): value / 100 for date, value in yield_months.items() if date[5:7] == "03"}
     inflation = {year: cpi[year] / cpi[year - 1] - 1 for year in cpi if year - 1 in cpi}
     revenue = share_of_gdp(given["revenue"])
-    primary_balance = share_of_gdp(given["primary"])
+    # The primary balance comes as an amount, or already as a share of GDP.
+    if "primary_share" in given:
+        primary_balance, balance_source = dict(given["primary_share"]), given["primary_source"]
+    else:
+        primary_balance, balance_source = share_of_gdp(given["primary"]), given["fiscal_source"] + [given["gdp_source"]]
     interest_to_revenue = {year: given["interest"][year] / given["revenue"][year]
                            for year in given["interest"] if year in given["revenue"]}
     average_rate = dict(given["average_rate"])
@@ -300,7 +317,7 @@ def assemble(country, sources, given):
         "inflation": (inflation, ["bis_cpi"]),
         "averageRate": (average_rate, given["rate_source"]),
         "revenue": (revenue, fiscal),
-        "primaryBalance": (primary_balance, fiscal),
+        "primaryBalance": (primary_balance, balance_source),
         "interestToRevenue": (interest_to_revenue, given.get("interest_source", []) + given["fiscal_source"]),
     }
     budget_series = ("averageRate", "revenue", "primaryBalance", "interestToRevenue")
@@ -314,7 +331,7 @@ def assemble(country, sources, given):
     # primary balance, from actual years only.
     last_budget_year = min(start_year, max(primary_balance))
     threshold, threshold_years = largest_five_year_average(primary_balance, last_budget_year)
-    average_balance = baseline_balance(primary_balance, last_budget_year, fiscal)
+    average_balance = baseline_balance(primary_balance, last_budget_year, balance_source)
 
     # Real GDP by fiscal year, for average growth. Japan has no quarterly
     # real GDP series among those fetched, so the IMF's yearly growth
@@ -373,7 +390,7 @@ def assemble(country, sources, given):
     start["growth"] = item(sum(growth[year] for year in growth_years) / 5 / 100, ["imf_weo"],
                            "average of IMF projections for " + growth_years[0] + " to " + growth_years[-1])
     start["stressThreshold"] = item(
-        threshold, fiscal,
+        threshold, balance_source,
         f"largest five-year average primary balance, years to March {threshold_years[0]} to {threshold_years[1]}")
     holders_source = given["holders_source"] + given["debt_source"] + [gdp_source]
     start["holdings"] = {

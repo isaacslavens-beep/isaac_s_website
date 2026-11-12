@@ -335,6 +335,31 @@ sources:
       domestic holders into captive and price-sensitive comes from this
       table; the size of domestic private holdings does not.
 
+  imf_fiscal_monitor:
+    name: Fiscal Monitor
+    publisher: International Monetary Fund
+    address: https://www.imf.org/external/datamapper/GGXONLB_G01_GDP_PT@FM
+    chart_label: International Monetary Fund, Fiscal Monitor
+    measures: The general government primary balance as a share of GDP, by calendar year, with the IMF's projections for the coming years.
+    used_for: Canada's primary balance, its average and its fiscal stress threshold.
+    series_or_tables:
+      - "IMF DataMapper indicator GGXONLB_G01_GDP_PT (Primary net lending/borrowing), area CAN"
+    definition_notes: >
+      The overall balance leaving out net interest payments (interest paid minus interest received).
+      General government: federal, provincial, territorial and local governments and the public pension plans.
+      Isaac chose this series for Canada on 2026-11-12.
+    units_and_frequency: Published in percent of GDP, annual. Converted to a fraction.
+    transformations:
+      - Give each calendar year to the fiscal year that ends the following March.
+      - Leave out the IMF's projections.
+    category_mapping: not an ownership table
+    retrieval: automated, from the IMF's DataMapper API
+    reuse_terms: to confirm
+    known_limits: >
+      Covers more of government than the debt does (local governments and pension plans are included),
+      and is by calendar year where the rest of Canada's figures are by fiscal year. The latest year may
+      be an IMF estimate. Vintage to confirm.
+
   imf_weo:
     name: World Economic Outlook
     publisher: International Monetary Fund
