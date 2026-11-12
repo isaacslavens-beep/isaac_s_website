@@ -325,13 +325,13 @@ button:disabled {
 .chart-tools {
   display: flex;
   flex-wrap: wrap;
-  justify-content: flex-end;
   gap: 8px;
   margin: 10px 0 6px;
 }
 
 /* Two charts side by side; one under the other on a narrow screen */
 .charts {
+  margin-top: 12px;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 8px 24px;

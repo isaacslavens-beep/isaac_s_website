@@ -44,7 +44,6 @@ function percent(decimals) {
 var FORMATS = {
   percent0: percent(0),
   percent1: percent(1),
-  percent2: percent(2),
   basisPoints: function (v) { return (v * 100).toFixed(1) + " bp"; },
   years0: function (v) { return v.toFixed(0) + (v === 1 ? " year" : " years"); },
   years1: function (v) { return v.toFixed(1) + " years"; },
@@ -69,9 +68,6 @@ function controlList(country) {
     { key: "moneyGrowth", section: "main", type: "range", format: "percent1", fixed: true,
       label: "Money supply growth",
       help: "How fast the money supply (M2) grows each year, before any money the central bank creates by buying debt. Inflation follows it." },
-    { key: "ageing", section: "main", type: "range", format: "percent2", key_control: true,
-      label: "Ageing: yearly worsening",
-      help: "How much the primary balance worsens each year as the population ages, as a share of GDP. Pensions and health care cost more every year." },
     { key: "stressInterestShare", section: "main", type: "range", format: "percent0",
       label: "Interest burden that counts as fiscal stress",
       help: "Fiscal stress starts when interest on the debt takes more than this share of government revenue." },
@@ -323,16 +319,6 @@ function value(item) {
   return item.value;
 }
 
-// The primary balance for each projected year: the chosen balance, made
-// worse each year by the ageing setting.
-function balanceByYear(c) {
-  var balances = [];
-  for (var t = 1; t <= page.presets.years; t++) {
-    balances.push(c.primaryBalance - c.ageing * t);
-  }
-  return balances;
-}
-
 // Turns a country's data and control values into the model's two inputs.
 function modelInputs(country, c) {
   var s = country.start;
@@ -378,7 +364,7 @@ function modelInputs(country, c) {
     controls: {
       years: page.presets.years,
       growth: c.growth,
-      primaryBalance: balanceByYear(c),
+      primaryBalance: c.primaryBalance,
       primaryBalanceMode: "fixed",
       stressInterestShare: c.stressInterestShare,
       capMode: c.capMode,
