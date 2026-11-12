@@ -1,6 +1,5 @@
 /* Sovereign debt simulator styles.
-   Colors are set once as variables: light theme first, dark theme below.
-   charts.js reads the same variables, so the charts follow the theme. */
+   Colors are set once as variables. charts.js reads the same variables. */
 
 :root {
   --page: #f2f4f8;      /* behind the cards */
@@ -24,30 +23,6 @@
   --warning-border: #f0d48a;
   --warning-text: #5c3d00;
   --shadow: 0 1px 2px rgba(16, 24, 40, 0.05);
-}
-
-:root[data-theme="dark"] {
-  --page: #0d1017;
-  --bg: #161a25;
-  --panel: #1f2433;
-  --raised: #2d3447;
-  --text: #e1e5ee;
-  --muted: #8c95a8;
-  --border: #272d3d;
-  --grid: #222838;
-  --accent: #4c8dff;
-  --accent-soft: rgba(76, 141, 255, 0.16);
-  --down: #f6566a;
-  --line-1: #4c8dff;
-  --line-2: #f0883e;
-  --line-3: #2fc4b2;
-  --line-4: #b392f0;
-  --stress: rgba(240, 180, 60, 0.15);
-  --dominance: rgba(246, 86, 106, 0.17);
-  --warning-bg: #332a10;
-  --warning-border: #5e4b17;
-  --warning-text: #f2d98a;
-  --shadow: none;
 }
 
 * {
@@ -126,17 +101,6 @@ button.quiet {
 
 button.quiet:hover:not(:disabled) {
   background: var(--accent-soft);
-}
-
-/* A square button holding only an icon: the theme switch */
-.icon-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 34px;
-  height: 34px;
-  padding: 0;
-  color: var(--muted);
 }
 
 /* The small round button that opens an explanation */

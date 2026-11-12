@@ -954,17 +954,6 @@ function showCountry(key) {
   update();
 }
 
-function setTheme(theme) {
-  document.documentElement.dataset.theme = theme;
-  document.getElementById("theme-toggle").setAttribute("aria-label",
-    theme === "dark" ? "Switch to light theme" : "Switch to dark theme");
-  try {
-    localStorage.setItem("tracker-theme", theme); // the only thing the page stores
-  } catch (error) {
-    // Storage can be blocked. The theme then lasts until the page closes.
-  }
-}
-
 function getJson(path) {
   return fetch(path).then(function (response) {
     if (!response.ok) throw new Error("Could not load " + path);
@@ -973,14 +962,6 @@ function getJson(path) {
 }
 
 function startPage() {
-  var stored = null;
-  try {
-    stored = localStorage.getItem("tracker-theme");
-  } catch (error) {
-    // Storage can be blocked.
-  }
-  setTheme(stored === "dark" ? "dark" : "light");
-
   Promise.all([
     getJson("data/presets.json"), getJson("data/meta.json"), getJson("data/estimates.json")
   ]).then(function (files) {
@@ -1023,10 +1004,6 @@ function startPage() {
     readAddress();
     showCountry(page.country);
 
-    document.getElementById("theme-toggle").addEventListener("click", function () {
-      setTheme(document.documentElement.dataset.theme === "dark" ? "light" : "dark");
-      draw();
-    });
     document.getElementById("download").addEventListener("click", downloadCsv);
 
     // Copies the page address, which holds every setting.

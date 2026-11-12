@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <!-- The same icon as the homepage -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🟠</text></svg>">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Sovereign Debt Simulator | Isaac Slavens</title>
@@ -10,18 +12,11 @@
 </head>
 <body>
 
-  <!-- Top bar: link to the homepage, the tool's name, country tabs, theme -->
+  <!-- Top bar: link to the homepage, the tool's name, country tabs -->
   <header class="topbar">
     <a class="home-link" href="../">&larr; Homepage</a>
     <span class="brand">Sovereign Debt Simulator</span>
     <nav class="tabs segmented" id="country-tabs" aria-label="Country"></nav>
-    <button type="button" class="icon-button" id="theme-toggle" aria-label="Switch to dark theme">
-      <!-- A half-filled circle: light and dark -->
-      <svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true">
-        <circle cx="10" cy="10" r="7.5" fill="none" stroke="currentColor" stroke-width="1.6"/>
-        <path d="M10 2.5a7.5 7.5 0 0 1 0 15z" fill="currentColor"/>
-      </svg>
-    </button>
   </header>
 
   <div class="layout">
