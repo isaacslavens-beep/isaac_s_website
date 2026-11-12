@@ -316,9 +316,9 @@ def assemble(country, sources, given):
     threshold, threshold_years = largest_five_year_average(primary_balance, last_budget_year)
     average_balance = baseline_balance(primary_balance, last_budget_year, fiscal)
 
-    # Real GDP by fiscal year, for average growth. Japan's quarterly series
-    # starts in 1994, so the IMF's yearly growth rates, which start in
-    # 1980, are used for Japan instead.
+    # Real GDP by fiscal year, for average growth. Japan has no quarterly
+    # real GDP series among those fetched, so the IMF's yearly growth
+    # rates are used for Japan instead.
     if given.get("growth_from_imf"):
         level, real_gdp = 1.0, {}
         for year in sorted(growth):

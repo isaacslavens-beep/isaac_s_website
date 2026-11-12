@@ -92,11 +92,7 @@ SINCE_GOLD = ("the years since the United States ended the dollar's convertibili
 
 
 def period_note(first_year, last_year):
-    """Says which years an average covers, and why."""
-    if first_year == BASELINE_FROM:
-        return f"from {BASELINE_FROM} to {last_year}, {SINCE_GOLD}"
-    return (f"from {first_year} to {last_year}. The data starts in {first_year}, so the average cannot "
-            f"start in {BASELINE_FROM} as it does for inflation")
+    return f"from {first_year} to {last_year}, {SINCE_GOLD}"
 
 
 def baseline_inflation(inflation, last_year, source):
@@ -118,32 +114,37 @@ def baseline_inflation(inflation, last_year, source):
     }
 
 
+RECENT_FROM = 2015     # growth and budgets are averaged over recent years only
+
+
+def recent_note(first_year, last_year):
+    # Isaac chose 2015 on 2026-11-11.
+    return f"from {first_year} to {last_year}, recent years that reflect the current environment"
+
+
 def baseline_growth(levels, last_year, source):
-    """Average yearly real growth since 1972, or since the data starts,
-    as the item written to the data file. `levels` holds real GDP by
-    year. The average is compounded."""
-    first_year = max(BASELINE_FROM, first_unbroken_year(levels, last_year) + 1)
-    years = last_year - first_year + 1
-    if years < 10:
-        stop(f"fewer than ten years of real GDP before {last_year}")
+    """Average yearly real growth since 2015, as the item written to the
+    data file. `levels` holds real GDP by year. The average is compounded."""
+    if RECENT_FROM - 1 not in levels or first_unbroken_year(levels, last_year) > RECENT_FROM - 1:
+        stop(f"real GDP does not cover every year from {RECENT_FROM - 1} to {last_year}")
+    years = last_year - RECENT_FROM + 1
     return {
-        "value": (levels[last_year] / levels[first_year - 1]) ** (1 / years) - 1,
+        "value": (levels[last_year] / levels[RECENT_FROM - 1]) ** (1 / years) - 1,
         "source": source,
-        "note": "average real growth " + period_note(first_year, last_year),
+        "note": "average real growth " + recent_note(RECENT_FROM, last_year),
     }
 
 
 def baseline_balance(balances, last_year, source):
-    """The average primary balance since 1972, or since the data starts,
-    as the item written to the data file."""
-    first_year = max(BASELINE_FROM, first_unbroken_year(balances, last_year))
-    years = range(first_year, last_year + 1)
-    if len(years) < 10:
-        stop(f"fewer than ten years of primary balance before {last_year}")
+    """The average primary balance since 2015, as the item written to the
+    data file."""
+    if first_unbroken_year(balances, last_year) > RECENT_FROM:
+        stop(f"the primary balance does not cover every year from {RECENT_FROM} to {last_year}")
+    years = range(RECENT_FROM, last_year + 1)
     return {
         "value": sum(balances[year] for year in years) / len(years),
         "source": source,
-        "note": "average primary balance " + period_note(first_year, last_year),
+        "note": "average primary balance " + recent_note(RECENT_FROM, last_year),
     }
 
 

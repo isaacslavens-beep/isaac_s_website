@@ -7,12 +7,12 @@
     "growth": {
       "min": -0.01, "max": 0.04, "step": 0.001, "default": null,
       "showBasis": true,
-      "basis": "The country's average real growth since 1972, as historical precedent."
+      "basis": "The country's average real growth since 2015, to reflect the current environment."
     },
     "primaryBalance": {
       "min": -0.08, "max": 0.04, "step": 0.001, "default": null,
       "showBasis": true,
-      "basis": "The country's average primary balance since 1972, as historical precedent."
+      "basis": "The country's average primary balance since 2015, to reflect the current environment."
     },
     "capLevel": {
       "min": 0, "max": 0.12, "step": 0.001, "default": null,
