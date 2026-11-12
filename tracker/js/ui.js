@@ -22,6 +22,7 @@ var GROUP_LABELS = {
 // Everything the page remembers while it is open.
 var page = {
   presets: null,
+  estimates: null,
   meta: null,
   data: {},        // country key -> its data file
   controls: {},    // country key -> that country's current control values
@@ -60,9 +61,6 @@ function controlList(country) {
     { key: "baselineInflation", section: "main", type: "range", format: "percent1",
       label: "Baseline inflation",
       help: "The inflation rate the economy returns to when the central bank is not buying debt." },
-    { key: "passThrough", section: "main", type: "range", format: "number2",
-      label: "Pass-through",
-      help: "Points of inflation the next year for each point of GDP the central bank buys." },
     { key: "capMode", section: "main", type: "select",
       label: "Yield cap",
       help: "The highest yield the central bank tolerates before it buys debt.",
@@ -129,7 +127,10 @@ function controlList(country) {
   list.push(
     { key: "persistence", section: "advanced", type: "range", format: "number2",
       label: "Inflation persistence",
-      help: "How much of last year's gap between inflation and its baseline carries into this year." }
+      help: "How much of last year's gap between inflation and its baseline carries into this year." },
+    { key: "passThrough", section: "advanced", type: "range", format: "number2",
+      label: "Pass-through",
+      help: "Points of inflation the next year for each point of GDP by which central bank holdings rise." }
   );
   Object.keys(country.start.holdings).forEach(function (group) {
     list.push({ key: "w_" + group, section: "advanced", type: "range", format: "percent0",
@@ -171,6 +172,10 @@ function presetFor(control, country) {
   if (control.key === "primaryBalance") preset.default = start.primaryBalance.value;
   if (control.key === "capLevel") preset.default = start.yield.value;
   if (control.key === "maturity") preset.default = start.maturity.value;
+  if (control.key === "passThrough") {
+    preset.default = page.estimates.passThrough.value;
+    preset.basis = "Default: " + page.estimates.passThrough.note + ".";
+  }
   if (control.key === "baselineInflation") {
     preset.default = start.baselineInflation.value;
     preset.basis = "Default: " + start.baselineInflation.note + ".";
@@ -406,7 +411,7 @@ function chartList(country) {
         { label: "Purchasing power of money", color: 1, decimals: 1,
           history: purchasingPowerHistory,
           projection: function (row) { return 100 / row.priceLevel; } },
-        { label: "If the central bank bought no debt", color: 2, decimals: 1,
+        { label: "If central bank holdings stayed level", color: 2, decimals: 1,
           history: none,
           projection: function (row) { return 100 / withoutPurchases[row.year - country.start.year]; } }
       ] },
@@ -441,8 +446,8 @@ function chartList(country) {
         { label: "Central bank holdings, share of the debt", color: 1, unit: "%", decimals: 1,
           history: debtShareHistory("centralBank"),
           projection: function (row) { return shareOfDebt(row.centralBank, row.debt); } },
-        { label: "Purchases in the year, share of GDP (left axis)", color: 2, unit: "%", decimals: 2, axis: "left",
-          history: none, projection: function (row) { return row.purchases * 100; } },
+        { label: "Rise in holdings in the year, share of GDP (left axis)", color: 2, unit: "%", decimals: 2, axis: "left",
+          history: none, projection: function (row) { return row.buying * 100; } },
         { label: "Central bank holdings, share of GDP (left axis)", color: 3, unit: "%", decimals: 1, axis: "left",
           history: history("centralBank", 100), projection: function (row) { return row.centralBank * 100; } }
       ] }
@@ -718,9 +723,10 @@ function fillHero() {
   var without = pricesWithoutPurchases(country, c);
   var lossWithout = 1 - 1 / without[years];
   var averageInflation = Math.pow(last.priceLevel, 1 / years) - 1;
-  var buyingYears = rows.filter(function (row) { return row.purchases > 0; });
-  var totalPurchases = 0;
-  buyingYears.forEach(function (row) { totalPurchases += row.purchases; });
+  var capYears = rows.filter(function (row) { return row.purchases > 0; });
+  var capPurchases = 0;
+  capYears.forEach(function (row) { capPurchases += row.purchases; });
+  var totalRise = last.centralBank - rows[0].centralBank;
 
   var steps = [
     "1. Loss of purchasing power = 1 − 1 ÷ price level. The price level in " + last.year + " is " +
@@ -730,15 +736,19 @@ function fillHero() {
     "2. The price level is each year's inflation compounded. Inflation averages " +
       FORMATS.percent1(averageInflation) + " a year over the " + years + " years.",
     "3. Inflation in a year = baseline inflation (" + FORMATS.percent1(c.baselineInflation) +
-      ") + pass-through (" + c.passThrough.toFixed(2) + ") × central bank purchases the year before" +
+      ") + pass-through (" + c.passThrough.toFixed(2) + ") × the rise in central bank holdings the year before, as a share of GDP" +
       " + persistence (" + c.persistence.toFixed(2) + ") × last year's gap between inflation and the baseline.",
-    "4. The central bank buys debt only in years when the yield would otherwise rise above its cap. " +
-      (buyingYears.length
-        ? "In this scenario it buys in " + buyingYears.length + " of the " + years + " years, starting in " +
-          buyingYears[0].year + ", for a total of " + FORMATS.percent0(totalPurchases) + " of GDP."
-        : "In this scenario it never buys."),
-    "5. With no purchases at all, the loss would be " + FORMATS.percent0(lossWithout) +
-      ". Purchases account for the other " + ((loss - lossWithout) * 100).toFixed(0) + " points."
+    "4. The central bank keeps its share of the debt, so its holdings rise when debt grows faster than " +
+      "the economy. It buys more in years when the yield would otherwise rise above its cap. " +
+      "In this scenario its holdings " + (totalRise >= 0 ? "rise" : "fall") + " by " +
+      FORMATS.percent0(Math.abs(totalRise)) + " of GDP over the " + years + " years" +
+      (capYears.length
+        ? ", of which " + FORMATS.percent0(capPurchases) + " of GDP is bought to hold the cap, starting in " +
+          capYears[0].year + "."
+        : ". The cap is never reached."),
+    "5. If central bank holdings stayed level as a share of GDP, the loss would be " + FORMATS.percent0(lossWithout) +
+      ". The change in its holdings accounts for the remaining " + ((loss - lossWithout) * 100).toFixed(1) +
+      " percentage points."
   ];
 
   var body = document.getElementById("how-body");
@@ -752,7 +762,7 @@ function fillHero() {
   // Every fifth year, so the steps can be checked against the numbers.
   var table = document.createElement("table");
   var head = table.insertRow();
-  ["Year", "Inflation", "Purchases, share of GDP", "Price level", "What 100 buys"].forEach(function (text) {
+  ["Year", "Inflation", "Rise in central bank holdings, share of GDP", "Price level", "What 100 buys"].forEach(function (text) {
     var cell = document.createElement("th");
     cell.textContent = text;
     head.append(cell);
@@ -760,7 +770,7 @@ function fillHero() {
   rows.forEach(function (row, t) {
     if (t % 5 !== 0) return;
     var line = table.insertRow();
-    [row.year, FORMATS.percent1(row.inflation), FORMATS.percent1(row.purchases),
+    [row.year, FORMATS.percent1(row.inflation), FORMATS.percent1(row.buying),
       row.priceLevel.toFixed(2), (100 / row.priceLevel).toFixed(0)].forEach(function (text) {
       line.insertCell().textContent = text;
     });
@@ -942,9 +952,12 @@ function startPage() {
   }
   setTheme(stored === "dark" ? "dark" : "light");
 
-  Promise.all([getJson("data/presets.json"), getJson("data/meta.json")]).then(function (files) {
+  Promise.all([
+    getJson("data/presets.json"), getJson("data/meta.json"), getJson("data/estimates.json")
+  ]).then(function (files) {
     page.presets = files[0];
     page.meta = files[1];
+    page.estimates = files[2];
     // Only countries the last build marked available are loaded.
     var available = COUNTRIES.filter(function (c) {
       return page.meta.countries[c.key] && page.meta.countries[c.key].available;

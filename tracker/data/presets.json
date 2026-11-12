@@ -17,8 +17,8 @@
       "basis": "Used only when the cap is fixed. Starts at the country's current yield."
     },
     "passThrough": {
-      "min": 0, "max": 1, "step": 0.01, "default": 0.05, "illustrative": true,
-      "basis": "Illustrative assumption until the historical presets are computed from data. The default will then be the lowest preset."
+      "min": 0, "max": 1, "step": 0.01, "default": null, "showBasis": true,
+      "basis": "Estimated by the build from the four countries' history. See data/estimates.json."
     },
     "selloffShare": {
       "min": 0, "max": 1, "step": 0.05, "default": 0.25, "illustrative": true,
@@ -42,7 +42,7 @@
     },
     "runoff": {
       "min": 0, "max": 0.02, "step": 0.001, "default": 0, "illustrative": true,
-      "basis": "Illustrative assumption: the central bank keeps its holdings steady as a share of GDP."
+      "basis": "Illustrative assumption: with no runoff the central bank keeps its share of the debt."
     },
     "yieldResponse": {
       "min": 0.005, "max": 0.1, "step": 0.005, "default": 0.03, "illustrative": true,

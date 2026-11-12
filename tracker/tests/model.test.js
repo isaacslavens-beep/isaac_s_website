@@ -45,8 +45,8 @@ test("debt stays constant at the debt-stabilizing primary balance", function () 
   });
 });
 
-test("with the cap off, purchases are zero and inflation converges to baseline", function () {
-  const controls = controlsWith({ capMode: "off" });
+test("with the cap off and pass-through at zero, purchases are zero and inflation converges to baseline", function () {
+  const controls = controlsWith({ capMode: "off", passThrough: 0 });
   const result = run(start, controls);
   result.rows.forEach(function (row) {
     assert.strictEqual(row.purchases, 0);
@@ -59,6 +59,33 @@ test("with the cap off, purchases are zero and inflation converges to baseline",
   close(result.rows[30].inflation, controls.baselineInflation, 1e-9);
 });
 
+test("with no cap and no runoff, the central bank keeps its share of the debt", function () {
+  const result = run(start, controlsWith({ capMode: "off" }));
+  result.rows.forEach(function (row) {
+    close(row.centralBank / row.debt, start.centralBank / start.debt, 1e-12, "share in " + row.year + ":");
+  });
+  // Debt rises in this scenario, so holdings rise as a share of GDP.
+  assert.ok(result.rows[1].buying > 0);
+  close(result.rows[1].buying, result.rows[1].centralBank - start.centralBank, 1e-15);
+});
+
+test("runoff lowers the central bank's holdings below its share of the debt", function () {
+  const result = run(start, controlsWith({ capMode: "off", runoff: 0.01 }));
+  const row = result.rows[1];
+  close(row.centralBank, start.centralBank / start.debt * row.debt - 0.01, 1e-12);
+});
+
+test("inflation follows last year's rise in central bank holdings", function () {
+  const controls = controlsWith({ capMode: "off" });
+  const result = run(start, controls);
+  for (let t = 1; t <= 30; t++) {
+    const prev = result.rows[t - 1];
+    close(result.rows[t].inflation,
+      controls.baselineInflation + controls.passThrough * prev.buying +
+        controls.persistence * (prev.inflation - controls.baselineInflation), 1e-12);
+  }
+});
+
 test("with the cap below the market yield, the yield equals the cap and purchases are positive", function () {
   const result = run(start, controlsWith({ capMode: "fixed", capLevel: 0.03 }));
   const row = result.rows[1];
@@ -67,7 +94,8 @@ test("with the cap below the market yield, the yield equals the cap and purchase
   assert.ok(row.purchases > 0);
   assert.strictEqual(row.dominance, true);
   assert.strictEqual(row.capBroken, false);
-  close(row.centralBank, start.centralBank + row.purchases, 1e-12);
+  // Its share of the debt, plus what it bought to hold the cap.
+  close(row.centralBank, start.centralBank / start.debt * row.debt + row.purchases, 1e-12);
   assert.strictEqual(result.headline.firstDominanceYear, 2026);
 });
 
@@ -238,7 +266,7 @@ test("the first year matches a calculation by hand", function () {
   const rate = (5 / 6) * 0.03 + (1 / 6) * 0.04;
   const debt = 1 * (1 + rate) / (1 + nominal) + 0.03;
   const captive = (0.5 * 0.50 + 0.9 * 0.15 + 0) * debt;
-  const absorb = debt - 0.15 - captive - 0.465;
+  const absorb = debt - 0.15 * debt - captive - 0.465;   // the central bank keeps its 15% share
   close(row.inflation, inflation, 1e-12);
   close(row.debt, debt, 1e-12);
   close(row.yield, 0.04 + (inflation - 0.03) + 0.03 * absorb, 1e-12);

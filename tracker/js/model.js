@@ -34,12 +34,14 @@
 //   priceSensitive    w_k  share of each group's holdings that is
 //                          price-sensitive, with the same keys as holdings
 //   yieldResponse     theta
-//   passThrough       lambda
+//   passThrough       lambda: points of inflation next year for each point
+//                          of GDP by which central bank holdings rise
 //   persistence       kappa
 //   baselineInflation pi_base
 //   foreignInflation  pi_f
 //   maturity          m    average maturity in years
-//   runoff            q    central bank runoff per year
+//   runoff            q    central bank runoff per year. With no runoff the
+//                          central bank keeps its share of the debt.
 //   selloffs               a list of { group, total, years }: the group sells
 //                          "total" (a share of GDP) evenly over "years" years.
 //                          Its captive and price-sensitive holdings shrink
@@ -84,6 +86,7 @@ function runModel(start, controls) {
     averageRate: start.averageRate,
     inflation: pi0,
     purchases: 0,
+    buying: 0,
     growth: null,
     nominalGrowth: null,
     primaryBalance: null,
@@ -104,8 +107,8 @@ function runModel(start, controls) {
   for (var t = 1; t <= controls.years; t++) {
     var prev = rows[t - 1];
 
-    // 1. Inflation, from last year's purchases.
-    var inflation = piBase + lambda * prev.purchases + kappa * (prev.inflation - piBase);
+    // 1. Inflation, from last year's rise in central bank holdings.
+    var inflation = piBase + lambda * prev.buying + kappa * (prev.inflation - piBase);
 
     // 2. Nominal growth.
     var growth = valueForYear(controls.growth, t);
@@ -156,9 +159,11 @@ function runModel(start, controls) {
     });
 
     // 5. What price-sensitive holders must absorb beyond their starting
-    // holdings, with the central bank on its passive path. The passive
-    // path cannot go below zero or above the debt.
-    var passiveCentralBank = Math.min(Math.max(prev.centralBank - q, 0), debt);
+    // holdings, with the central bank on its passive path. On that path
+    // the central bank keeps the share of the debt it held last year,
+    // less any runoff. It cannot go below zero or above the debt.
+    var lastShare = prev.debt > 0 ? prev.centralBank / prev.debt : 0;
+    var passiveCentralBank = Math.min(Math.max(lastShare * debt - q, 0), debt);
     var passiveAbsorb = debt - passiveCentralBank - totalCaptive - W;
 
     // 6. The market yield, then intervention.
@@ -230,7 +235,10 @@ function runModel(start, controls) {
       marketYield: marketYield,
       averageRate: averageRate,
       inflation: inflation,
-      purchases: purchases,
+      purchases: purchases,   // bought to hold the cap
+      // The rise in holdings as a share of GDP, for whatever reason:
+      // keeping its share of a growing debt, or holding the cap.
+      buying: centralBank - prev.centralBank,
       growth: growth,
       nominalGrowth: nominalGrowth,
       primaryBalance: primaryBalance,

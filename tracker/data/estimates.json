@@ -1,0 +1,25 @@
+{
+  "passThrough": {
+    "value": 0.09922844709648498,
+    "years": 79,
+    "byCountry": {
+      "united-states": {
+        "value": 0.1547674148679565,
+        "years": 22
+      },
+      "japan": {
+        "value": 0.013579893721630288,
+        "years": 3
+      },
+      "united-kingdom": {
+        "value": 0.03664586619421528,
+        "years": 19
+      },
+      "canada": {
+        "value": 0.18046001490399818,
+        "years": 35
+      }
+    },
+    "note": "estimated from 79 years of history in the four countries: the inflation that followed each rise in central bank holdings, beyond what the baseline and persistence explain"
+  }
+}
