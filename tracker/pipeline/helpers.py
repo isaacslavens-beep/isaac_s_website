@@ -135,6 +135,32 @@ def baseline_growth(levels, last_year, source):
     }
 
 
+def money_supply(levels, gdp, start_year, per_gdp_unit, source):
+    """The money supply (M2) as a share of GDP for each fiscal year, and
+    the two items written to the data file: its value in the starting year
+    and the average yearly rise in the ratio since 1972, or since the
+    series began if that is later.
+
+    `levels` holds M2 in the last month of each fiscal year.
+    `per_gdp_unit` is how many of the series' units make one unit of the
+    GDP series."""
+    ratio = {year: value / per_gdp_unit / gdp[year] for year, value in levels.items() if year in gdp}
+    if start_year not in ratio:
+        stop(f"the money supply has no value for {start_year}")
+    first = max(first_unbroken_year(ratio, start_year), BASELINE_FROM)
+    years = start_year - first
+    if years < 10:
+        stop("fewer than ten years of money supply history")
+    trend = (ratio[start_year] / ratio[first]) ** (1 / years) - 1
+    start_item = {"value": ratio[start_year], "source": source,
+                  "note": "M2 at the end of the fiscal year, divided by the year's GDP"}
+    trend_item = {
+        "value": trend, "source": source,
+        "note": f"average yearly rise in M2 as a share of GDP from {first} to {start_year}",
+    }
+    return ratio, start_item, trend_item
+
+
 BALANCE_FROM = 2022    # the primary balance is averaged from this year
 
 

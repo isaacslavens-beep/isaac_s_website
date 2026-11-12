@@ -35,9 +35,17 @@
       "label": "Bank of Canada, Government of Canada securities outstanding",
       "retrievedOn": "2026-11-11"
     },
+    "boc_monetary_aggregates": {
+      "label": "Bank of Canada, Monetary aggregates",
+      "retrievedOn": "2026-11-12"
+    },
     "boj_fof": {
       "label": "Bank of Japan, Flow of Funds Accounts",
       "retrievedOn": "2026-11-11"
+    },
+    "boj_money_stock": {
+      "label": "Bank of Japan, Money Stock",
+      "retrievedOn": "2026-11-12"
     },
     "cao_gdp": {
       "label": "Cabinet Office of Japan, gross domestic product",
@@ -57,6 +65,10 @@
     },
     "fed_h41": {
       "label": "Federal Reserve, H.4.1 Factors Affecting Reserve Balances",
+      "retrievedOn": "2026-11-12"
+    },
+    "fed_h6": {
+      "label": "Federal Reserve, H.6 Money Stock Measures",
       "retrievedOn": "2026-11-12"
     },
     "fed_z1": {

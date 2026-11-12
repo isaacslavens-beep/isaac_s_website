@@ -335,6 +335,66 @@ sources:
       domestic holders into captive and price-sensitive comes from this
       table; the size of domestic private holdings does not.
 
+  fed_h6:
+    name: H.6 Money Stock Measures
+    publisher: Board of Governors of the Federal Reserve System
+    address: https://fred.stlouisfed.org/series/M2SL
+    chart_label: Federal Reserve, H.6 Money Stock Measures
+    measures: The M2 money stock of the United States, monthly.
+    used_for: The money supply (M2) at the starting year, and how fast it has grown compared with GDP.
+    series_or_tables:
+      - "FRED series M2SL, M2"
+    definition_notes: Definition of M2 to confirm against the H.6 release (it changed in May 2020).
+    units_and_frequency: Published in billions of dollars, monthly, seasonally adjusted.
+    transformations:
+      - Take the value for the last month of each fiscal year and divide by that year's GDP.
+      - Take the average yearly rise in that ratio.
+    category_mapping: not an ownership table
+    retrieval: automated, through FRED, which mirrors the Federal Reserve series
+    reuse_terms: to confirm
+    known_limits: >
+      The definition of M2 changed in May 2020, so growth across that date is not like for like. To confirm.
+
+  boj_money_stock:
+    name: Money Stock
+    publisher: Bank of Japan
+    address: https://www.stat-search.boj.or.jp/ (exact address to confirm)
+    chart_label: Bank of Japan, Money Stock
+    measures: The M2 money stock of Japan, as the average amount outstanding over each month.
+    used_for: The money supply (M2) at the starting year, and how fast it has grown compared with GDP.
+    series_or_tables:
+      - "Bank of Japan time-series database MD02, series MAM1NAM2M2MO, M2/Average Amounts Outstanding/Money Stock"
+    definition_notes: Definition of M2 to confirm against the Bank of Japan's notes.
+    units_and_frequency: Published in hundreds of millions of yen, monthly.
+    transformations:
+      - Take the value for the last month of each fiscal year and divide by that year's GDP.
+      - Take the average yearly rise in that ratio.
+    category_mapping: not an ownership table
+    retrieval: automated, from the Bank of Japan's time-series data service
+    reuse_terms: to confirm
+    known_limits: >
+      The series starts in April 2003, so Japan's history of M2 is shorter than the other countries'.
+
+  boc_monetary_aggregates:
+    name: Monetary aggregates
+    publisher: Bank of Canada
+    address: https://www.bankofcanada.ca/valet/observations/V41552796/json
+    chart_label: Bank of Canada, Monetary aggregates
+    measures: The M2 (gross) money stock of Canada, monthly.
+    used_for: The money supply (M2) at the starting year, and how fast it has grown compared with GDP.
+    series_or_tables:
+      - "Bank of Canada Valet series V41552796, M2 (gross) (Seasonally adjusted)"
+    definition_notes: Definition of M2 (gross) to confirm against the Bank of Canada's notes. The Bank also publishes wider measures (M2+, M2++, M3).
+    units_and_frequency: Published in millions of dollars, monthly, seasonally adjusted.
+    transformations:
+      - Take the value for the last month of each fiscal year and divide by that year's GDP.
+      - Take the average yearly rise in that ratio.
+    category_mapping: not an ownership table
+    retrieval: automated, from the Bank of Canada's Valet service
+    reuse_terms: to confirm
+    known_limits: >
+      To confirm.
+
   imf_fiscal_monitor:
     name: Fiscal Monitor
     publisher: International Monetary Fund

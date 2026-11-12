@@ -358,3 +358,38 @@ series:
     frequency: quarterly
     annual_rule: average of the four quarters of the fiscal year, then the average yearly growth since 2015
     feeds: the default for real growth
+
+  - key: us_m2
+    country: united-states
+    source: fed_h6
+    service: fred
+    id: M2SL
+    title: M2
+    units: billions of dollars, seasonally adjusted
+    frequency: monthly
+    annual_rule: the value for September, the last month of the fiscal year
+    feeds: money supply
+
+  - key: jp_m2
+    country: japan
+    source: boj_money_stock
+    service: bank_of_japan
+    database: MD02
+    id: MAM1NAM2M2MO
+    title: M2/Average Amounts Outstanding/Money Stock
+    unit_name: 100 million yen
+    units: hundreds of millions of yen, average over the month
+    frequency: monthly
+    annual_rule: the value for March, the last month of the fiscal year
+    feeds: money supply
+
+  - key: ca_m2
+    country: canada
+    source: boc_monetary_aggregates
+    service: bank_of_canada
+    id: V41552796
+    title: M2 (gross) (Seasonally adjusted)
+    units: millions of dollars, seasonally adjusted
+    frequency: monthly
+    annual_rule: the value for March, the last month of the fiscal year
+    feeds: money supply

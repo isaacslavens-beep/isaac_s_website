@@ -19,7 +19,7 @@ import yaml
 import march_countries
 from helpers import (CACHE, DATA, HERE, MANUAL, baseline_balance, baseline_growth, baseline_inflation, by_year,
                      first_unbroken_year, largest_five_year_average,
-                     last_on_or_before, last_values, load, quarter_start, stop, write_json)
+                     last_on_or_before, last_values, load, quarter_start, stop, write_json, money_supply)
 from parsers import us_fed_f32s, us_tic_history, us_tic_table5
 
 
@@ -174,6 +174,12 @@ def build_united_states(sources):
         "source": ["omb_budget", "us_treasury_mts", "bea_gdp"],
         "note": f"largest five-year average primary balance, fiscal years {threshold_years[0]} to {threshold_years[1]}",
     }
+
+    # The money supply: M2 in the last month of each fiscal year.
+    m2_months = dict(load("us_m2"))
+    m2 = {year: m2_months[end[:8] + "01"] for year, end in year_end.items() if end[:8] + "01" in m2_months}
+    money, start["money"], start["moneyTrend"] = money_supply(m2, gdp, start_year, 1, ["fed_h6", "bea_gdp"])
+    history["money"] = (money, ["fed_h6", "bea_gdp"])
 
     # Ownership comes from the files Isaac downloads by hand. If one is
     # missing, the country is marked unavailable.

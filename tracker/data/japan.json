@@ -108,6 +108,22 @@
       ],
       "note": "largest five-year average primary balance, years to March 1995 to 1999"
     },
+    "money": {
+      "value": 1.9020895720303406,
+      "source": [
+        "boj_money_stock",
+        "cao_gdp"
+      ],
+      "note": "M2 at the end of the fiscal year, divided by the year's GDP"
+    },
+    "moneyTrend": {
+      "value": 0.01809342873847375,
+      "source": [
+        "boj_money_stock",
+        "cao_gdp"
+      ],
+      "note": "average yearly rise in M2 as a share of GDP from 2004 to 2026"
+    },
     "holdings": {
       "domestic": {
         "value": 0.8464921633758683,
@@ -453,6 +469,38 @@
         0.09162701758778283
       ],
       "note": "the value for the year to March 2025, the latest published, carried into 2026"
+    },
+    "money": {
+      "source": [
+        "boj_money_stock",
+        "cao_gdp"
+      ],
+      "firstYear": 2004,
+      "values": [
+        1.2820442339815865,
+        1.3031585713416378,
+        1.3110943022772463,
+        1.3156752868829704,
+        1.3428157057292462,
+        1.4273741837386993,
+        1.5297421999113263,
+        1.5434069087134148,
+        1.6055764504415073,
+        1.652584045606348,
+        1.6644619867410773,
+        1.6764025337245008,
+        1.6696436219862136,
+        1.72560475363334,
+        1.742431607325243,
+        1.7764556139623986,
+        1.8300480836947983,
+        2.06321556648348,
+        2.0534284540716663,
+        2.052053602060948,
+        2.0050795393664704,
+        1.9448373591301806,
+        1.9020895720303406
+      ]
     }
   }
 }

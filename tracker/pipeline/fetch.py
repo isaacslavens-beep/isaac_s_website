@@ -31,6 +31,8 @@ CACHE = os.path.join(HERE, "cache")
 FRED = "https://api.stlouisfed.org/fred"
 FISCALDATA = "https://api.fiscaldata.treasury.gov/services/api/fiscal_service"
 IMF = "https://www.imf.org/external/datamapper/api/v1"
+BANK_OF_CANADA = "https://www.bankofcanada.ca/valet"
+BANK_OF_JAPAN = "https://www.stat-search.boj.or.jp/api/v1"
 BIS = "https://stats.bis.org/api/v2/data/dataflow/BIS"
 
 PAUSE = 0.6  # seconds between requests, well inside every service's limits
@@ -57,6 +59,10 @@ def main():
             result = fetch_imf(series)
         elif service == "bis":
             result = fetch_bis(series)
+        elif service == "bank_of_canada":
+            result = fetch_bank_of_canada(series)
+        elif service == "bank_of_japan":
+            result = fetch_bank_of_japan(series)
         else:
             stop(f"{key}: unknown service '{service}'")
 
@@ -238,6 +244,50 @@ def fetch_bis(series):
         stop(f"{series['key']}: the BIS returned no observations")
     observations.sort()
     return {"service": "bis", "metadata": expected, "observations": observations}
+
+
+# ---------------------------------------------------------------- Bank of Canada
+
+def fetch_bank_of_canada(series):
+    data = get_json(f"{BANK_OF_CANADA}/observations/{series['id']}/json", {})
+    info = data["seriesDetail"][series["id"]]
+    if info["label"] != series["title"]:
+        stop(f"{series['key']}: the Bank of Canada calls {series['id']} \"{info['label']}\" "
+             f"but series.yml expects \"{series['title']}\"")
+    observations = []
+    for row in data["observations"]:
+        if series["id"] in row and row[series["id"]].get("v") not in (None, ""):
+            observations.append([row["d"], float(row[series["id"]]["v"])])
+    if not observations:
+        stop(f"{series['key']}: the Bank of Canada returned no observations")
+    return {"service": "bank_of_canada", "metadata": info, "observations": observations}
+
+
+# ---------------------------------------------------------------- Bank of Japan
+
+def fetch_bank_of_japan(series):
+    data = get_json(BANK_OF_JAPAN + "/getDataCode", {
+        "format": "json", "lang": "en", "db": series["database"], "code": series["id"],
+    })
+    if data.get("STATUS") != 200 or len(data.get("RESULTSET", [])) != 1:
+        stop(f"{series['key']}: the Bank of Japan answered \"{data.get('MESSAGE')}\"")
+    if data.get("NEXTPOSITION"):
+        stop(f"{series['key']}: the Bank of Japan sent the series in parts, which this script does not read")
+    result = data["RESULTSET"][0]
+    for field, wanted in (("SERIES_CODE", series["id"]), ("NAME_OF_TIME_SERIES", series["title"]),
+                          ("UNIT", series["unit_name"]), ("FREQUENCY", "MONTHLY")):
+        if result.get(field) != wanted:
+            stop(f"{series['key']}: the Bank of Japan gives {field} as \"{result.get(field)}\" "
+                 f"but series.yml expects \"{wanted}\"")
+    observations = []
+    for month, value in zip(result["VALUES"]["SURVEY_DATES"], result["VALUES"]["VALUES"]):
+        if value is not None:
+            month = str(month)
+            observations.append([f"{month[:4]}-{month[4:6]}-01", float(value)])
+    if not observations:
+        stop(f"{series['key']}: the Bank of Japan returned no observations")
+    metadata = {key: value for key, value in result.items() if key != "VALUES"}
+    return {"service": "bank_of_japan", "metadata": metadata, "observations": observations}
 
 
 # ---------------------------------------------------------------- shared

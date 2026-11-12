@@ -12,7 +12,7 @@ which is the same for all three.
 
 import os
 
-from helpers import (MANUAL, baseline_balance, baseline_growth, baseline_inflation, first_unbroken_year, largest_five_year_average, last_values, load, stop)
+from helpers import (MANUAL, money_supply, baseline_balance, baseline_growth, baseline_inflation, first_unbroken_year, largest_five_year_average, last_values, load, stop)
 from parsers import (ca_boc_debt, ca_statcan_gfs, ca_statcan_holdings, jp_boj_fof, jp_mof_debt,
                      jp_mof_general_bonds, jp_mof_maturity, jp_mof_table4, jp_mof_table20,
                      uk_dmo_gilt_holdings, uk_dmo_portfolio, uk_ons_psa6, uk_ons_tbill_holdings)
@@ -129,6 +129,7 @@ def build_japan(sources):
         "prefix": "jp",
         "growth_from_imf": True,
         "gdp_rule": "average",
+        "money_source": "boj_money_stock", "money_per_gdp_unit": 10,   # hundreds of millions of yen to billions
         "gdp_source": "cao_gdp",
         "government": ("Central government only: government bonds, including Fiscal Investment and Loan "
                        "Program bonds, and financing bills. Local government debt is not included."),
@@ -191,6 +192,7 @@ def build_canada(sources):
 
     return assemble(country, sources, {
         "prefix": "ca",
+        "money_source": "boc_monetary_aggregates", "money_per_gdp_unit": 1,
         "gdp_rule": "sum",
         "gdp_source": "imf_ifs_gdp",
         "government": ("The federal government and the provincial and territorial governments, "
@@ -393,6 +395,15 @@ def assemble(country, sources, given):
         threshold, balance_source,
         f"largest five-year average primary balance, years to March {threshold_years[0]} to {threshold_years[1]}")
     holders_source = given["holders_source"] + given["debt_source"] + [gdp_source]
+    # The money supply: M2 in March, the last month of each fiscal year.
+    # The United Kingdom has no M2 series among those fetched.
+    if "money_source" in given:
+        money_source = [given["money_source"], gdp_source]
+        m2 = {int(date[:4]): value for date, value in load(prefix + "_m2") if date[5:7] == "03"}
+        money, start["money"], start["moneyTrend"] = money_supply(
+            m2, gdp, start_year, given["money_per_gdp_unit"], money_source)
+        history["money"] = (money, money_source)
+
     start["holdings"] = {
         "domestic": item(domestic[start_year], holders_source,
                          "every domestic holder other than the central bank, as a share of all holdings, "

@@ -29,6 +29,8 @@
 //                          per year, or a function (see primaryBalanceFor)
 //   primaryBalanceMode     "fixed" or "reactive"
 //   gamma                  reactive mode: response of the balance to debt
+//   moneyTrend             optional: yearly rise in the money supply as a
+//                          share of GDP (used when start.money is given)
 //   stressInterestShare    optional: a year is also in fiscal stress when
 //                          interest is more than this share of revenue
 //   capMode                "automatic", "fixed" or "off"
@@ -89,6 +91,8 @@ function runModel(start, controls) {
     inflation: pi0,
     purchases: 0,
     buying: 0,
+    money: isNumber(start.money) ? start.money : null,
+    moneyGrowth: null,
     growth: null,
     nominalGrowth: null,
     primaryBalance: null,
@@ -234,6 +238,18 @@ function runModel(start, controls) {
         " but debt is " + debt);
     }
 
+    // The money supply (M2), as a share of GDP. It keeps drifting against
+    // GDP at its past rate, and each unit of debt the central bank buys to
+    // hold the cap adds one unit of money. Its growth in money terms is
+    // the change in the share on top of the growth of GDP in money terms.
+    var money = null;
+    var moneyGrowth = null;
+    if (prev.money !== null) {
+      var moneyTrend = isNumber(controls.moneyTrend) ? controls.moneyTrend : 0;
+      money = prev.money * (1 + moneyTrend) + purchases;
+      moneyGrowth = prev.money > 0 ? money / prev.money * (1 + nominalGrowth) - 1 : null;
+    }
+
     // Debt that comes due this year, as a share of this year's GDP.
     var maturing = prev.debt / m / (1 + nominalGrowth);
 
@@ -250,6 +266,8 @@ function runModel(start, controls) {
       // The rise in holdings as a share of GDP, for whatever reason:
       // keeping its share of a growing debt, or holding the cap.
       buying: centralBank - prev.centralBank,
+      money: money,
+      moneyGrowth: moneyGrowth,
       growth: growth,
       nominalGrowth: nominalGrowth,
       primaryBalance: primaryBalance,
@@ -341,7 +359,16 @@ function headlineFigures(rows) {
     if (row.debt > 0) peakShare = Math.max(peakShare, row.centralBank / row.debt);
   });
 
+  // The money supply's growth in money terms as a steady yearly rate.
+  var moneyTimes = null;
+  if (rows[0].money > 0 && years > 0) {
+    moneyTimes = last.money / rows[0].money;
+    rows.forEach(function (row, t) { if (t > 0) moneyTimes *= 1 + row.nominalGrowth; });
+  }
+
   return {
+    moneyTimes: moneyTimes,                // null when no money supply was given
+    annualMoneyGrowth: moneyTimes === null ? null : Math.pow(moneyTimes, 1 / years) - 1,
     finalDebt: last.debt,
     firstStressYear: firstStress,         // null means "not reached"
     firstDominanceYear: firstDominance,   // null means "not reached"

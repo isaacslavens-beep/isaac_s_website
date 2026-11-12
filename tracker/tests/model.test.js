@@ -264,6 +264,42 @@ test("interest above the chosen share of revenue is fiscal stress, and switches 
   none.rows.forEach(function (row) { assert.strictEqual(row.stressFromInterest, false); });
 });
 
+test("the money supply grows with GDP, its trend and cap purchases", function () {
+  // Without a starting money supply the model leaves it out.
+  const without = run(start, controlsWith({}));
+  assert.strictEqual(without.rows[5].money, null);
+  assert.strictEqual(without.headline.annualMoneyGrowth, null);
+
+  // With no trend and no cap, money keeps its share of GDP, so it grows
+  // at the same rate as GDP in money terms.
+  const withMoney = Object.assign({}, start, { money: 0.8 });
+  const flat = run(withMoney, controlsWith({ capMode: "off", moneyTrend: 0 }));
+  flat.rows.slice(1).forEach(function (row) {
+    close(row.money, 0.8, 1e-12);
+    close(row.moneyGrowth, row.nominalGrowth, 1e-12);
+  });
+
+  // A trend of 1% a year raises the share by 1% a year.
+  const trend = run(withMoney, controlsWith({ capMode: "off", moneyTrend: 0.01 }));
+  close(trend.rows[1].money, 0.8 * 1.01, 1e-12);
+  close(trend.rows[1].moneyGrowth, 1.01 * (1 + trend.rows[1].nominalGrowth) - 1, 1e-12);
+
+  // Purchases to hold the cap are added one for one, and the headline
+  // rate compounds to the total.
+  const capped = run(withMoney, controlsWith({ capMode: "fixed", capLevel: 0.01, moneyTrend: 0.01 }));
+  let times = 1;
+  let bought = false;
+  capped.rows.slice(1).forEach(function (row, index) {
+    const prev = capped.rows[index];
+    close(row.money, prev.money * 1.01 + row.purchases, 1e-12);
+    if (row.purchases > 0) bought = true;
+    times *= 1 + row.moneyGrowth;
+  });
+  assert.ok(bought);
+  close(capped.headline.moneyTimes, times, 1e-9);
+  close(capped.headline.annualMoneyGrowth, Math.pow(times, 1 / 30) - 1, 1e-12);
+});
+
 test("reactive mode moves the primary balance with debt", function () {
   const controls = controlsWith({ capMode: "off", primaryBalanceMode: "reactive", gamma: 0.03 });
   const result = run(start, controls);
