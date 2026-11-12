@@ -296,6 +296,30 @@ button:disabled {
   border-radius: 4px;
 }
 
+.warning p {
+  margin: 0;
+}
+
+.warning #warning-more {
+  margin-top: 6px;
+  max-width: 80ch;
+}
+
+/* The round question mark that opens the explanation */
+.why {
+  width: 22px;
+  height: 22px;
+  margin-left: 6px;
+  padding: 0;
+  border-radius: 50%;
+  border-color: var(--warning-text);
+  background: transparent;
+  color: var(--warning-text);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1;
+}
+
 /* ---------- Chart ---------- */
 
 .chart-tools {

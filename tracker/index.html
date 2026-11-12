@@ -45,7 +45,14 @@
         <dl class="headline" id="headline"></dl>
       </div>
 
-      <p class="warning" id="warning" role="status" hidden></p>
+      <div class="warning" id="warning" role="status" hidden>
+        <p>
+          <span id="warning-text"></span>
+          <button type="button" class="why" id="warning-why" aria-expanded="false"
+                  aria-controls="warning-more" aria-label="What does this mean?">?</button>
+        </p>
+        <p id="warning-more" hidden></p>
+      </div>
 
       <div class="chart-tools">
         <div class="range" role="group" aria-label="Years projected">

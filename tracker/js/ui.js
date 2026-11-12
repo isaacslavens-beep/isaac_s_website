@@ -533,8 +533,18 @@ function fillText() {
   var warning = document.getElementById("warning");
   warning.hidden = h.firstCapBrokenYear === null;
   if (h.firstCapBrokenYear !== null) {
-    warning.textContent = "The cap cannot be held. From " + h.firstCapBrokenYear +
-      " the central bank holds all of the debt and the yield rises above the cap.";
+    var rows = page.result.rows;
+    var firstBought = rows.filter(function (row) { return row.purchases > 0; })[0];
+    var broken = rows.filter(function (row) { return row.year === h.firstCapBrokenYear; })[0];
+    document.getElementById("warning-text").textContent = "From " + h.firstCapBrokenYear +
+      " the central bank owns all of the government's debt and can no longer hold interest rates down.";
+    // The longer explanation, shown when the question mark is pressed.
+    document.getElementById("warning-more").textContent =
+      "A central bank holds interest rates down by buying government debt. In this scenario it starts buying in " +
+      firstBought.year + " to keep the yield at " + FORMATS.percent1(broken.cap) +
+      ". Lenders want more than that, so every year it has to buy more. By " + h.firstCapBrokenYear +
+      " it owns all of the debt and there is none left to buy. From then on the cap has no effect, " +
+      "and the yield in the chart is the rate lenders would ask for.";
   }
 
   // The source line names the publisher and series behind the history of
@@ -590,12 +600,8 @@ function fillHero() {
   rows.slice(1).forEach(function (row) { gdpGrowth *= 1 + row.nominalGrowth; });
   var moneyTimes = page.result.headline.moneyTimes;
   var moneyPerYear = page.result.headline.annualMoneyGrowth;
-  var money = document.getElementById("hero-money");
-  var moneyTotal = document.createElement("span");
-  moneyTotal.className = "hero-total";
-  money.textContent = "Money supply expansion: " + FORMATS.percent1(moneyPerYear) + " annually ";
-  moneyTotal.textContent = moneyTimes.toFixed(moneyTimes >= 10 ? 0 : 1) + " times as large in total";
-  money.append(moneyTotal);
+  document.getElementById("hero-money").textContent =
+    "Money supply expansion: " + FORMATS.percent1(moneyPerYear) + " annually";
   document.getElementById("hero-money-note").textContent =
     "Projected growth of the money supply (M2), " + startYear + " to " + last.year + ".";
 
@@ -869,6 +875,12 @@ function startPage() {
       draw();
     });
     document.getElementById("download").addEventListener("click", downloadCsv);
+    // The question mark beside the warning shows or hides its explanation.
+    document.getElementById("warning-why").addEventListener("click", function () {
+      var more = document.getElementById("warning-more");
+      more.hidden = !more.hidden;
+      this.setAttribute("aria-expanded", String(!more.hidden));
+    });
     document.getElementById("reset").addEventListener("click", function () {
       page.controls[page.country] = defaultControls(page.data[page.country]);
       buildControls();
