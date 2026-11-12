@@ -21,13 +21,6 @@ from helpers import DATA, HERE, MANUAL
 SHOWN = ("united-states", "japan", "canada")   # the countries on the page
 OUTPUT = os.path.join(HERE, "..", "SOURCES.md")
 
-FIELDS = (
-    ("publisher", "Publisher"), ("address", "Address"), ("measures", "What it measures"),
-    ("used_for", "Used for"), ("definition_notes", "Definitions"),
-    ("units_and_frequency", "Units and frequency"), ("category_mapping", "Category mapping"),
-    ("retrieval", "How it is retrieved"), ("reuse_terms", "Terms of reuse"), ("known_limits", "Known limits"),
-)
-
 
 def main():
     with open(os.path.join(HERE, "sources.yml")) as f:
@@ -54,7 +47,7 @@ def main():
     lines += illustrative(presets)
     lines += differences()
     lines += open_items(sources, countries)
-    lines += source_entries(sources, series_list, meta)
+    lines += source_entries(sources, series_list, meta, countries)
     lines += manual_files()
 
     with open(OUTPUT, "w") as f:
@@ -267,8 +260,7 @@ def differences():
         "averages from 1972.",
         "- Canada's primary balance comes from the IMF, not Statistics Canada.",
         "- Japan uses the interest test alone for fiscal stress.",
-        "- The page shows the United States, Japan and Canada. United Kingdom data is still built but not "
-        "shown; it has no M2 series.",
+        "- The page shows the United States, Japan and Canada only.",
         "- The page shows two charts, debt and yields, always over 30 years. There is no compare view, "
         "holders chart or range choice.",
         "- Step 7 (reactive primary balance, Japan back-test) is dropped. Step 8 (scheduled refresh) is "
@@ -280,20 +272,14 @@ def differences():
 # ---------------------------------------------------------------- 5. open items
 
 def open_items(sources, countries):
-    lines = [
+    used = used_sources(countries)
+    unconfirmed = [key for key in sources if key in used and "to confirm" in json.dumps(sources[key]).lower()]
+    return [
         "## 5. Open items",
         "",
-        "Fields in the registry still marked \"to confirm\". None may remain when the branch is merged.",
-        "",
-    ]
-    for key, entry in sources.items():
-        fields = [label for name, label in FIELDS if "to confirm" in str(entry.get(name, "")).lower()]
-        if fields:
-            lines.append(f"- `{key}` ({entry['name']}): " + ", ".join(fields).lower())
-    lines += [
-        "",
-        "Other points to settle:",
-        "",
+        f"- {len(unconfirmed)} of the {len(used)} sources still have a field marked \"to confirm\" in "
+        "`sources.yml` (mostly terms of reuse and exact addresses). They are marked * in section 6. "
+        "None may remain when the branch is merged.",
         "- The sector mappings for Japan and Canada follow the United States rule by analogy.",
         "- Japan's revenue leaves out the surplus carried over from the year before.",
         "- Canada's revenue counts federal transfers to provinces twice.",
@@ -301,37 +287,50 @@ def open_items(sources, countries):
         "- The selloff response default is to be checked against published estimates.",
         "",
     ]
-    return lines
+
+
+def used_sources(countries):
+    """The keys of every source that a figure in the shown countries'
+    data files names."""
+    used = set()
+    for country in countries.values():
+        items = list(country["start"].values()) + list(country["start"].get("holdings", {}).values()) \
+            + list(country["history"].values()) + list(country["parameters"].get("priceSensitive", {}).values())
+        for item in items:
+            if isinstance(item, dict):
+                used.update(item.get("source") or [])
+    return used
 
 
 # ---------------------------------------------------------------- 6. sources
 
-def source_entries(sources, series_list, meta):
-    lines = ["## 6. Sources", ""]
+def source_entries(sources, series_list, meta, countries):
+    """One line per source. The full entry for each is in sources.yml."""
+    used = used_sources(countries)
+    lines = [
+        "## 6. Sources",
+        "",
+        "One line each. The full entry (definitions, units, transformations, limits) is under the same "
+        "key in `tracker/pipeline/sources.yml`. * means a field is still marked \"to confirm\".",
+        "",
+        "| Key | Source | Used for | Series or file | Retrieved |",
+        "|---|---|---|---|---|",
+    ]
     for key, entry in sources.items():
-        lines += [f"### {entry['name']} (`{key}`)", ""]
-        retrieved = meta["sources"].get(key, {})
-        if retrieved:
-            lines.append("- Last retrieved: " + retrieved["retrievedOn"]
-                         + (", " + retrieved["edition"] if "edition" in retrieved else ""))
-        for name, label in FIELDS:
-            if entry.get(name):
-                lines.append(f"- {label}: " + " ".join(str(entry[name]).split()))
-        lines.append("- Series or tables:")
-        for item in entry.get("series_or_tables") or []:
-            lines.append("    - " + item)
-        lines.append("- Transformations:")
-        for item in entry.get("transformations") or []:
-            lines.append("    - " + item)
-        fetched = [series for series in series_list if series["source"] == key]
+        if key not in used:
+            continue
+        fetched = [series for series in series_list if series["source"] == key and series["country"] in SHOWN]
         if fetched:
-            lines.append("- Fetched automatically:")
-            for series in fetched:
-                identifier = series.get("id") or series.get("indicator") or series.get("series") \
-                    or series.get("endpoint")
-                lines.append(f"    - `{series['key']}`: {series['service']} {identifier}. "
-                             f"Feeds {series['feeds']}. Yearly rule: {' '.join(str(series['annual_rule']).split())}.")
-        lines.append("")
+            names = [str(series.get("id") or series.get("indicator") or series.get("series")
+                         or series.get("endpoint")) for series in fetched]
+            what = ", ".join(dict.fromkeys(names))   # each name once, in order
+        else:
+            what = "manual file"
+        star = "*" if "to confirm" in json.dumps(entry).lower() else ""
+        lines.append(f"| `{key}`{star} | {entry['publisher']}, {entry['name']} | "
+                     f"{' '.join(str(entry['used_for']).split()).replace('the United Kingdom, ', '')} | {what} | "
+                     f"{meta['sources'].get(key, {}).get('retrievedOn', '')} |")
+    lines.append("")
     return lines
 
 
@@ -341,26 +340,16 @@ def manual_files():
     lines = [
         "## 7. Manual files",
         "",
-        "Files downloaded by hand, kept in `tracker/pipeline/manual/`. Each has its own parser in "
-        "`tracker/pipeline/parsers/`, which stops if the file's layout is not what it expects.",
+        "Downloaded by hand, kept in `tracker/pipeline/manual/`, one parser each. Where each came from "
+        "and when is in the `notes.txt` in its folder.",
         "",
     ]
-    for folder in sorted(os.listdir(MANUAL)):
-        path = os.path.join(MANUAL, folder)
-        if not os.path.isdir(path):
-            continue
-        lines += [f"### {folder}", ""]
-        notes = os.path.join(path, "notes.txt")
-        if os.path.exists(notes):
-            with open(notes) as f:
-                for line in f:
-                    if "|" in line and not line.startswith("One line per file"):
-                        name, address, table, date = [part.strip() for part in line.split("|", 3)]
-                        lines.append(f"- `{name}`: {table.rstrip(chr(46))}. From {address}. Downloaded {date}.")
-        else:
-            for name in sorted(os.listdir(path)):
-                lines.append(f"- `{name}`")
-        lines.append("")
+    for key in SHOWN:
+        path = os.path.join(MANUAL, key)
+        if os.path.isdir(path):
+            names = sorted(name for name in os.listdir(path) if name != "notes.txt")
+            lines.append(f"- {key}: " + ", ".join(f"`{name}`" for name in names))
+    lines.append("")
     return lines
 
 
