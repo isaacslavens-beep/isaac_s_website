@@ -575,6 +575,27 @@ function fillHero() {
   total.textContent = FORMATS.percent0(loss) + " in total";
   number.textContent = FORMATS.percent1(lossPerYear) + " annually ";
   number.append(total);
+  // Money supply expansion: how fast the central bank's holdings of
+  // government debt grow in money terms. Holdings are a share of GDP, so
+  // they are multiplied by how much GDP has grown in money terms.
+  var gdpGrowth = 1;
+  rows.slice(1).forEach(function (row) { gdpGrowth *= 1 + row.nominalGrowth; });
+  var moneyRatio = rows[0].centralBank > 0 ? last.centralBank * gdpGrowth / rows[0].centralBank : null;
+  var moneyPerYear = moneyRatio > 0 ? Math.pow(moneyRatio, 1 / years) - 1 : null;
+  var money = document.getElementById("hero-money");
+  var moneyTotal = document.createElement("span");
+  moneyTotal.className = "hero-total";
+  if (moneyPerYear === null) {
+    money.textContent = "Money supply expansion: none";
+  } else {
+    money.textContent = "Money supply expansion: " + FORMATS.percent1(moneyPerYear) + " annually ";
+    moneyTotal.textContent = moneyRatio.toFixed(moneyRatio >= 10 ? 0 : 1) + " times as large in total";
+    money.append(moneyTotal);
+  }
+  document.getElementById("hero-money-note").textContent =
+    "Projected growth in the money the central bank has created to hold government debt, " +
+    startYear + " to " + last.year + ".";
+
   var without = pricesWithoutPurchases(country, c);
   var lossWithout = 1 - 1 / without[years];
   var averageInflation = Math.pow(last.priceLevel, 1 / years) - 1;
@@ -603,7 +624,15 @@ function fillHero() {
         : ". The cap is never reached."),
     "5. If central bank holdings stayed level as a share of GDP, the loss would be " + FORMATS.percent0(lossWithout) +
       ". The change in its holdings accounts for the remaining " + ((loss - lossWithout) * 100).toFixed(1) +
-      " percentage points."
+      " percentage points.",
+    "6. Money supply expansion is the growth in the central bank's holdings of government debt, in money terms. " +
+      "Its holdings go from " + FORMATS.percent0(rows[0].centralBank) + " of GDP in " + startYear + " to " +
+      FORMATS.percent0(last.centralBank) + " of GDP in " + last.year + ", and GDP in money terms is " +
+      gdpGrowth.toFixed(2) + " times as large" +
+      (moneyPerYear === null ? "."
+        : ", so the holdings are " + moneyRatio.toFixed(1) + " times as large: " +
+          FORMATS.percent1(moneyPerYear) + " annually. This counts only money created to buy government debt, " +
+          "not money created by bank lending.")
   ];
 
   var body = document.getElementById("how-body");

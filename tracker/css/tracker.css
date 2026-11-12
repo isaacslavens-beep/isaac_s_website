@@ -217,6 +217,14 @@ button:disabled {
   line-height: 1.1;
 }
 
+/* The second figure, smaller than the first */
+.hero .hero-money {
+  margin-top: 8px;
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
 .hero-total {
   font-size: 18px;
   font-weight: 600;
