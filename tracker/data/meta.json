@@ -1,0 +1,153 @@
+{
+  "lastSuccessfulRun": "2026-11-12",
+  "countries": {
+    "united-states": {
+      "name": "United States",
+      "available": true
+    },
+    "japan": {
+      "name": "Japan",
+      "available": true
+    },
+    "united-kingdom": {
+      "name": "United Kingdom",
+      "available": true
+    },
+    "canada": {
+      "name": "Canada",
+      "available": true
+    }
+  },
+  "sources": {
+    "bea_gdp": {
+      "label": "U.S. Bureau of Economic Analysis, Gross Domestic Product",
+      "retrievedOn": "2026-11-12"
+    },
+    "bis_cpi": {
+      "label": "Bank for International Settlements, consumer prices",
+      "retrievedOn": "2026-11-12"
+    },
+    "bls_cpi": {
+      "label": "U.S. Bureau of Labor Statistics, Consumer Price Index",
+      "retrievedOn": "2026-11-12"
+    },
+    "boc_debt": {
+      "label": "Bank of Canada, Government of Canada securities outstanding",
+      "retrievedOn": "2026-11-11"
+    },
+    "boc_monetary_aggregates": {
+      "label": "Bank of Canada, Monetary aggregates",
+      "retrievedOn": "2026-11-12"
+    },
+    "boj_fof": {
+      "label": "Bank of Japan, Flow of Funds Accounts",
+      "retrievedOn": "2026-11-11"
+    },
+    "boj_money_stock": {
+      "label": "Bank of Japan, Money Stock",
+      "retrievedOn": "2026-11-12"
+    },
+    "cao_gdp": {
+      "label": "Cabinet Office of Japan, gross domestic product",
+      "retrievedOn": "2026-11-12"
+    },
+    "dmo_debt_portfolio": {
+      "label": "UK Debt Management Office, debt portfolio",
+      "retrievedOn": "2026-11-11"
+    },
+    "dmo_gilt_holdings": {
+      "label": "UK Debt Management Office, distribution of gilt holdings",
+      "retrievedOn": "2026-11-11"
+    },
+    "fed_h15": {
+      "label": "Federal Reserve, H.15 Selected Interest Rates",
+      "retrievedOn": "2026-11-12"
+    },
+    "fed_h41": {
+      "label": "Federal Reserve, H.4.1 Factors Affecting Reserve Balances",
+      "retrievedOn": "2026-11-12"
+    },
+    "fed_h6": {
+      "label": "Federal Reserve, H.6 Money Stock Measures",
+      "retrievedOn": "2026-11-12"
+    },
+    "fed_z1": {
+      "label": "Federal Reserve, Financial Accounts of the United States",
+      "retrievedOn": "2026-11-11"
+    },
+    "imf_fiscal_monitor": {
+      "label": "International Monetary Fund, Fiscal Monitor",
+      "retrievedOn": "2026-11-12",
+      "edition": "Fiscal Monitor (October 2026)"
+    },
+    "imf_ifs_gdp": {
+      "label": "International Monetary Fund, International Financial Statistics",
+      "retrievedOn": "2026-11-12"
+    },
+    "imf_ifs_money": {
+      "label": "International Monetary Fund, International Financial Statistics",
+      "retrievedOn": "2026-11-12"
+    },
+    "imf_weo": {
+      "label": "International Monetary Fund, World Economic Outlook",
+      "retrievedOn": "2026-11-12",
+      "edition": "World Economic Outlook (October 2026)"
+    },
+    "mof_debt": {
+      "label": "Ministry of Finance, Japan, central government debt",
+      "retrievedOn": "2026-11-11"
+    },
+    "mof_dmr": {
+      "label": "Ministry of Finance, Japan, Debt Management Report",
+      "retrievedOn": "2026-11-11"
+    },
+    "mof_general_account": {
+      "label": "Ministry of Finance, Japan, general account settlement",
+      "retrievedOn": "2026-11-11"
+    },
+    "oecd_yields": {
+      "label": "OECD, long-term government bond yields",
+      "retrievedOn": "2026-11-12"
+    },
+    "omb_budget": {
+      "label": "U.S. Office of Management and Budget, Fiscal Year Budget Data",
+      "retrievedOn": "2026-11-12"
+    },
+    "ons_gdp": {
+      "label": "Office for National Statistics, gross domestic product",
+      "retrievedOn": "2026-11-12"
+    },
+    "ons_psf": {
+      "label": "Office for National Statistics, public sector finances",
+      "retrievedOn": "2026-11-11"
+    },
+    "ons_ukea_tbills": {
+      "label": "Office for National Statistics, UK Economic Accounts",
+      "retrievedOn": "2026-11-11"
+    },
+    "statcan_gfs": {
+      "label": "Statistics Canada, government finance statistics",
+      "retrievedOn": "2026-11-11"
+    },
+    "statcan_nbsa": {
+      "label": "Statistics Canada, National Balance Sheet Accounts",
+      "retrievedOn": "2026-11-11"
+    },
+    "us_tic_mfh": {
+      "label": "U.S. Treasury, Major Foreign Holders of Treasury Securities",
+      "retrievedOn": "2026-11-11"
+    },
+    "us_treasury_average_rates": {
+      "label": "U.S. Treasury, Average Interest Rates on U.S. Treasury Securities",
+      "retrievedOn": "2026-11-12"
+    },
+    "us_treasury_mspd": {
+      "label": "U.S. Treasury, Monthly Statement of the Public Debt",
+      "retrievedOn": "2026-11-12"
+    },
+    "us_treasury_mts": {
+      "label": "U.S. Treasury, Monthly Treasury Statement",
+      "retrievedOn": "2026-11-12"
+    }
+  }
+}

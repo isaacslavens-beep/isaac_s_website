@@ -1,0 +1,6 @@
+One line per file: file | address | table name | download date. Taken from Isaac's README of 2026-11-11.
+
+slt_table5.txt | https://ticdata.treasury.gov/resource-center/data-chart-center/tic/Documents/slt_table5.txt | TIC Table 5, Major Foreign Holders of Treasury Securities (2025-08 to 2026-08) | 2026-11-11
+mfhhis01.txt | https://www.treasury.gov/resource-center/data-chart-center/tic/Documents/mfhhis01.txt | Major Foreign Holders of Treasury Securities, historical table (2000 to 2025) | 2026-11-11
+F3_2_s.csv | https://www.federalreserve.gov/releases/z1/current/z1_csv_files.zip (release of 2026-09-11) | Financial Accounts of the United States, table F3.2.s Treasury securities, levels (to 2026:Q2) | 2026-11-11
+F3_2_s_data_dictionary.txt | https://www.federalreserve.gov/releases/z1/current/z1_csv_files.zip (release of 2026-09-11) | Data dictionary for table F3.2.s | 2026-11-11

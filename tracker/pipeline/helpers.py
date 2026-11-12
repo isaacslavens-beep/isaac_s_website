@@ -1,0 +1,201 @@
+"""Small functions shared by build.py and march_countries.py."""
+
+import datetime
+import json
+import os
+import sys
+
+HERE = os.path.dirname(os.path.abspath(__file__))
+CACHE = os.path.join(HERE, "cache")
+MANUAL = os.path.join(HERE, "manual")
+DATA = os.path.join(HERE, "..", "data")
+
+
+def load(key):
+    """The observations of one cached series, as [date, value] pairs in
+    date order."""
+    path = os.path.join(CACHE, key + ".json")
+    if not os.path.exists(path):
+        stop(f"{key} is not in the cache. Run fetch.py first.")
+    with open(path) as f:
+        return json.load(f)["observations"]
+
+
+def by_year(observations):
+    return {int(date[:4]): value for date, value in observations}
+
+
+def quarter_start(date):
+    """The first day of the quarter a date falls in: 2026-09-30 gives
+    2026-07-01."""
+    month = (int(date[5:7]) - 1) // 3 * 3 + 1
+    return f"{date[:4]}-{month:02d}-01"
+
+
+def last_values(observations, last_date, count, step_months, may_miss=0):
+    """The values of the `count` periods ending at last_date, or None if
+    more than `may_miss` of them are missing."""
+    values = dict(observations)
+    year, month = int(last_date[:4]), int(last_date[5:7])
+    found = []
+    for _ in range(count):
+        date = f"{year}-{month:02d}-01"
+        if date in values:
+            found.append(values[date])
+        elif count - len(found) > 0 and may_miss > 0:
+            may_miss -= 1
+        else:
+            return None
+        month -= step_months
+        if month < 1:
+            month += 12
+            year -= 1
+    return found
+
+
+def last_on_or_before(observations, date, within_days):
+    """The latest value dated on or before `date`, if it is no more than
+    `within_days` older."""
+    limit = datetime.date.fromisoformat(date)
+    found = None
+    for observed, value in observations:
+        day = datetime.date.fromisoformat(observed)
+        if day <= limit and (limit - day).days <= within_days:
+            found = value
+    return found
+
+
+def first_unbroken_year(values, last_year):
+    """The first year of the run of years, without gaps, ending at last_year."""
+    year = last_year
+    while year - 1 in values:
+        year -= 1
+    return year
+
+
+def write_json(path, content):
+    with open(path, "w") as f:
+        json.dump(content, f, indent=2)
+        f.write("\n")
+
+
+def stop(message):
+    print("BUILD FAILED: " + message, file=sys.stderr)
+    sys.exit(1)
+
+
+BASELINE_FROM = 1972   # the first full year after the dollar's link to gold ended
+
+
+SINCE_GOLD = ("the years since the United States ended the dollar's convertibility into gold "
+              "in August 1971")
+
+
+def period_note(first_year, last_year):
+    return f"from {first_year} to {last_year}, {SINCE_GOLD}"
+
+
+def baseline_inflation(inflation, last_year, source):
+    """Average inflation from 1972 to the starting year, as the item
+    written to the data file. The United States ended the dollar's
+    convertibility into gold in August 1971, so 1972 is the first full
+    year without it (Isaac, 2026-11-11). The average is compounded: the
+    steady rate that gives the same rise in prices over the period."""
+    level = 1.0
+    for year in range(BASELINE_FROM, last_year + 1):
+        if year not in inflation:
+            stop(f"inflation has no value for {year}, so the average since {BASELINE_FROM} cannot be computed")
+        level *= 1 + inflation[year]
+    years = last_year - BASELINE_FROM + 1
+    return {
+        "value": level ** (1 / years) - 1,
+        "source": source,
+        "note": "average inflation " + period_note(BASELINE_FROM, last_year),
+    }
+
+
+def baseline_growth(levels, last_year, source):
+    """Average yearly real growth since 1972, or since the figures begin
+    if that is later, as the item written to the data file. `levels` holds
+    real GDP by year. The average is compounded. (Isaac chose 1972, to
+    match money growth, on 2026-11-12.)"""
+    first = max(first_unbroken_year(levels, last_year) + 1, BASELINE_FROM)
+    years = last_year - first + 1
+    if years < 10:
+        stop("fewer than ten years of real GDP history")
+    period = period_note(first, last_year) if first == BASELINE_FROM \
+        else f"from {first} to {last_year}, the years the figures cover"
+    return {
+        "value": (levels[last_year] / levels[first - 1]) ** (1 / years) - 1,
+        "source": source,
+        "note": "average real growth " + period,
+    }
+
+
+def money_supply(levels, gdp, start_year, per_gdp_unit, source, gdp_source):
+    """The money supply (M2) for each fiscal year, as a share of GDP and
+    as yearly growth, and the three items written to the data file: its
+    share of GDP in the starting year, its average yearly growth, and the
+    average yearly rise in its share of GDP. Both averages run from 1972,
+    or from when the series begins if that is later.
+
+    `levels` holds M2 in the last month of each fiscal year.
+    `per_gdp_unit` is how many of the series' units make one unit of the
+    GDP series."""
+    ratio = {year: value / per_gdp_unit / gdp[year] for year, value in levels.items() if year in gdp}
+    growth = {year: levels[year] / levels[year - 1] - 1 for year in levels if year - 1 in levels}
+    if start_year not in ratio:
+        stop(f"the money supply has no value for {start_year}")
+
+    def period(values):
+        """The first year of the averaging period, and its description."""
+        first = max(first_unbroken_year(values, start_year), BASELINE_FROM)
+        if start_year - first < 10:
+            stop("fewer than ten years of money supply history")
+        if first == BASELINE_FROM:
+            return first, f"from {first} to {start_year}, {SINCE_GOLD}"
+        return first, f"from {first} to {start_year}, the years the figures cover"
+
+    first, growth_period = period(levels)
+    average_growth = (levels[start_year] / levels[first]) ** (1 / (start_year - first)) - 1
+    first, trend_period = period(ratio)      # GDP may begin later than M2
+    trend = (ratio[start_year] / ratio[first]) ** (1 / (start_year - first)) - 1
+    items = {
+        "money": {"value": ratio[start_year], "source": source + gdp_source,
+                  "note": "M2 at the end of the fiscal year, divided by the year's GDP"},
+        "moneyGrowth": {"value": average_growth, "source": source,
+                        "note": "average yearly growth of the money supply (M2) " + growth_period},
+        "moneyTrend": {"value": trend, "source": source + gdp_source,
+                       "note": "average yearly rise in M2 as a share of GDP " + trend_period.split(",")[0]},
+    }
+    return ratio, growth, items
+
+
+BALANCE_FROM = 2022    # the primary balance is averaged from this year
+
+
+def baseline_balance(balances, last_year, source):
+    """The average primary balance since 2022, as the item written to the
+    data file. Isaac chose 2022 on 2026-11-12."""
+    if first_unbroken_year(balances, last_year) > BALANCE_FROM:
+        stop(f"the primary balance does not cover every year from {BALANCE_FROM} to {last_year}")
+    years = range(BALANCE_FROM, last_year + 1)
+    return {
+        "value": sum(balances[year] for year in years) / len(years),
+        "source": source,
+        "note": f"average primary balance from {BALANCE_FROM} to {last_year}, recent years that reflect the current environment",
+    }
+
+
+def largest_five_year_average(values, last_year):
+    """The largest five-year average in the unbroken run of years ending at
+    last_year. Returns the average and its first and last year."""
+    first = first_unbroken_year(values, last_year)
+    best, best_years = None, None
+    for end in range(first + 4, last_year + 1):
+        average = sum(values[y] for y in range(end - 4, end + 1)) / 5
+        if best is None or average > best:
+            best, best_years = average, (end - 4, end)
+    if best is None:
+        stop("fewer than five years of primary balance history")
+    return best, best_years

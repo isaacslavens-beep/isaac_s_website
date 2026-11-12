@@ -1,0 +1,901 @@
+/* Sovereign debt simulator styles.
+   Colors are set once as variables: light theme first, dark theme below.
+   charts.js reads the same variables, so the charts follow the theme. */
+
+:root {
+  --page: #f2f4f8;      /* behind the cards */
+  --bg: #ffffff;        /* the cards */
+  --panel: #eef1f6;     /* soft fills inside a card */
+  --raised: #ffffff;    /* the selected button in a group */
+  --text: #101828;
+  --muted: #5b6779;
+  --border: #e2e6ee;
+  --grid: #edf0f5;
+  --accent: #2563eb;
+  --accent-soft: #e8f0ff;
+  --down: #d92d3a;      /* the loss figure */
+  --line-1: #2563eb;    /* blue */
+  --line-2: #e0661a;    /* orange */
+  --line-3: #0d9488;    /* teal */
+  --line-4: #7c3aed;    /* purple */
+  --stress: rgba(230, 150, 20, 0.16);
+  --dominance: rgba(217, 45, 58, 0.15);
+  --warning-bg: #fff6dd;
+  --warning-border: #f0d48a;
+  --warning-text: #5c3d00;
+  --shadow: 0 1px 2px rgba(16, 24, 40, 0.05);
+}
+
+:root[data-theme="dark"] {
+  --page: #0d1017;
+  --bg: #161a25;
+  --panel: #1f2433;
+  --raised: #2d3447;
+  --text: #e1e5ee;
+  --muted: #8c95a8;
+  --border: #272d3d;
+  --grid: #222838;
+  --accent: #4c8dff;
+  --accent-soft: rgba(76, 141, 255, 0.16);
+  --down: #f6566a;
+  --line-1: #4c8dff;
+  --line-2: #f0883e;
+  --line-3: #2fc4b2;
+  --line-4: #b392f0;
+  --stress: rgba(240, 180, 60, 0.15);
+  --dominance: rgba(246, 86, 106, 0.17);
+  --warning-bg: #332a10;
+  --warning-border: #5e4b17;
+  --warning-text: #f2d98a;
+  --shadow: none;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--page);
+  color: var(--text);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-size: 15px;
+  line-height: 1.45;
+  font-variant-numeric: tabular-nums;
+}
+
+a {
+  color: var(--accent);
+}
+
+h1, h2, h3, p {
+  margin: 0;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+/* ---------- Buttons ---------- */
+
+button,
+input {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+button:hover {
+  border-color: var(--muted);
+}
+
+button:disabled {
+  color: var(--muted);
+  cursor: default;
+  opacity: 0.55;
+}
+
+button:disabled:hover {
+  border-color: var(--border);
+}
+
+button:focus-visible,
+input:focus-visible,
+summary:focus-visible,
+a:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* A button with no box: Reset */
+button.quiet {
+  border-color: transparent;
+  background: transparent;
+  padding: 4px 8px;
+  color: var(--accent);
+}
+
+button.quiet:hover:not(:disabled) {
+  background: var(--accent-soft);
+}
+
+/* A square button holding only an icon: the theme switch */
+.icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  color: var(--muted);
+}
+
+/* The small round button that opens an explanation */
+.info {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  border-radius: 50%;
+  border-color: var(--muted);
+  background: transparent;
+  color: var(--muted);
+  font-size: 10.5px;
+  font-weight: 700;
+  line-height: 1;
+  opacity: 0.75;
+}
+
+.info:hover,
+.info[aria-expanded="true"] {
+  opacity: 1;
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+/* A group of buttons where one is selected */
+.segmented {
+  display: inline-flex;
+  gap: 2px;
+  padding: 3px;
+  background: var(--panel);
+  border-radius: 10px;
+}
+
+.segmented button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  flex: 1;
+  border: 0;
+  border-radius: 7px;
+  padding: 5px 12px;
+  background: transparent;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.segmented button:hover {
+  color: var(--text);
+}
+
+.segmented button[aria-pressed="true"] {
+  background: var(--raised);
+  color: var(--text);
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.14);
+}
+
+.segmented img {
+  height: 12px;
+  width: auto;
+  border-radius: 2px;
+  box-shadow: 0 0 0 1px var(--border);
+}
+
+/* ---------- Cards ---------- */
+
+.card {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+  padding: 14px 16px;
+}
+
+.card-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.card h2,
+.card summary {
+  font-size: 15px;
+  font-weight: 650;
+}
+
+.units {
+  color: var(--muted);
+  font-size: 12.5px;
+}
+
+/* ---------- Top bar ---------- */
+
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 10px 16px;
+  padding: 8px 16px;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+}
+
+.home-link {
+  font-size: 13.5px;
+  color: var(--muted);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.home-link:hover {
+  color: var(--accent);
+}
+
+.brand {
+  min-width: 0;
+  padding-left: 16px;
+  border-left: 1px solid var(--border);
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tabs {
+  margin-left: auto;
+}
+
+/* ---------- Layout ----------
+   Results on the left with the settings beside them. The working, the
+   advanced settings and the notes sit below the results. */
+
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 330px;
+  grid-template-areas:
+    "results panel"
+    "more    panel";
+  gap: 14px 16px;
+  align-items: start;
+  max-width: 1720px;
+  margin: 0 auto;
+  padding: 16px;
+}
+
+.results {
+  grid-area: results;
+  min-width: 0;
+}
+
+.more {
+  grid-area: more;
+  min-width: 0;
+  display: grid;
+  gap: 14px;
+}
+
+/* The settings stay in view while the page scrolls. */
+.panel {
+  grid-area: panel;
+  position: sticky;
+  top: 67px;
+  max-height: calc(100vh - 83px);
+  overflow-y: auto;
+}
+
+/* On a narrow screen the settings go between the charts and the rest. */
+@media (max-width: 900px) {
+  .layout {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      "results"
+      "panel"
+      "more";
+    padding: 12px;
+  }
+
+  .panel {
+    position: static;
+    max-height: none;
+  }
+}
+
+/* ---------- Title ---------- */
+
+.title-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 2px 16px;
+  margin-bottom: 12px;
+}
+
+.title-row h1 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+/* The outline keeps a white flag visible on a white page. */
+.flag {
+  height: 20px;
+  width: auto;
+  border-radius: 3px;
+  box-shadow: 0 0 0 1px var(--border);
+}
+
+.meta {
+  color: var(--muted);
+  font-size: 12.5px;
+}
+
+.error {
+  margin-bottom: 12px;
+  padding: 10px 14px;
+  border: 1px solid var(--down);
+  border-radius: 10px;
+  color: var(--down);
+}
+
+/* ---------- Headline figures ---------- */
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 12px;
+}
+
+@media (max-width: 1560px) {
+  .stats {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 560px) {
+  .stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+}
+
+/* Each card is a column with the figure pushed to the bottom, so the
+   figures in a row line up even when one label takes two lines. */
+.stat {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  padding: 10px 14px;
+}
+
+.stat-label {
+  padding-bottom: 4px;
+  color: var(--muted);
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+.together {
+  white-space: nowrap;
+}
+
+.stat-label .info {
+  margin-left: 6px;
+  vertical-align: -2px;
+}
+
+.stat-value {
+  margin-top: auto;
+  font-size: 27px;
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+}
+
+.stat-value small {
+  margin-left: 4px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0;
+}
+
+.stat-note {
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 12.5px;
+}
+
+.stat-value.words {
+  font-size: 21px;
+  line-height: 1.5;
+  letter-spacing: -0.01em;
+}
+
+/* The two central figures */
+.stat.loss .stat-value {
+  color: var(--down);
+}
+
+.stat.money .stat-value {
+  color: var(--accent);
+}
+
+.stat.loss .stat-value small,
+.stat.money .stat-value small {
+  color: var(--muted);
+}
+
+/* An explanation. In a figure's card it opens over the page, under the
+   card; beside a setting it opens in place. */
+.tip {
+  color: var(--muted);
+  font-size: 12.5px;
+}
+
+.stat .tip {
+  position: absolute;
+  z-index: 10;
+  top: calc(100% + 6px);
+  left: 0;
+  width: max(100%, 230px);
+  padding: 10px 12px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(16, 24, 40, 0.16);
+  color: var(--text);
+}
+
+/* Cards at the right edge open their explanation leftward. */
+.stat:nth-child(3n) .tip {
+  left: auto;
+  right: 0;
+}
+
+@media (max-width: 560px) {
+  .stat:nth-child(3n) .tip {
+    left: 0;
+    right: auto;
+  }
+
+  .stat:nth-child(2n) .tip {
+    left: auto;
+    right: 0;
+  }
+}
+
+/* ---------- Warning ---------- */
+
+.warning {
+  margin-top: 12px;
+  padding: 10px 14px;
+  background: var(--warning-bg);
+  border: 1px solid var(--warning-border);
+  border-radius: 10px;
+  color: var(--warning-text);
+  font-size: 14px;
+}
+
+.warning .info {
+  margin-left: 4px;
+  vertical-align: 1px;
+  border-color: var(--warning-text);
+  color: var(--warning-text);
+  opacity: 1;
+}
+
+.warning #warning-more {
+  margin-top: 6px;
+  max-width: 85ch;
+}
+
+/* ---------- Charts ---------- */
+
+/* Two charts side by side; one under the other on a narrower screen */
+.charts {
+  margin-top: 12px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+@media (max-width: 1150px) {
+  .charts {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.charts .card {
+  min-width: 0;
+  padding: 12px 8px 8px 14px;
+}
+
+.charts .card-head {
+  padding-right: 8px;
+  margin-bottom: 2px;
+}
+
+.chart {
+  width: 100%;
+  min-height: 300px;
+}
+
+/* The legend under each chart shows the values for the year under the
+   pointer. History lines share a legend entry with their projection. */
+.u-legend {
+  color: var(--text);
+  font-size: 12.5px;
+  text-align: left;
+  padding-right: 8px;
+}
+
+.u-legend .legend-hidden {
+  display: none;
+}
+
+.u-legend .u-series > * {
+  padding: 2px 4px;
+}
+
+.u-legend .u-value {
+  font-weight: 650;
+}
+
+.chart-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 16px;
+  margin-top: 10px;
+}
+
+.key {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  color: var(--muted);
+  font-size: 12.5px;
+}
+
+.key > span {
+  white-space: nowrap;
+}
+
+.chart-tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.swatch {
+  display: inline-block;
+  width: 20px;
+  height: 10px;
+  margin-right: 6px;
+  vertical-align: middle;
+  border-radius: 2px;
+}
+
+.swatch-history {
+  height: 0;
+  border-top: 2px solid var(--line-1);
+  border-radius: 0;
+}
+
+.swatch-projection {
+  height: 0;
+  border-top: 2px dashed var(--line-1);
+  border-radius: 0;
+}
+
+.swatch-stress {
+  background: var(--stress);
+  box-shadow: 0 0 0 1px var(--border);
+}
+
+.swatch-dominance {
+  background: var(--dominance);
+  box-shadow: 0 0 0 1px var(--border);
+}
+
+/* ---------- Settings ---------- */
+
+.panel h3 {
+  margin: 18px 0 10px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+}
+
+.control {
+  margin-bottom: 14px;
+}
+
+.control-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.control label {
+  font-size: 13.5px;
+  font-weight: 600;
+}
+
+.control output {
+  margin-left: auto;
+  padding-left: 8px;
+  font-size: 13.5px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.control .tip {
+  margin-top: 4px;
+}
+
+/* Under each slider: its lowest value, its default and its highest */
+.range-ends {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 11.5px;
+}
+
+/* The setting that matters most, set apart from the others */
+.control.key-control {
+  padding: 12px 12px 10px;
+  border: 1px solid var(--accent);
+  border-radius: 10px;
+  background: var(--accent-soft);
+}
+
+.control.key-control label {
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.control.key-control output {
+  font-size: 18px;
+  color: var(--accent);
+}
+
+/* Settings that belong to the one above */
+.control.indent {
+  margin-left: 10px;
+  padding-left: 12px;
+  border-left: 2px solid var(--border);
+}
+
+.control .segmented {
+  display: flex;
+  margin-top: 6px;
+}
+
+/* Sliders. --fill is the filled part of the track; ui.js sets it. */
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  display: block;
+  width: 100%;
+  height: 24px;
+  margin: 2px 0 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+input[type="range"]::-webkit-slider-runnable-track {
+  height: 4px;
+  border-radius: 2px;
+  background: linear-gradient(to right, var(--accent) var(--fill, 50%), var(--border) var(--fill, 50%));
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  margin-top: -6px;
+  border: 2px solid var(--accent);
+  border-radius: 50%;
+  background: var(--raised);
+  box-shadow: 0 1px 3px rgba(16, 24, 40, 0.25);
+}
+
+input[type="range"]::-moz-range-track {
+  height: 4px;
+  border-radius: 2px;
+  background: var(--border);
+}
+
+input[type="range"]::-moz-range-progress {
+  height: 4px;
+  border-radius: 2px;
+  background: var(--accent);
+}
+
+input[type="range"]::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  border: 2px solid var(--accent);
+  border-radius: 50%;
+  background: var(--raised);
+  box-shadow: 0 1px 3px rgba(16, 24, 40, 0.25);
+}
+
+.key-control input[type="range"]::-webkit-slider-runnable-track {
+  background: linear-gradient(to right, var(--accent) var(--fill, 50%), var(--bg) var(--fill, 50%));
+}
+
+/* An on-off switch: a checkbox drawn as a sliding dot */
+.control.check label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.control.check input {
+  -webkit-appearance: none;
+  appearance: none;
+  flex: none;
+  position: relative;
+  width: 32px;
+  height: 18px;
+  margin: 0;
+  border-radius: 9px;
+  background: var(--border);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.control.check input::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.3);
+  transition: left 0.15s;
+}
+
+.control.check input:checked {
+  background: var(--accent);
+}
+
+.control.check input:checked::after {
+  left: 16px;
+}
+
+/* ---------- Below the charts ---------- */
+
+details.card summary {
+  cursor: pointer;
+}
+
+details.card[open] summary {
+  margin-bottom: 12px;
+}
+
+/* Advanced settings, in as many columns as fit */
+.advanced-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 0 32px;
+}
+
+#how-body p {
+  margin: 8px 0;
+  max-width: 85ch;
+  font-size: 14px;
+}
+
+/* The table scrolls sideways on a phone instead of widening the page. */
+.table-scroll {
+  overflow-x: auto;
+}
+
+#how-body table {
+  border-collapse: collapse;
+  margin: 10px 0;
+  font-size: 13.5px;
+}
+
+#how-body th,
+#how-body td {
+  padding: 5px 18px 5px 0;
+  text-align: right;
+  border-bottom: 1px solid var(--border);
+}
+
+#how-body th {
+  color: var(--muted);
+  font-weight: 600;
+  vertical-align: bottom;
+}
+
+.notes p {
+  margin-top: 6px;
+  max-width: 110ch;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+/* ---------- Footer ---------- */
+
+.footer {
+  max-width: 1720px;
+  margin: 0 auto;
+  padding: 4px 16px 24px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.footer p {
+  margin: 2px 0;
+}
+
+/* ---------- Phone ---------- */
+
+/* The country buttons take a row of their own. */
+@media (max-width: 700px) {
+  .topbar {
+    flex-wrap: wrap;
+  }
+
+  .brand {
+    margin-right: auto;
+  }
+
+  .tabs {
+    order: 3;
+    display: flex;
+    flex-basis: 100%;
+    margin-left: 0;
+  }
+
+  .segmented button {
+    padding: 6px 8px;
+  }
+
+  .stat-value {
+    font-size: 23px;
+  }
+}

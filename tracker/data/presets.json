@@ -1,0 +1,86 @@
+{
+  "note": "Ranges and default values for the controls, with the basis for each default. A default of null means the value comes from the country's data file. Values are fractions: 0.02 means 2%. Defaults marked illustrative are starting values for exploring scenarios, not estimates.",
+
+  "years": 30,
+
+  "controls": {
+    "growth": {
+      "min": -0.01, "max": 0.04, "step": 0.001, "default": null,
+      "showBasis": true,
+      "basis": "The country's average real growth since 1972."
+    },
+    "primaryBalance": {
+      "min": -0.08, "max": 0.04, "step": 0.001, "default": null,
+      "showBasis": true,
+      "basis": "The country's average primary balance from 2022."
+    },
+    "stressInterestShare": {
+      "min": 0.1, "max": 1, "step": 0.01, "default": 0.3, "illustrative": true,
+      "basis": "Illustrative assumption."
+    },
+    "centralBankLimit": {
+      "min": 0.2, "max": 1, "step": 0.05, "default": 0.5, "illustrative": true,
+      "basis": "Illustrative assumption. The highest in this data is the Bank of Japan's 47% in 2024."
+    },
+    "capLevel": {
+      "min": 0, "max": 0.12, "step": 0.001, "default": null,
+      "basis": "Used only when the cap is fixed. Starts at the country's current yield."
+    },
+    "moneyGrowth": {
+      "min": 0, "max": 0.2, "step": 0.001, "default": null, "showBasis": true,
+      "basis": "The country's past average."
+    },
+    "moneyShare": {
+      "min": 0, "max": 1.5, "step": 0.01, "default": null, "showBasis": true,
+      "basis": "Estimated by the build from the countries' history. See data/estimates.json."
+    },
+    "moneyTrend": {
+      "min": -0.02, "max": 0.05, "step": 0.001, "default": null, "showBasis": true,
+      "basis": "The country's past average."
+    },
+    "selloffShare": {
+      "min": 0, "max": 1, "step": 0.05, "default": 0.25, "illustrative": true,
+      "basis": "Illustrative assumption."
+    },
+    "selloffResponse": {
+      "min": 0, "max": 0.5, "step": 0.01, "default": 0.15, "illustrative": true,
+      "basis": "Illustrative assumption, five times the usual yield response."
+    },
+    "selloffYears": {
+      "min": 1, "max": 10, "step": 1, "default": 5, "illustrative": true,
+      "basis": "Illustrative assumption."
+    },
+    "persistence": {
+      "min": 0, "max": 0.95, "step": 0.05, "default": 0.5, "illustrative": true,
+      "basis": "Illustrative assumption."
+    },
+    "foreignInflation": {
+      "min": 0, "max": 0.06, "step": 0.001, "default": 0.02, "illustrative": true,
+      "basis": "Illustrative assumption."
+    },
+    "runoff": {
+      "min": 0, "max": 0.02, "step": 0.001, "default": 0, "illustrative": true,
+      "basis": "Illustrative assumption: with no runoff the central bank keeps its share of the debt."
+    },
+    "yieldResponse": {
+      "min": 0.005, "max": 0.1, "step": 0.005, "default": 0.03, "illustrative": true,
+      "basis": "Illustrative assumption: about 3 basis points of yield for each point of GDP of debt, one value for every country."
+    },
+    "maturity": {
+      "min": 1, "max": 20, "step": 0.1, "default": null,
+      "basis": "The average maturity of the country's debt, from its data file."
+    }
+  },
+
+  "priceSensitive": {
+    "min": 0, "max": 1, "step": 0.01,
+    "note": "A group's default comes from the country's data file where the data separates holders by type. Otherwise it is the illustrative value here.",
+    "defaults": {
+      "domesticPrivate": { "default": 0.5, "illustrative": true, "basis": "Illustrative assumption." },
+      "foreignOfficial": { "default": 0.1, "illustrative": true, "basis": "Illustrative assumption." },
+      "foreignPrivate": { "default": 1.0, "illustrative": true, "basis": "Illustrative assumption." },
+      "domestic": { "default": 0.5, "illustrative": true, "basis": "Illustrative assumption." },
+      "foreign": { "default": 0.6, "illustrative": true, "basis": "Illustrative assumption for countries whose data cannot separate foreign official from foreign private holders." }
+    }
+  }
+}
