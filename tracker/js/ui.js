@@ -60,7 +60,9 @@ function controlList(country) {
   // The main controls, in order of how much they move the loss of
   // purchasing power: the largest first.
   var list = [
-    { key: "moneyGrowth", section: "main", type: "range", format: "percent1",
+    // Not shown as a slider: the money supply reacts to what the central
+    // bank buys, so its starting rate is fixed at the country's past average.
+    { key: "moneyGrowth", section: "main", type: "range", format: "percent1", fixed: true,
       label: "Money supply growth",
       help: "How fast the money supply (M2) grows each year, before any money the central bank creates by buying debt. Inflation follows it." },
     { key: "stressInterestShare", section: "main", type: "range", format: "percent0",
@@ -612,8 +614,9 @@ function fillHero() {
       FORMATS.percent1(lossPerYear) + " annually: 1 − (1 − " + FORMATS.percent0(loss) + ") ^ (1 ÷ " + years + ").",
     "2. The price level is each year's inflation compounded. Inflation averages " +
       FORMATS.percent1(averageInflation) + " a year over the " + years + " years.",
-    "3. Inflation follows the money supply. Money growing at " + FORMATS.percent1(c.moneyGrowth) +
-      " a year, with real growth of " + FORMATS.percent1(c.growth) + " and " + FORMATS.percent1(c.moneyTrend) +
+    "3. Inflation follows the money supply. Without central bank buying, money grows at " +
+      FORMATS.percent1(c.moneyGrowth) + " a year (the " + country.start.moneyGrowth.note +
+      "). Money growing at that rate, with real growth of " + FORMATS.percent1(c.growth) + " and " + FORMATS.percent1(c.moneyTrend) +
       " of money growth that does not raise prices, implies inflation of " + FORMATS.percent1(impliedInflation) +
       ": (1 + " + FORMATS.percent1(c.moneyGrowth) + ") ÷ ((1 + " + FORMATS.percent1(c.growth) + ") × (1 + " +
       FORMATS.percent1(c.moneyTrend) + ")) − 1. Each year inflation moves toward the rate that last year's money growth implies, and " +
