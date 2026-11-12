@@ -84,6 +84,10 @@
       "label": "International Monetary Fund, International Financial Statistics",
       "retrievedOn": "2026-11-12"
     },
+    "imf_ifs_money": {
+      "label": "International Monetary Fund, International Financial Statistics",
+      "retrievedOn": "2026-11-12"
+    },
     "imf_weo": {
       "label": "International Monetary Fund, World Economic Outlook",
       "retrievedOn": "2026-11-12",

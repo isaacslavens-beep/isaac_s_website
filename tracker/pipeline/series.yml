@@ -393,3 +393,18 @@ series:
     frequency: monthly
     annual_rule: the value for March, the last month of the fiscal year
     feeds: money supply
+
+  - key: jp_m2_history
+    country: japan
+    source: imf_ifs_money
+    service: fred
+    id: MYAGM2JPM189S
+    title: M2 for Japan
+    units: yen, seasonally adjusted
+    frequency: monthly
+    closed: true    # ended in February 2017; used only for years before the Bank of Japan series begins
+    annual_rule: >
+      the value for March of each year before 2004, scaled by the ratio of
+      the Bank of Japan series to this one in March 2004
+    feeds: money supply before 2004
+

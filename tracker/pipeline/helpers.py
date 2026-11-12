@@ -149,19 +149,27 @@ def money_supply(levels, gdp, start_year, per_gdp_unit, source, gdp_source):
     growth = {year: levels[year] / levels[year - 1] - 1 for year in levels if year - 1 in levels}
     if start_year not in ratio:
         stop(f"the money supply has no value for {start_year}")
-    first = max(first_unbroken_year(ratio, start_year), BASELINE_FROM)
-    years = start_year - first
-    if years < 10:
-        stop("fewer than ten years of money supply history")
-    period = (f"from {first} to {start_year}, {SINCE_GOLD}" if first == BASELINE_FROM
-              else f"from {first} to {start_year}, the years the series covers")
+
+    def period(values):
+        """The first year of the averaging period, and its description."""
+        first = max(first_unbroken_year(values, start_year), BASELINE_FROM)
+        if start_year - first < 10:
+            stop("fewer than ten years of money supply history")
+        if first == BASELINE_FROM:
+            return first, f"from {first} to {start_year}, {SINCE_GOLD}"
+        return first, f"from {first} to {start_year}, the years the figures cover"
+
+    first, growth_period = period(levels)
+    average_growth = (levels[start_year] / levels[first]) ** (1 / (start_year - first)) - 1
+    first, trend_period = period(ratio)      # GDP may begin later than M2
+    trend = (ratio[start_year] / ratio[first]) ** (1 / (start_year - first)) - 1
     items = {
         "money": {"value": ratio[start_year], "source": source + gdp_source,
                   "note": "M2 at the end of the fiscal year, divided by the year's GDP"},
-        "moneyGrowth": {"value": (levels[start_year] / levels[first]) ** (1 / years) - 1, "source": source,
-                        "note": "average yearly growth of the money supply (M2) " + period},
-        "moneyTrend": {"value": (ratio[start_year] / ratio[first]) ** (1 / years) - 1, "source": source + gdp_source,
-                       "note": f"average yearly rise in M2 as a share of GDP from {first} to {start_year}"},
+        "moneyGrowth": {"value": average_growth, "source": source,
+                        "note": "average yearly growth of the money supply (M2) " + growth_period},
+        "moneyTrend": {"value": trend, "source": source + gdp_source,
+                       "note": "average yearly rise in M2 as a share of GDP " + trend_period.split(",")[0]},
     }
     return ratio, growth, items
 

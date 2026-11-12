@@ -129,6 +129,7 @@ def build_japan(sources):
         "prefix": "jp",
         "growth_from_imf": True,
         "gdp_rule": "average",
+        "money_history": "jp_m2_history",
         "money_source": "boj_money_stock", "money_per_gdp_unit": 10,   # hundreds of millions of yen to billions
         "gdp_source": "cao_gdp",
         "government": ("Central government only: government bonds, including Fiscal Investment and Loan "
@@ -400,11 +401,22 @@ def assemble(country, sources, given):
     if "money_source" in given:
         money_source = [given["money_source"], gdp_source]
         m2 = {int(date[:4]): value for date, value in load(prefix + "_m2") if date[5:7] == "03"}
+        # Japan's current series begins in 2003. Earlier years come from a
+        # closed series, scaled so the two join without a step.
+        if "money_history" in given:
+            older = {int(date[:4]): value for date, value in load(given["money_history"]) if date[5:7] == "03"}
+            join = min(m2)
+            if join not in older:
+                stop(f"{given['money_history']} has no value for March {join}, where it joins the current series")
+            for year, value in older.items():
+                if year < join:
+                    m2[year] = value * m2[join] / older[join]
+            money_source = money_source + ["imf_ifs_money"]
         money, money_growth, items = money_supply(
-            m2, gdp, start_year, given["money_per_gdp_unit"], [given["money_source"]], [gdp_source])
+            m2, gdp, start_year, given["money_per_gdp_unit"], money_source[:1] + money_source[2:], [gdp_source])
         start.update(items)
         history["money"] = (money, money_source)
-        history["moneyGrowth"] = (money_growth, [given["money_source"]])
+        history["moneyGrowth"] = (money_growth, money_source[:1] + money_source[2:])
 
     start["holdings"] = {
         "domestic": item(domestic[start_year], holders_source,

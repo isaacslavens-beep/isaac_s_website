@@ -66,7 +66,10 @@ def main():
         else:
             stop(f"{key}: unknown service '{service}'")
 
-        check_not_stale(key, result, today)
+        # A series marked `closed` in series.yml has ended and is used only
+        # for the years before its replacement begins.
+        if not series.get("closed"):
+            check_not_stale(key, result, today)
 
         result["key"] = key
         result["retrieved"] = today.isoformat()

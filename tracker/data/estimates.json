@@ -23,7 +23,7 @@
     "note": "estimated from 79 years of history in the four countries: the inflation that followed each rise in central bank holdings, beyond what the baseline and persistence explain"
   },
   "moneyShare": {
-    "value": 0.722923096792803,
+    "value": 0.7366579621782677,
     "years": 63,
     "byCountry": {
       "united-states": {
@@ -31,7 +31,7 @@
         "years": 23
       },
       "japan": {
-        "value": 0.18060041695440174,
+        "value": 0.4360847540193656,
         "years": 4
       },
       "canada": {

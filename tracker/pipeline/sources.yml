@@ -395,6 +395,30 @@ sources:
     known_limits: >
       To confirm.
 
+  imf_ifs_money:
+    name: International Financial Statistics, monetary aggregates
+    publisher: International Monetary Fund
+    address: https://fred.stlouisfed.org/series/MYAGM2JPM189S
+    chart_label: International Monetary Fund, International Financial Statistics
+    measures: The M2 money stock of Japan, monthly, from 1955 to February 2017.
+    used_for: Japan's money supply (M2) in the years before the Bank of Japan's current series begins in April 2003.
+    series_or_tables:
+      - "FRED series MYAGM2JPM189S, M2 for Japan"
+    definition_notes: >
+      The series has ended. From April 2003 it follows the Bank of Japan's current definition of M2, and
+      the two agree to within 0.6% in every March from 2004 to 2016. Before April 2003 its definition
+      is the older one (to confirm against the IMF's notes).
+    units_and_frequency: Published in yen, monthly, seasonally adjusted.
+    transformations:
+      - Take the value for March of each year before 2004.
+      - Multiply by the ratio of the Bank of Japan series to this one in March 2004, so the two join without a step.
+    category_mapping: not an ownership table
+    retrieval: automated, through FRED, which mirrors the IMF series
+    reuse_terms: to confirm
+    known_limits: >
+      A closed series, used for history only. The definition of M2 changed in April 2003, so growth
+      across that date is not like for like. To confirm.
+
   imf_fiscal_monitor:
     name: Fiscal Monitor
     publisher: International Monetary Fund
