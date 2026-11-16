@@ -54,22 +54,22 @@ var FORMATS = {
 // ---------------------------------------------------------------- controls
 
 // The controls, in the order they appear. `section` is where each one
-// goes: main, scenario or advanced. The one-line descriptions are shown
-// under each label.
+// goes: main, scenario or advanced. `help` is shown behind the "i" button,
+// followed by where the default comes from. Two more flags:
+//   boxed   one of the two settings that matter most, shown first in a box
+//   hidden  not shown, because it moves the result little; the model still
+//           uses its default
 function controlList(country) {
-  // The main controls. The primary balance comes first and is marked
-  // `key_control`, which sets it apart on the page: the two settings that
-  // matter most come first, boxed; the rest follow under "Other settings".
   var list = [
-    { key: "primaryBalance", section: "main", type: "range", format: "percent1", key_control: true,
+    { key: "primaryBalance", section: "main", type: "range", format: "percent1", boxed: true,
       label: "Primary balance",
       help: "Held constant for the whole projection." },
-    // Not shown as a slider: the money supply reacts to what the central
-    // bank buys, so its starting rate is fixed at the country's past average.
-    { key: "moneyGrowth", section: "main", type: "range", format: "percent1", fixed: true,
+    // Hidden: M2 reacts to what the central bank buys, so its underlying
+    // growth stays at the country's past average.
+    { key: "moneyGrowth", section: "main", type: "range", format: "percent1", hidden: true,
       label: "Money supply growth",
       help: "M2 growth before any money created by central bank purchases." },
-    { key: "growth", section: "main", type: "range", format: "percent1", key_control: true,
+    { key: "growth", section: "main", type: "range", format: "percent1", boxed: true,
       label: "Real growth",
       help: "Held constant for the whole projection." },
     { key: "stressInterestShare", section: "main", type: "range", format: "percent0",
@@ -77,15 +77,14 @@ function controlList(country) {
       help: "Interest-to-revenue ratio above which a year counts as fiscal stress. Revenue is held at its starting share of GDP." },
     { key: "capMode", section: "main", type: "choice",
       label: "Yield cap",
-      help: "The central bank buys whatever debt it takes to hold the 10-year yield at the cap, up to its limit. Stress level: the yield at which interest would equal the fiscal stress threshold once the whole debt pays that yield, recomputed annually from that year's debt, so it falls as debt grows. Fixed: a set level. Off: no purchases beyond keeping its share of the debt.",
+      help: "The central bank buys whatever debt it takes to hold the 10-year yield at the cap, up to its limit. Fixed: a set level. Stress level: the yield at which interest would equal the fiscal stress threshold once the whole debt pays that yield, recomputed annually from that year's debt, so it falls as debt grows. Off: no purchases beyond keeping its share of the debt.",
       options: [
-        ["stress", "Stress level"],
         ["fixed", "Fixed"],
+        ["stress", "Stress level"],
         ["off", "Off"]
       ],
       // Shown under the buttons, so the level in force is always stated.
-      note: function (c, country) {
-        var s = country.start;
+      note: function (c) {
         if (c.capMode === "off") return "No cap. The central bank never buys to hold the yield down.";
         if (c.capMode === "fixed") return "Capped at " + FORMATS.percent1(c.capLevel) + ".";
         // The level moves with the debt, so it is read from the projection.
@@ -121,9 +120,7 @@ function controlList(country) {
       label: "Share sold", help: "" },
     { key: "selloffYears", section: "scenario", type: "range", format: "years0", indent: true,
       showWhen: function (c) { return c.selloffOn; },
-      label: "Over", help: "" }
-  );
-  list.push(
+      label: "Over", help: "" },
     { key: "selloffResponse", section: "scenario", type: "range", format: "basisPoints", indent: true,
       showWhen: function (c) { return c.selloffOn; },
       label: "Yield rise from selling",
@@ -132,9 +129,9 @@ function controlList(country) {
 
   // Advanced settings: these move the result less.
   list.push(
-    // Not shown: it changes how quickly inflation reaches the rate money
+    // Hidden: it changes how quickly inflation reaches the rate money
     // growth implies, which barely moves a 30-year result.
-    { key: "persistence", section: "advanced", type: "range", format: "number2", fixed: true,
+    { key: "persistence", section: "advanced", type: "range", format: "number2", hidden: true,
       label: "Inflation persistence",
       help: "Share of last year's gap between inflation and the money-implied rate that carries into this year." },
     { key: "moneyShare", section: "advanced", type: "range", format: "number2",
@@ -144,10 +141,8 @@ function controlList(country) {
       label: "Money growth that does not raise prices",
       help: "Trend rise in M2 relative to GDP that does not raise prices (falling velocity)." }
   );
-  // The controls marked `fixed` are not shown: they change the result
-  // very little. The model still uses their default values.
   Object.keys(country.start.holdings).forEach(function (group) {
-    list.push({ key: "w_" + group, section: "advanced", type: "range", format: "percent0", fixed: true,
+    list.push({ key: "w_" + group, section: "advanced", type: "range", format: "percent0", hidden: true,
       label: "Price-sensitive share: " + GROUP_LABELS[group].toLowerCase(),
       help: "Share of this group's holdings that demands a higher yield to absorb more debt." });
   });
@@ -155,10 +150,10 @@ function controlList(country) {
     { key: "yieldResponse", section: "advanced", type: "range", format: "basisPoints",
       label: "Yield response",
       help: "Basis points of yield per point of GDP of debt that price-sensitive holders must absorb. It works both ways: debt the central bank takes off the market lowers the yield at the same rate, so with the yield cap on, a higher value can mean lower yields." },
-    { key: "runoff", section: "advanced", type: "range", format: "percent1", fixed: true,
+    { key: "runoff", section: "advanced", type: "range", format: "percent1", hidden: true,
       label: "Central bank runoff",
       help: "Annual decline in central bank holdings, as a share of GDP." },
-    { key: "maturity", section: "advanced", type: "range", format: "years1", fixed: true,
+    { key: "maturity", section: "advanced", type: "range", format: "years1", hidden: true,
       label: "Average maturity",
       help: "One-over-maturity of the debt reprices at the current yield each year." }
   );
@@ -180,28 +175,20 @@ function presetFor(control, country) {
       basis: fromData ? "Default: " + fromData.note + "." : fallback.basis
     };
   }
-  var preset = Object.assign({}, page.presets.controls[control.preset || control.key] || {});
+  var preset = Object.assign({}, page.presets.controls[control.key] || {});
   var start = country.start;
-  // Real growth starts at the IMF's projection for the next five years; the
-  // primary balance at its recent average. The data file says which years.
-  var averages = { growth: "growth", primaryBalance: "baselinePrimaryBalance" };
-  if (averages[control.key]) {
-    preset.default = start[averages[control.key]].value;
-    preset.basis = "Default: " + start[averages[control.key]].note + ".";
-  }
-  if (control.key === "capLevel") preset.default = start.yield.value;
-  if (control.key === "maturity") preset.default = start.maturity.value;
-  if (control.key === "moneyTrend") {
-    preset.default = start.moneyTrend.value;
-    preset.basis = "Default: " + start.moneyTrend.note + ".";
-  }
-  if (control.key === "moneyShare") {
-    preset.default = page.estimates.moneyShare.value;
-    preset.basis = "Default: " + page.estimates.moneyShare.note + ".";
-  }
-  if (control.key === "moneyGrowth") {
-    preset.default = start.moneyGrowth.value;
-    preset.basis = "Default: " + start.moneyGrowth.note + ".";
+  // Defaults taken from the data files, each with a note saying where from.
+  var fromData = {
+    growth: start.growth,                          // the IMF's projection
+    primaryBalance: start.baselinePrimaryBalance,  // the recent average
+    moneyGrowth: start.moneyGrowth,
+    moneyTrend: start.moneyTrend,
+    maturity: start.maturity,
+    moneyShare: page.estimates.moneyShare          // estimated across countries
+  }[control.key];
+  if (fromData) {
+    preset.default = fromData.value;
+    preset.basis = "Default: " + fromData.note + ".";
   }
   if (control.key === "stressInterestShare") {
     // Shown beside the assumption so the reader can place it: what the
@@ -219,7 +206,6 @@ function presetFor(control, country) {
     preset.basis = preset.basis + " In " + start.year + " this central bank holds " +
       FORMATS.percent0(share) + ".";
   }
-  if (control.key === "capMode") preset.default = "stress";
   if (control.type === "check") preset.default = false;
   return preset;
 }
@@ -290,12 +276,12 @@ function buildControls() {
   Object.keys(sections).forEach(function (name) { sections[name].textContent = ""; });
 
   controlList(country).forEach(function (control) {
-    if (control.fixed) return;
+    if (control.hidden) return;
     var preset = presetFor(control, country);
     var id = "control-" + control.key;
     var box = document.createElement("div");
     box.className = "control" + (control.type === "check" ? " check" : "") + (control.indent ? " indent" : "") +
-      (control.key_control ? " key-control" : "");
+      (control.boxed ? " key-control" : "");
     box.dataset.key = control.key;
 
     // The first line: the label, the "i" button and the current value.
@@ -371,7 +357,7 @@ function buildControls() {
         var note = document.createElement("p");
         note.className = "control-note";
         box.append(note);
-        box.note = function (current) { note.textContent = control.note(current, country); };
+        box.note = function (current) { note.textContent = control.note(current); };
       }
     } else {
       // An on-off switch.
@@ -389,7 +375,7 @@ function buildControls() {
 
     box.showWhen = control.showWhen;
     // A heading between the key settings and the rest.
-    if (control.section === "main" && !control.key_control && !sections.main.querySelector("h3")) {
+    if (control.section === "main" && !control.boxed && !sections.main.querySelector("h3")) {
       var heading = document.createElement("h3");
       heading.textContent = "Other settings";
       sections.main.append(heading);
@@ -444,7 +430,7 @@ function modelInputs(country, c) {
       year: s.year,
       debt: value(s.debt),
       centralBank: value(s.centralBank),
-      money: s.money ? value(s.money) : null,   // a country without M2 data has none
+      money: value(s.money),
       holdings: holdings,
       yield: value(s.yield),
       averageRate: value(s.averageRate),
@@ -456,7 +442,6 @@ function modelInputs(country, c) {
       years: page.presets.years,
       growth: c.growth,
       primaryBalance: c.primaryBalance,
-      primaryBalanceMode: "fixed",
       stressInterestShare: c.stressInterestShare,
       capMode: c.capMode,
       capLevel: c.capLevel,
@@ -467,7 +452,6 @@ function modelInputs(country, c) {
       moneyShare: c.moneyShare,
       moneyTrend: c.moneyTrend,
       persistence: c.persistence,
-      foreignInflation: page.presets.controls.foreignInflation.default, // only moves the exchange rate, which no chart shows
       maturity: c.maturity,
       runoff: c.runoff,
       selloffs: selloffs,
@@ -487,10 +471,11 @@ function historyValue(country, name, year) {
   return index >= 0 && index < series.values.length ? series.values[index] : null;
 }
 
-// The two charts, shown side by side. Each line says where its history
-// comes from (`history`, a function of the year), where its projection
-// comes from (`projection`, a function of the model's row for that year),
-// and which data series its source line should name.
+// The two charts, shown side by side. `key` names the box it is drawn in
+// (chart-debt, chart-yields) and `sources` the data series the source line
+// names. Each line says where its history comes from (`history`, a function
+// of the year) and its projection (`projection`, a function of the model's
+// row for that year).
 function chartList(country) {
   function history(name, scale) {
     return function (year) {
@@ -500,16 +485,14 @@ function chartList(country) {
   }
 
   return [
-    { key: "debt", title: "Debt", units: "Percent of GDP",
-      rightLabel: "Percent of GDP", rightUnit: "%",
+    { key: "debt", unit: "%", decimals: 0,
       sources: ["debt"],
       series: [
         { label: "Debt", color: 1, unit: "%", decimals: 1,
           history: history("debt", 100), projection: function (row) { return row.debt * 100; } }
       ] },
 
-    { key: "yields", title: "Interest rates", units: "Percent",
-      rightLabel: "Percent", rightUnit: "%", rightDecimals: 1,
+    { key: "yields", unit: "%", decimals: 1,
       sources: ["yield", "averageRate"],
       series: [
         { label: "10-year yield", color: 1, unit: "%", decimals: 2,
@@ -552,18 +535,16 @@ function chartTable(definition) {
       // In the starting year, a line with no model value uses its history.
       return i === startIndex && projected === null ? s.history(year) : projected;
     });
-    return Object.assign({}, s, { values: values, axis: s.axis || "right" });
+    return Object.assign({}, s, { values: values });
   });
   return { years: years, startIndex: startIndex, series: series };
 }
 
-// Draws both charts, each in its own box.
+// Draws both charts, each in its own box. Only fiscal stress is shaded;
+// fiscal dominance has its own card.
 function draw() {
-  var zones = [];
-  page.result.rows.forEach(function (row, t) {
-    if (t === 0) return;
-    // Only fiscal stress is shaded; fiscal dominance has its own card.
-    if (row.stress) zones.push({ year: row.year, type: "stress" });
+  var stressYears = page.result.rows.filter(function (row) { return row.stress; }).map(function (row) {
+    return row.year;
   });
 
   page.plots.forEach(function (plot) { plot.destroy(); });
@@ -571,7 +552,7 @@ function draw() {
     var table = chartTable(definition);
     var startYear = table.years[table.startIndex];
     return drawChart(document.getElementById("chart-" + definition.key), Object.assign({}, definition, table, {
-      zones: zones,
+      stressYears: stressYears,
       // Half as many years of history as years projected
       xMin: Math.max(table.years[0], startYear - page.presets.years / 2),
       xMax: startYear + page.presets.years,
@@ -854,10 +835,10 @@ function writeAddress() {
   var code = COUNTRIES.filter(function (c) { return c.key === page.country; })[0].code;
   params.set("c", code);
   var values = page.controls[page.country];
-  var fixed = {};
-  controlList(page.data[page.country]).forEach(function (control) { fixed[control.key] = control.fixed; });
+  var hidden = {};
+  controlList(page.data[page.country]).forEach(function (control) { hidden[control.key] = control.hidden; });
   Object.keys(values).forEach(function (key) {
-    if (fixed[key]) return;
+    if (hidden[key]) return;
     var v = values[key];
     params.set(key, typeof v === "boolean" ? (v ? "1" : "0") : v);
   });
@@ -887,7 +868,7 @@ function readAddress() {
   var values = page.controls[page.country];
   controlList(country).forEach(function (control) {
     var text = params.get(control.key);
-    if (text === null || control.fixed) return;
+    if (text === null || control.hidden) return;
     var preset = presetFor(control, country);
     if (control.type === "range") {
       var number = parseFloat(text);

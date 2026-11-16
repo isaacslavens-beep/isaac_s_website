@@ -1,4 +1,4 @@
-"""Small functions shared by build.py and march_countries.py."""
+"""Small functions shared by build.py and japan_uk_canada.py."""
 
 import datetime
 import json

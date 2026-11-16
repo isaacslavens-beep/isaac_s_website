@@ -16,7 +16,7 @@ import sys
 
 import yaml
 
-import march_countries
+import japan_uk_canada
 import sources_doc
 from helpers import (CACHE, DATA, HERE, MANUAL, baseline_balance, baseline_growth, baseline_inflation, by_year,
                      first_unbroken_year, largest_five_year_average,
@@ -30,7 +30,7 @@ def main():
     with open(os.path.join(HERE, "series.yml")) as f:
         series_list = yaml.safe_load(f)["series"]
 
-    countries = [build_united_states(sources)] + march_countries.build_all(sources)
+    countries = [build_united_states(sources)] + japan_uk_canada.build_all(sources)
 
     # Nothing is written unless every country passes validation.
     for country in countries:
@@ -469,7 +469,7 @@ def build_meta(series_list, sources, countries):
         "us_tic_mfh": ("united-states", [us_tic_table5.FILE, us_tic_history.FILE]),
         "fed_z1": ("united-states", [us_fed_f32s.FILE]),
     }
-    manual_files.update(march_countries.MANUAL_SOURCES)
+    manual_files.update(japan_uk_canada.MANUAL_SOURCES)
     for source, (folder, names) in manual_files.items():
         notes = os.path.join(MANUAL, folder, "notes.txt")
         if not os.path.exists(notes) or not all(os.path.exists(os.path.join(MANUAL, folder, n)) for n in names):

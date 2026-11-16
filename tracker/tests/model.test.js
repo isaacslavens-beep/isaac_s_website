@@ -34,29 +34,22 @@ function run(startValues, controls) {
   return result;
 }
 
-test("debt stays constant at the debt-stabilizing primary balance", function () {
-  const result = run(start, controlsWith({
-    capMode: "off",
-    passThrough: 0,
-    primaryBalance: function (t, stabilizingBalance) { return stabilizingBalance; }
-  }));
-  result.rows.forEach(function (row) {
-    close(row.debt, start.debt, 1e-12, "debt in " + row.year + ":");
+test("debt follows the debt equation, and the stabilizing balance would hold it steady", function () {
+  const result = run(start, controlsWith({ capMode: "off" }));
+  result.rows.slice(1).forEach(function (row, index) {
+    const prev = result.rows[index];
+    const carried = prev.debt * (1 + row.averageRate) / (1 + row.nominalGrowth);
+    close(row.debt, carried - row.primaryBalance, 1e-12, "debt in " + row.year + ":");
+    close(carried - row.stabilizingBalance, prev.debt, 1e-12, "steady debt in " + row.year + ":");
   });
 });
 
-test("with the cap off and pass-through at zero, purchases are zero and inflation converges to baseline", function () {
-  const controls = controlsWith({ capMode: "off", passThrough: 0 });
-  const result = run(start, controls);
+test("with the cap off, the central bank never buys to hold a cap", function () {
+  const result = run(start, controlsWith({ capMode: "off" }));
   result.rows.forEach(function (row) {
     assert.strictEqual(row.purchases, 0);
     assert.strictEqual(row.dominance, false);
   });
-  // The gap to baseline halves every year with persistence 0.5.
-  const gap0 = start.inflation - controls.baselineInflation;
-  close(result.rows[1].inflation - controls.baselineInflation, gap0 * 0.5, 1e-12);
-  close(result.rows[2].inflation - controls.baselineInflation, gap0 * 0.25, 1e-12);
-  close(result.rows[30].inflation, controls.baselineInflation, 1e-9);
 });
 
 test("with no cap and no runoff, the central bank keeps its share of the debt", function () {
@@ -65,25 +58,13 @@ test("with no cap and no runoff, the central bank keeps its share of the debt", 
     close(row.centralBank / row.debt, start.centralBank / start.debt, 1e-12, "share in " + row.year + ":");
   });
   // Debt rises in this scenario, so holdings rise as a share of GDP.
-  assert.ok(result.rows[1].buying > 0);
-  close(result.rows[1].buying, result.rows[1].centralBank - start.centralBank, 1e-15);
+  assert.ok(result.rows[1].centralBank > start.centralBank);
 });
 
 test("runoff lowers the central bank's holdings below its share of the debt", function () {
   const result = run(start, controlsWith({ capMode: "off", runoff: 0.01 }));
   const row = result.rows[1];
   close(row.centralBank, start.centralBank / start.debt * row.debt - 0.01, 1e-12);
-});
-
-test("inflation follows last year's rise in central bank holdings", function () {
-  const controls = controlsWith({ capMode: "off" });
-  const result = run(start, controls);
-  for (let t = 1; t <= 30; t++) {
-    const prev = result.rows[t - 1];
-    close(result.rows[t].inflation,
-      controls.baselineInflation + controls.passThrough * prev.buying +
-        controls.persistence * (prev.inflation - controls.baselineInflation), 1e-12);
-  }
 });
 
 test("with the cap below the market yield, the yield equals the cap and purchases are positive", function () {
@@ -99,20 +80,24 @@ test("with the cap below the market yield, the yield equals the cap and purchase
   assert.strictEqual(result.headline.firstDominanceYear, 2026);
 });
 
-test("with pass-through at zero, purchases leave inflation unchanged", function () {
-  const capped = run(start, controlsWith({ capMode: "fixed", capLevel: 0.03, passThrough: 0 }));
-  const uncapped = run(start, controlsWith({ capMode: "off", passThrough: 0 }));
+test("when buying creates no money, purchases leave inflation unchanged", function () {
+  const capped = run(start, controlsWith({ capMode: "fixed", capLevel: 0.03, moneyShare: 0 }));
+  const uncapped = run(start, controlsWith({ capMode: "off", moneyShare: 0 }));
   assert.ok(capped.rows[1].purchases > 0, "the capped run should have purchases");
   capped.rows.forEach(function (row, t) {
     assert.strictEqual(row.inflation, uncapped.rows[t].inflation);
   });
 });
 
-test("with pass-through above zero, purchases raise next year's inflation", function () {
-  const capped = run(start, controlsWith({ capMode: "fixed", capLevel: 0.03, passThrough: 0.2 }));
-  const uncapped = run(start, controlsWith({ capMode: "off", passThrough: 0.2 }));
+test("when buying creates money, purchases raise next year's inflation", function () {
+  const controls = controlsWith({ capMode: "fixed", capLevel: 0.03 });
+  const capped = run(start, controls);
+  const uncapped = run(start, controlsWith({ capMode: "off" }));
+  // The purchases add moneyShare x purchases / M2 to money growth, and
+  // (1 - persistence) of the inflation that implies arrives the next year.
+  const extraMoneyGrowth = controls.moneyShare * capped.rows[1].purchases / start.money;
   close(capped.rows[2].inflation - uncapped.rows[2].inflation,
-    0.2 * capped.rows[1].purchases, 1e-12);
+    (1 - controls.persistence) * extraMoneyGrowth / (1 + controls.growth), 1e-12);
 });
 
 test("raising any group's price-sensitive share raises the yield response to debt", function () {
@@ -149,10 +134,9 @@ test("with the cap off, a selloff by captive holders raises the first-year yield
 });
 
 test("a selloff spread over several years arrives evenly", function () {
-  const without = run(start, controlsWith({ capMode: "off", passThrough: 0 }));
+  const without = run(start, controlsWith({ capMode: "off" }));
   const withSelloff = run(start, controlsWith({
     capMode: "off",
-    passThrough: 0,
     selloffs: [{ group: "foreignOfficial", total: 0.06, years: 3 }]
   }));
   // Year 1 has no feedback yet, so the rise is exactly a third of the total.
@@ -261,16 +245,9 @@ test("interest above the chosen share of revenue is fiscal stress", function () 
   none.rows.forEach(function (row) { assert.strictEqual(row.stressFromInterest, false); });
 });
 
-test("without a money supply, inflation follows central bank holdings as before", function () {
-  const result = run(start, controlsWith({}));
-  assert.strictEqual(result.rows[5].money, null);
-  assert.strictEqual(result.headline.annualMoneyGrowth, null);
-});
-
 test("with a money supply, inflation settles at money growth less real growth less the trend", function () {
-  const withMoney = Object.assign({}, start, { money: 0.8 });
   const controls = controlsWith({ capMode: "off", moneyGrowth: 0.07, moneyTrend: 0.01, moneyShare: 0, growth: 0.02 });
-  const result = run(withMoney, controls);
+  const result = run(start, controls);
   const implied = 1.07 / (1.02 * 1.01) - 1;
 
   // The first year, by hand: part of the way from starting inflation.
@@ -283,17 +260,16 @@ test("with a money supply, inflation settles at money growth less real growth le
   close(result.headline.annualMoneyGrowth, 0.07, 1e-12);
 
   // Faster money growth means more inflation.
-  const faster = run(withMoney, Object.assign({}, controls, { moneyGrowth: 0.10 }));
+  const faster = run(start, Object.assign({}, controls, { moneyGrowth: 0.10 }));
   assert.ok(faster.headline.purchasingPowerLoss > result.headline.purchasingPowerLoss);
   // A faster rise in money against GDP means less.
-  const drift = run(withMoney, Object.assign({}, controls, { moneyTrend: 0.03 }));
+  const drift = run(start, Object.assign({}, controls, { moneyTrend: 0.03 }));
   assert.ok(drift.headline.purchasingPowerLoss < result.headline.purchasingPowerLoss);
 });
 
 test("central bank buying creates money, and the money raises inflation the next year", function () {
-  const withMoney = Object.assign({}, start, { money: 0.8 });
   const controls = controlsWith({ capMode: "fixed", capLevel: 0.01, moneyGrowth: 0.07, moneyTrend: 0.01, moneyShare: 1 });
-  const result = run(withMoney, controls);
+  const result = run(start, controls);
   let times = 1;
   result.rows.slice(1).forEach(function (row, index) {
     const prev = result.rows[index];
@@ -303,7 +279,7 @@ test("central bank buying creates money, and the money raises inflation the next
     if (rise < 0) rise = Math.min(row.centralBank * (1 + row.nominalGrowth) - prev.centralBank, 0);
     close(row.moneyGrowth, 0.07 + rise / prev.money, 1e-12);
     close(row.money, prev.money * (1 + row.moneyGrowth) / (1 + row.nominalGrowth), 1e-12);
-    const implied = (1 + prev.moneyGrowth) / ((1 + row.growth) * 1.01) - 1;
+    const implied = (1 + prev.moneyGrowth) / ((1 + controls.growth) * 1.01) - 1;
     close(row.inflation, implied + controls.persistence * (prev.inflation - implied), 1e-12);
     times *= 1 + row.moneyGrowth;
   });
@@ -311,15 +287,14 @@ test("central bank buying creates money, and the money raises inflation the next
   close(result.headline.moneyTimes, times, 1e-9);
 
   // With no money created by the buying, inflation is lower.
-  const none = run(withMoney, Object.assign({}, controls, { moneyShare: 0 }));
+  const none = run(start, Object.assign({}, controls, { moneyShare: 0 }));
   assert.ok(none.headline.purchasingPowerLoss < result.headline.purchasingPowerLoss);
 });
 
 test("holdings that shrink against GDP without any sale destroy no money", function () {
   // Fast nominal growth and a balanced budget: debt and the central bank's
   // holdings fall as shares of GDP while both rise in money terms.
-  const withMoney = Object.assign({}, start, { money: 0.8 });
-  const result = run(withMoney, controlsWith({
+  const result = run(start, controlsWith({
     capMode: "off", moneyGrowth: 0.12, moneyTrend: 0, moneyShare: 1, growth: 0.03, primaryBalance: 0
   }));
   const falling = result.rows.slice(1).filter(function (row, index) {
@@ -331,7 +306,7 @@ test("holdings that shrink against GDP without any sale destroy no money", funct
   falling.forEach(function (row) { close(row.moneyGrowth, 0.12, 1e-12); });
 
   // Runoff larger than the economy's growth is a real sale: money falls.
-  const runoff = run(withMoney, controlsWith({
+  const runoff = run(start, controlsWith({
     capMode: "off", moneyGrowth: 0.02, moneyTrend: 0, moneyShare: 1, growth: 0, primaryBalance: 0, runoff: 0.02
   }));
   assert.ok(runoff.rows[1].moneyGrowth < 0.02);
@@ -403,16 +378,6 @@ test("with no stress threshold, only the interest test can cause fiscal stress",
   assert.strictEqual(some.rows[1].stress, true);
 });
 
-test("reactive mode moves the primary balance with debt", function () {
-  const controls = controlsWith({ capMode: "off", primaryBalanceMode: "reactive", gamma: 0.03 });
-  const result = run(start, controls);
-  close(result.rows[1].primaryBalance, -0.03, 1e-12, "year 1 starts at the slider value:");
-  for (let t = 2; t <= 5; t++) {
-    close(result.rows[t].primaryBalance,
-      -0.03 + 0.03 * (result.rows[t - 1].debt - start.debt), 1e-12);
-  }
-});
-
 test("the average interest rate reprices one m-th of the debt each year", function () {
   const result = run(start, controlsWith({ capMode: "off" }));
   close(result.rows[1].averageRate, (5 / 6) * 0.03 + (1 / 6) * 0.04, 1e-12);
@@ -423,6 +388,8 @@ test("the average interest rate reprices one m-th of the debt each year", functi
 test("the first year matches a calculation by hand", function () {
   const result = run(start, controlsWith({ capMode: "off" }));
   const row = result.rows[1];
+  // Money growth of 4.04% with 2% real growth implies 2% inflation, and
+  // half of the gap from 3% remains.
   const inflation = 0.02 + 0.5 * (0.03 - 0.02);
   const nominal = 1.02 * (1 + inflation) - 1;
   const rate = (5 / 6) * 0.03 + (1 / 6) * 0.04;
@@ -430,20 +397,17 @@ test("the first year matches a calculation by hand", function () {
   const captive = (0.5 * 0.50 + 0.9 * 0.15 + 0) * debt;
   const absorb = debt - 0.15 * debt - captive - 0.465;   // the central bank keeps its 15% share
   close(row.inflation, inflation, 1e-12);
+  close(row.priceLevel, 1 + inflation, 1e-12);
   close(row.debt, debt, 1e-12);
   close(row.yield, 0.04 + (inflation - 0.03) + 0.03 * absorb, 1e-12);
   close(row.interest, rate * 1 / (1 + nominal), 1e-12);
   close(row.interestToRevenue, row.interest / 0.17, 1e-12);
-  close(row.financingNeed, row.interest + 0.03 + (1 / 6) / (1 + nominal), 1e-12);
-  close(row.realReturn, (1 + rate) / (1 + inflation), 1e-12);
-  close(row.exchangeRate, 1.02 / (1 + inflation), 1e-12);
 });
 
 test("large surpluses stop at zero debt", function () {
   const result = run(start, controlsWith({ capMode: "off", primaryBalance: 0.2 }));
   const last = result.rows[30];
   assert.strictEqual(last.debt, 0);
-  assert.strictEqual(last.debtRepaid, true);
   assert.strictEqual(last.centralBank, 0);
 });
 
@@ -472,6 +436,9 @@ test("a missing input stops with a clear message", function () {
   const broken = Object.assign({}, start);
   delete broken.revenue;
   assert.throws(function () { runModel(broken, invented.controls); }, /start\.revenue/);
+  const noMoney = Object.assign({}, start);
+  delete noMoney.money;
+  assert.throws(function () { runModel(noMoney, invented.controls); }, /start\.money/);
   assert.throws(function () {
     runModel(Object.assign({}, start, { holdings: { domesticPrivate: 0.2 } }),
       controlsWith({ priceSensitive: { domesticPrivate: 0.5 } }));

@@ -4,44 +4,28 @@
 // Call its destroy() before drawing another in the same container.
 //
 // chart:
-//   years       the x values, one per year
-//   startIndex  the position of the starting year in `years`. Everything up
-//               to it is history (solid line); everything from it on is
-//               projection (dashed line).
-//   series      a list of { label, values, color, axis, decimals, unit,
-//               width, dotted }
-//               values are already in display units, with null where there
-//               is no data. color is 1 to 4. axis is "right" or "left".
-//               dotted: the whole line is dotted, history and projection,
-//               with a looser dot for the projection.
-//   stacked     true to stack the series as filled areas
-//   zones       a list of { year, type }, type "stress" or "dominance"
-//   xMin, xMax  the first and last year shown
-//   leftLabel   the title of the left axis, when a series uses it
-//   zoom        optional { min, max }: the years to show, when zoomed in
-//   onZoom      optional: called with (min, max) when the reader drags
-//               across the chart to zoom, or with nulls on a double-click
-//   syncKey     optional: charts with the same key share one crosshair
+//   years        the x values, one per year
+//   startIndex   the position of the starting year in `years`. Up to it is
+//                history (solid line); from it on, projection (dashed line).
+//   series       a list of { label, values, color, decimals, unit, width, dotted }:
+//                values are in display units, with null where there is no
+//                data; color is 1 or 2 (--line-1 or --line-2 in the CSS);
+//                dotted draws the whole line dotted, with looser dots for
+//                the projection
+//   unit, decimals  for the value axis on the right
+//   stressYears  the years to shade as fiscal stress
+//   xMin, xMax   the first and last year shown
+//   zoom         optional { min, max }: the years to show, when zoomed in
+//   onZoom       optional: called with (min, max) when the reader drags
+//                across the chart, or with nulls on a double-click
+//   syncKey      optional: charts with the same key share one crosshair
 
 function drawChart(container, chart) {
   var css = getComputedStyle(document.documentElement);
   function color(name) {
     return css.getPropertyValue(name).trim();
   }
-
   var start = chart.startIndex;
-  var hasLeft = chart.series.some(function (s) { return s.axis === "left"; });
-
-  // What is plotted. When stacked, each series is drawn at the running
-  // total of itself and the series before it.
-  var plotted = chart.series.map(function (s) { return s.values.slice(); });
-  if (chart.stacked) {
-    for (var n = 1; n < plotted.length; n++) {
-      plotted[n] = plotted[n].map(function (v, i) {
-        return v === null || plotted[n - 1][i] === null ? null : v + plotted[n - 1][i];
-      });
-    }
-  }
 
   // Each line becomes two uPlot series: history, then projection. Both
   // include the starting year, so the two parts join up.
@@ -50,110 +34,75 @@ function drawChart(container, chart) {
     label: "Year",
     value: function (u, year) { return year === null ? chart.years[chart.years.length - 1] : year; }
   }];
-  var order = chart.series.map(function (_, n) { return n; });
-  if (chart.stacked) order.reverse(); // draw the tallest area first
-
-  order.forEach(function (n) {
-    var s = chart.series[n];
-    var stroke = color("--line-" + s.color);
-    var scale = s.axis === "left" ? "left" : "right";
-    var history = plotted[n].map(function (v, i) { return i <= start ? v : null; });
-    var projection = plotted[n].map(function (v, i) { return i >= start ? v : null; });
-
-    // The legend shows the real value for the year under the pointer,
-    // whichever part of the line it is on.
-    function legendValue(u, raw, seriesIndex, i) {
-      // With no pointer on the chart, the legend shows the last year.
-      if (i === null || i === undefined) i = chart.years.length - 1;
-      var v = s.values[i];
-      return v === null ? "no data" : v.toFixed(s.decimals) + (s.unit || "");
-    }
-
+  chart.series.forEach(function (s) {
     var common = {
-      scale: scale,
-      stroke: stroke,
-      width: s.width || (s.color === 1 ? 2.25 : 1.75),
+      scale: "y",
+      stroke: color("--line-" + s.color),
+      width: s.width || 2.25,
       points: { show: false },
-      fill: chart.stacked ? stroke : undefined
+      cap: s.dotted ? "round" : undefined
     };
-    data.push(history);
+    // History: listed nowhere, hidden and shown together with its projection.
+    data.push(s.values.map(function (v, i) { return i <= start ? v : null; }));
     uSeries.push(Object.assign({}, common, {
       label: s.label,
       class: "legend-hidden",
-      dash: s.dotted ? [1, 4] : undefined,
-      cap: s.dotted ? "round" : undefined
+      dash: s.dotted ? [1, 4] : undefined
     }));
-    data.push(projection);
+    // Projection: its legend entry shows the value for the year under the
+    // pointer, history or projection, or the last year with no pointer.
+    data.push(s.values.map(function (v, i) { return i >= start ? v : null; }));
     uSeries.push(Object.assign({}, common, {
       label: s.label,
       class: s.dotted ? "legend-dotted" : undefined,
-      dash: chart.stacked ? undefined : s.dotted ? [1, 7] : [10, 6],
-      cap: s.dotted ? "round" : undefined,
-      value: legendValue
+      dash: s.dotted ? [1, 7] : [10, 6],
+      value: function (u, raw, seriesIndex, i) {
+        var v = s.values[i === null || i === undefined ? chart.years.length - 1 : i];
+        return v === null ? "no data" : v.toFixed(s.decimals) + s.unit;
+      }
     }));
   });
 
-  function percentOrNumber(decimals, unit) {
-    return function (u, ticks) {
-      return ticks.map(function (v) { return v.toFixed(decimals) + unit; });
-    };
-  }
-
   var font = "11px " + color("--mono");
+  var axis = {
+    font: font,
+    stroke: color("--muted"),
+    grid: { stroke: color("--grid"), width: 1 },
+    ticks: { stroke: color("--grid"), width: 1 }
+  };
   var axes = [
-    {
-      font: font,
-      stroke: color("--muted"),
-      grid: { stroke: color("--grid"), width: 1 },
-      ticks: { stroke: color("--grid"), width: 1 },
+    Object.assign({}, axis, {
       incrs: [1, 2, 5, 10, 20],
-      values: function (u, ticks) { return ticks.map(String); } // years without a comma
-    },
-    {
-      scale: "right",
-      side: 1, // the value axis sits on the right
-      stroke: color("--muted"),
-      grid: { stroke: color("--grid"), width: 1 },
-      ticks: { stroke: color("--grid"), width: 1 },
+      values: function (u, ticks) { return ticks.map(String); }   // years without a comma
+    }),
+    Object.assign({}, axis, {
+      scale: "y",
+      side: 1,   // on the right
       size: 58,
-      font: font,
-      values: percentOrNumber(chart.rightDecimals || 0, chart.rightUnit || "")
-    }
+      values: function (u, ticks) {
+        return ticks.map(function (v) { return v.toFixed(chart.decimals) + chart.unit; });
+      }
+    })
   ];
-  if (hasLeft) {
-    axes.push({
-      scale: "left",
-      side: 3,
-      stroke: color("--muted"),
-      grid: { show: false },
-      ticks: { stroke: color("--grid"), width: 1 },
-      size: 64,
-      font: font,
-      labelFont: font,
-      label: chart.leftLabel,
-      labelSize: 18,
-      values: percentOrNumber(chart.leftDecimals || 0, chart.leftUnit || "")
-    });
-  }
 
-  // Shaded bands for the two zones, one year wide each.
-  function drawZones(u) {
+  // Fiscal stress: a shaded band one year wide for each year in stress.
+  function drawStress(u) {
     var ctx = u.ctx;
     ctx.save();
     ctx.beginPath();
     ctx.rect(u.bbox.left, u.bbox.top, u.bbox.width, u.bbox.height);
     ctx.clip();
-    chart.zones.forEach(function (zone) {
-      var x0 = u.valToPos(zone.year - 0.5, "x", true);
-      var x1 = u.valToPos(zone.year + 0.5, "x", true);
-      ctx.fillStyle = color(zone.type === "dominance" ? "--dominance" : "--stress");
+    ctx.fillStyle = color("--stress");
+    chart.stressYears.forEach(function (year) {
+      var x0 = u.valToPos(year - 0.5, "x", true);
+      var x1 = u.valToPos(year + 0.5, "x", true);
       ctx.fillRect(x0, u.bbox.top, x1 - x0, u.bbox.height);
     });
     ctx.restore();
   }
 
-  // A thin vertical line at the starting year, where history ends and the
-  // projection begins.
+  // A thin dashed vertical line at the starting year, where history ends
+  // and the projection begins.
   function drawStartLine(u) {
     var ctx = u.ctx;
     var ratio = devicePixelRatio || 1;
@@ -171,25 +120,9 @@ function drawChart(container, chart) {
     ctx.restore();
   }
 
-  // A stacked chart cannot show a dashed projection, so the projection is
-  // veiled with the background color instead.
-  function drawProjectionVeil(u) {
-    var ctx = u.ctx;
-    var x0 = u.valToPos(chart.years[start], "x", true);
-    var right = u.bbox.left + u.bbox.width;
-    if (x0 >= right) return;
-    ctx.save();
-    ctx.globalAlpha = 0.35;
-    ctx.fillStyle = color("--bg");
-    ctx.fillRect(Math.max(x0, u.bbox.left), u.bbox.top, right - Math.max(x0, u.bbox.left), u.bbox.height);
-    ctx.restore();
-  }
-
-  // A tag on the right axis with the last value of the first series.
+  // A tag on the axis with the first line's last value in view.
   function drawLastValueTag(u) {
-    if (chart.stacked) return;
     if (!u.series[2].show) return;   // the first line is hidden
-    // The last year in view, so the tag follows a zoom.
     var lastYear = Math.min(chart.xMax, u.scales.x.max);
     var s = chart.series[0];
     var last = null;
@@ -199,8 +132,8 @@ function drawChart(container, chart) {
     if (last === null) return;
     var ctx = u.ctx;
     var ratio = devicePixelRatio || 1;
-    var text = last.toFixed(s.decimals) + (s.unit || "");
-    var y = u.valToPos(last, s.axis === "left" ? "left" : "right", true);
+    var text = last.toFixed(s.decimals) + s.unit;
+    var y = u.valToPos(last, "y", true);
     var x = u.bbox.left + u.bbox.width + 2 * ratio;
     ctx.save();
     ctx.font = "600 " + 11 * ratio + "px " + color("--mono");
@@ -217,16 +150,15 @@ function drawChart(container, chart) {
     ctx.restore();
   }
 
-  // Zoomed in by the reader, or not set. While this chart is being built,
-  // its own first scale does not count as a zoom.
+  // While the chart is being built, its first scale does not count as a
+  // zoom by the reader.
   var building = true;
 
-  var options = {
+  var plot = new uPlot({
     width: container.clientWidth,
     height: Math.max(320, Math.min(540, Math.round(window.innerHeight * 0.56))),
     scales: {
-      // The years are always set by this file: the default period, or a
-      // zoom. Without a value, the default period.
+      // The years shown are always set here: the whole period, or a zoom.
       x: {
         time: false,
         auto: false,
@@ -234,20 +166,19 @@ function drawChart(container, chart) {
           return min === null || min === undefined ? [chart.xMin, chart.xMax] : [min, max];
         }
       },
-      right: { range: chart.stacked ? [0, 100] : undefined },
-      left: {}
+      y: {}
     },
     series: uSeries,
     axes: axes,
     cursor: {
-      x: true, y: true, points: { show: !chart.stacked },   // the crosshair
+      x: true, y: true, points: { show: true },   // the crosshair
       sync: chart.syncKey ? { key: chart.syncKey } : undefined,
-      drag: { x: true, y: false, setScale: true },           // drag across to zoom
+      drag: { x: true, y: false, setScale: true },  // drag across to zoom
       bind: { dblclick: function () { return function () { return null; }; } }   // handled below
     },
     legend: { show: true, live: true },
     hooks: {
-      // The whole default period is reported as no zoom.
+      // The whole period is reported as no zoom.
       setScale: [function (u, key) {
         if (key !== "x" || building || !chart.onZoom) return;
         var min = u.scales.x.min;
@@ -255,27 +186,20 @@ function drawChart(container, chart) {
         if (min <= chart.xMin && max >= chart.xMax) chart.onZoom(null, null);
         else chart.onZoom(min, max);
       }],
-      // Clicking a line's legend entry hides both its parts: history and
-      // projection are two uPlot series, and only the projection is listed.
+      // Clicking a line's legend entry hides its history too: the
+      // projection is the listed series, its history the one before it.
       setSeries: [function (u, i, opts) {
-        if (chart.stacked || !opts || opts.show === undefined || i % 2 !== 0 || i === 0) return;
+        if (!opts || opts.show === undefined || i === 0 || i % 2 !== 0) return;
         if (u.series[i - 1].show !== opts.show) u.setSeries(i - 1, { show: opts.show });
       }],
       drawClear: [function (u) {
-        if (!chart.stacked) drawZones(u);
+        drawStress(u);
         drawStartLine(u);
       }],
-      draw: [function (u) {
-        if (chart.stacked) {
-          drawProjectionVeil(u);
-          drawZones(u);
-        }
-        drawLastValueTag(u);
-      }]
+      draw: [drawLastValueTag]
     }
-  };
+  }, data, container);
 
-  var plot = new uPlot(options, data, container);
   var view = chart.zoom || { min: chart.xMin, max: chart.xMax };
   plot.setScale("x", { min: view.min, max: view.max });
   // uPlot applies scales a moment later, so zooms count from then on.

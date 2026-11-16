@@ -1,87 +1,65 @@
 // Sovereign debt simulator: the model.
 //
 // One function, runModel(start, controls), projects one country forward in
-// annual steps. It is a pure function: it reads only its two arguments, it
-// changes neither of them, and the same inputs always give the same outputs.
-// It knows nothing about the page, so the same file runs in the browser and
-// in the tests.
+// annual steps. It is a pure function: it reads only its two arguments,
+// changes neither, and the same inputs always give the same outputs. It
+// knows nothing about the page, so the same file runs in the browser and in
+// the tests.
 //
 // Every quantity is a share of GDP stored as a fraction (0.05 means 5% of
 // GDP), and every rate is a fraction per year (0.04 means 4%).
 //
-// start: the country's values in the starting year
-//   year              the starting year, for example 2025
+// start: the country in the starting year
+//   year              the starting year, for example 2026
 //   debt              d    debt
 //   centralBank       cb   central bank holdings
 //   holdings          h_k  holdings of each other group, for example
 //                          { domesticPrivate, foreignOfficial, foreignPrivate }
-//   yield             i    yield on new borrowing
-//   averageRate       r    average interest rate on the whole debt stock
+//   yield             i    10-year yield
+//   averageRate       r    average interest rate on the whole debt
 //   inflation         pi   inflation
 //   revenue           tau  government revenue
+//   money             M2   the money supply
 //   stressThreshold        the largest five-year average primary balance in
-//                          the country's history. Left out (null) for a
-//                          country with no surplus to compare against:
-//                          the balance test is then not used.
-//   money                  optional: the money supply (M2)
-//
-// Inflation is worked out in one of two ways. When start.money and
-// controls.moneyGrowth are both given, inflation follows the money supply:
-// money growth, less real growth, less the yearly rise in money as a share
-// of GDP. Otherwise inflation follows the rise in central bank holdings
-// through passThrough, around baselineInflation.
+//                          the country's history, or null for a country with
+//                          no surplus to compare against (the balance test
+//                          is then not used)
 //
 // controls: the scenario
 //   years                  how many years to project
-//   growth            g    real growth: one number, or a list with one per year
-//   primaryBalance    pb   positive is a surplus: one number, a list with one
-//                          per year, or a function (see primaryBalanceFor)
-//   primaryBalanceMode     "fixed" or "reactive"
-//   gamma                  reactive mode: response of the balance to debt
-//   moneyGrowth            yearly growth of the money supply when the
-//                          central bank's holdings are level as a share of GDP
-//   moneyTrend             how much faster than GDP the money supply has
-//                          grown each year without causing inflation
-//   moneyShare             how much new money each unit of central bank
-//                          buying creates (1 means one for one)
-//   stressInterestShare    optional: a year is also in fiscal stress when
-//                          interest is more than this share of revenue
-//   capMode                "stress", "fixed" or "off". "stress" puts the cap
-//                          each year at the yield where interest on that
-//                          year's debt equals stressInterestShare of
-//                          revenue (see stressYield), so it falls as debt
-//                          grows
-//   capLevel               the cap when capMode is "fixed"
+//   growth            g    real growth
+//   primaryBalance    pb   positive is a surplus
+//   moneyGrowth            M2 growth when the central bank's holdings are
+//                          level as a share of GDP
+//   moneyTrend             how much faster than GDP M2 grows without
+//                          raising prices (falling velocity)
+//   moneyShare             new M2 created per unit of debt the central bank
+//                          adds to its holdings
+//   persistence       kappa the part of last year's gap between inflation
+//                          and the money-implied rate that remains
 //   priceSensitive    w_k  share of each group's holdings that is
 //                          price-sensitive, with the same keys as holdings
-//   yieldResponse     theta
-//   passThrough       lambda: points of inflation next year for each point
-//                          of GDP by which central bank holdings rise
-//                          (not used when inflation follows money)
-//   persistence       kappa: how much of last year's gap carries over
-//   baselineInflation pi_base (not used when inflation follows money)
-//   foreignInflation  pi_f
+//   yieldResponse     theta yield per unit of debt that price-sensitive
+//                          holders must absorb
 //   maturity          m    average maturity in years
-//   runoff            q    central bank runoff per year. With no runoff the
-//                          central bank keeps its share of the debt.
-//   selloffs               a list of { group, total, years }: the group sells
-//                          "total" (a share of GDP) evenly over "years" years.
-//                          Its captive and price-sensitive holdings shrink
-//                          in proportion, and the remaining price-sensitive
-//                          holders must absorb what it sold.
+//   runoff            q    yearly fall in central bank holdings. With none
+//                          the central bank keeps its share of the debt.
+//   capMode                "fixed", "stress" or "off". "stress" puts the cap
+//                          each year at the yield where interest would take
+//                          stressInterestShare of revenue (see stressYield)
+//   capLevel               the cap when capMode is "fixed"
+//   stressInterestShare    optional: a year is also in fiscal stress when
+//                          interest is more than this share of revenue
 //   centralBankLimit       optional: the largest share of the debt the
-//                          central bank will hold. Once there it stops
-//                          buying, and the cap no longer holds.
-//   selloffResponse        optional: extra yield for each unit of debt sold
-//                          in a selloff that the central bank has not yet
-//                          bought, on top of yieldResponse. A selloff is a
-//                          sudden supply of debt, which moves the yield
-//                          more than the same amount of slow new borrowing.
-//   selloffDecay           optional: the share of that unbought debt the
-//                          market absorbs each year, so the extra yield
-//                          fades (0.5, half a year, when left out). The
-//                          debt itself stays with price-sensitive holders
-//                          and keeps its yieldResponse effect.
+//                          central bank will hold (all of it when left out).
+//                          Once there it stops buying, and the cap fails.
+//   selloffs               optional: a list of { group, total, years }: the
+//                          group sells "total" (a share of GDP) evenly over
+//                          "years" years
+//   selloffResponse   phi  optional: extra yield per unit of debt sold in a
+//                          selloff and not yet absorbed, on top of theta
+//   selloffDecay           optional: the share of that unabsorbed debt the
+//                          market takes up each year (0.5 when left out)
 
 function runModel(start, controls) {
   checkInputs(start, controls);
@@ -90,33 +68,25 @@ function runModel(start, controls) {
   var d0 = start.debt;
   var i0 = start.yield;
   var pi0 = start.inflation;
-
+  var g = controls.growth;
+  var pb = controls.primaryBalance;
   var w = controls.priceSensitive;
   var theta = Math.max(controls.yieldResponse, 1e-9); // avoids dividing by zero
-  var lambda = controls.passThrough;
   var kappa = controls.persistence;
-  var piBase = controls.baselineInflation;
-  var piF = controls.foreignInflation;
   var m = controls.maturity;
   var q = controls.runoff;
-
-  // Inflation follows the money supply when both of these are given.
-  var monetary = usesMoney(start, controls);
-  var moneyTrend = monetary && isNumber(controls.moneyTrend) ? controls.moneyTrend : 0;
-  var moneyShare = monetary && isNumber(controls.moneyShare) ? controls.moneyShare : 1;
   var phi = isNumber(controls.selloffResponse) ? controls.selloffResponse : 0;
   var decay = isNumber(controls.selloffDecay) ? controls.selloffDecay : 0.5;
   var limit = isNumber(controls.centralBankLimit) ? controls.centralBankLimit : 1;
 
   // Starting holdings. The data may be off from the debt by a rounding gap
-  // (the pipeline allows up to 1%), so the groups are scaled to fit exactly.
+  // (up to 1% is allowed), so the groups are scaled to fit exactly.
   var h0 = scaleToFit(start.holdings, d0 - start.centralBank);
-
   var totalH0 = 0;
   groups.forEach(function (k) { totalH0 += h0[k]; });
 
-  // The cap. A fixed cap is one level for the whole projection. A stress
-  // cap is worked out again each year from that year's debt.
+  // A fixed cap is one level for the whole projection. A stress cap is
+  // worked out again each year from that year's debt.
   var cap = controls.capMode === "fixed" ? controls.capLevel : null;
 
   // Year 0 is the starting year, taken straight from the data.
@@ -129,93 +99,62 @@ function runModel(start, controls) {
     marketYield: i0,
     averageRate: start.averageRate,
     inflation: pi0,
-    purchases: 0,
-    buying: 0,
-    selloffOverhang: 0,
-    money: monetary ? start.money : null,
-    // Money growth in the starting year is taken to be the chosen rate.
-    moneyGrowth: monetary ? controls.moneyGrowth : null,
-    growth: null,
+    priceLevel: 1,
+    money: start.money,
+    moneyGrowth: controls.moneyGrowth,
     nominalGrowth: null,
     primaryBalance: null,
     stabilizingBalance: null,
     interest: null,
     interestToRevenue: null,
-    financingNeed: null,
-    priceLevel: 1,
-    realReturn: 1,
-    exchangeRate: 1,
+    purchases: 0,
+    selloffOverhang: 0,
     cap: null,
     stress: false,
     stressFromBalance: false,
     stressFromInterest: false,
     dominance: false,
-    capBroken: false,
-    debtRepaid: false
+    capBroken: false
   }];
 
   for (var t = 1; t <= controls.years; t++) {
     var prev = rows[t - 1];
 
-    var growth = valueForYear(controls.growth, t);
+    // 1. Inflation moves toward the rate last year's money growth implies:
+    // money growth less real growth less the trend. Persistence is the part
+    // of last year's gap that remains.
+    var implied = (1 + prev.moneyGrowth) / ((1 + g) * (1 + controls.moneyTrend)) - 1;
+    var inflation = implied + kappa * (prev.inflation - implied);
+    var nominalGrowth = (1 + g) * (1 + inflation) - 1;
 
-    // 1. Inflation. With money: the inflation that last year's money
-    // growth implies is money growth, less real growth, less the yearly
-    // rise in money as a share of GDP. Inflation moves toward that rate,
-    // and persistence is the part of last year's gap that remains.
-    // Without money: from last year's rise in central bank holdings.
-    var inflation;
-    if (monetary) {
-      var impliedInflation = (1 + prev.moneyGrowth) / ((1 + growth) * (1 + moneyTrend)) - 1;
-      inflation = impliedInflation + kappa * (prev.inflation - impliedInflation);
-    } else {
-      inflation = piBase + lambda * prev.buying + kappa * (prev.inflation - piBase);
-    }
-
-    // 2. Nominal growth.
-    var nominalGrowth = (1 + growth) * (1 + inflation) - 1;
-
-    // The average interest rate for this year was set at the end of last
-    // year: one m-th of the debt repriced at last year's yield (step 8).
+    // 2. The average interest rate: one m-th of the debt reprices at last
+    // year's yield.
     var averageRate = (1 - 1 / m) * prev.averageRate + (1 / m) * prev.yield;
 
-    // The primary balance that would hold debt steady this year.
+    // 3. Debt. Surpluses large enough to repay everything stop it at zero.
+    var debt = Math.max(prev.debt * (1 + averageRate) / (1 + nominalGrowth) - pb, 0);
+
+    // 4. Fiscal stress, for either of two reasons: the primary balance
+    // that would hold debt steady is more than the country has ever
+    // sustained, or interest takes more of revenue than the chosen share.
+    // Last year's debt divided by (1 + nominal growth) is that debt as a
+    // share of this year's GDP.
     var stabilizingBalance = prev.debt * (averageRate - nominalGrowth) / (1 + nominalGrowth);
-
-    // 3. Debt.
-    var primaryBalance = primaryBalanceFor(controls, t, prev.debt, d0, stabilizingBalance);
-    var debt = prev.debt * (1 + averageRate) / (1 + nominalGrowth) - primaryBalance;
-    var debtRepaid = false;
-    if (debt <= 0) {
-      // Surpluses have repaid everything. Debt stops at zero.
-      debt = 0;
-      debtRepaid = true;
-    }
-
-    // Interest on the debt. Last year's debt is divided by (1 + nominal
-    // growth) to express it as a share of this year's GDP.
     var interest = averageRate * prev.debt / (1 + nominalGrowth);
     var interestToRevenue = interest / start.revenue;
-
-    // Fiscal stress, for either of two reasons: the balance needed to hold
-    // debt steady is more than the country has ever sustained, or interest
-    // takes more of the government's revenue than the chosen share.
     var stressFromBalance = isNumber(start.stressThreshold) && stabilizingBalance > start.stressThreshold;
     var stressFromInterest = isNumber(controls.stressInterestShare) &&
       interestToRevenue > controls.stressInterestShare;
-    var stress = stressFromBalance || stressFromInterest;
 
-    // Stress cap: the yield at which interest on this year's debt would
-    // take the chosen share of revenue. No debt, no cap.
     if (controls.capMode === "stress") {
       cap = debt > 0 ? stressYield(start, controls, debt) : null;
     }
 
-    // 4. Captive holdings: the part of each group that is not
-    // price-sensitive keeps its share of the debt, less any selloff. A
-    // selloff also shrinks the group's price-sensitive base, in
-    // proportion, and a group cannot sell more than it started with.
-    // W is the price-sensitive base of all groups together.
+    // 5. Captive holdings: the part of each group that is not
+    // price-sensitive keeps its share of the debt, less anything sold. A
+    // selloff also shrinks the group's price-sensitive base in proportion,
+    // and a group cannot sell more than it started with. W is the
+    // price-sensitive base of all groups together.
     var captive = {};
     var base = {};
     var totalCaptive = 0;
@@ -230,45 +169,39 @@ function runModel(start, controls) {
       W += base[k];
     });
 
-    // 5. What price-sensitive holders must absorb beyond their starting
-    // holdings, with the central bank on its passive path. On that path
-    // the central bank keeps the share of the debt it held last year,
-    // less any runoff. It cannot go below zero or above the debt.
+    // 6. What price-sensitive holders must absorb beyond their starting
+    // holdings (M), with the central bank on its passive path: it keeps
+    // last year's share of the debt, less any runoff.
     var lastShare = prev.debt > 0 ? prev.centralBank / prev.debt : 0;
     var passiveCentralBank = Math.min(Math.max(lastShare * debt - q, 0), debt);
     var passiveAbsorb = debt - passiveCentralBank - totalCaptive - W;
 
-    // The selloff overhang: debt sold in selloffs that the central bank
-    // has not bought and the market has not yet absorbed. Each unit of it
-    // adds phi to the yield. Part of last year's overhang is absorbed each
-    // year, so the extra yield from a one-off sale fades.
+    // Debt sold in selloffs that the market has not yet taken up. Part of
+    // last year's is taken up each year, so the extra yield fades.
     var overhang = prev.selloffOverhang * (1 - decay) + soldThisYear;
 
-    // 6. The market yield, then intervention.
+    // 7. The yield lenders ask for: the starting yield, moved one for one
+    // with inflation, plus theta per unit absorbed and phi per unit of
+    // overhang. Yields do not go below zero.
     var inflationChange = inflation - pi0;
-    // A yield is not allowed below zero.
     var marketYield = Math.max(i0 + inflationChange + theta * passiveAbsorb + phi * overhang, 0);
 
-    var absorb = passiveAbsorb; // M: what price-sensitive holders end up absorbing
+    // 8. The cap. Above it the central bank buys until the yield is back at
+    // the cap, up to its limit. Each unit bought lowers the yield by theta,
+    // and by phi as well while there is overhang left to buy.
+    var absorb = passiveAbsorb;
     var yieldNow = marketYield;
     var purchases = 0;
     var capBroken = false;
-
     if (cap !== null && marketYield > cap) {
-      // How much the central bank must buy to bring the yield down to the
-      // cap. Each unit bought lowers the yield by theta, and by phi as
-      // well while there is overhang left to buy.
       var needed = (marketYield - cap) / (theta + phi);
       if (needed > overhang) {
         needed = overhang + (marketYield - (theta + phi) * overhang - cap) / theta;
       }
-      // The most it can buy: up to its limit, a share of the debt (all of
-      // the debt when no limit is given).
       var most = Math.max(Math.min(passiveAbsorb + W + totalCaptive, limit * debt - passiveCentralBank), 0);
       if (needed > most + 1e-12) {
-        // Even buying up to its limit does not bring the yield down to
-        // the cap. The central bank stops there and the yield stays above
-        // the cap.
+        // Even buying up to its limit does not bring the yield down to the
+        // cap. The central bank stops there and the yield stays above it.
         purchases = most;
         capBroken = true;
       } else {
@@ -280,54 +213,32 @@ function runModel(start, controls) {
     }
     var centralBank = passiveCentralBank + purchases;
 
-    // Price-sensitive holdings cannot fall below zero. Anything beyond
-    // that comes out of captive holders, in proportion to their holdings.
+    // 9. Each group's holdings: its captive part plus its portion of what
+    // price-sensitive holders hold. Price-sensitive holdings cannot fall
+    // below zero; anything beyond that comes out of captive holders, in
+    // proportion. If no group is price-sensitive, split by starting holdings.
     var priceSensitiveTotal = Math.max(W + absorb, 0);
     var takenFromCaptive = Math.max(-(W + absorb), 0);
-
-    // 7. Each group's holdings: its captive part plus its portion of what
-    // price-sensitive holders hold.
     var holdings = {};
     var sum = centralBank;
     groups.forEach(function (k) {
-      var captivePart = captive[k];
-      if (totalCaptive > 0) {
-        captivePart -= takenFromCaptive * captive[k] / totalCaptive;
-      }
-      // If no group is price-sensitive at all, split by starting holdings.
+      var captivePart = captive[k] - (totalCaptive > 0 ? takenFromCaptive * captive[k] / totalCaptive : 0);
       var portion = W > 0 ? base[k] / W : h0[k] / totalH0;
       holdings[k] = captivePart + portion * priceSensitiveTotal;
       sum += holdings[k];
     });
-
-    // The four holdings must sum to the debt every year.
     if (Math.abs(sum - debt) > 1e-9) {
-      throw new Error("Year " + (start.year + t) + ": holdings sum to " + sum +
-        " but debt is " + debt);
+      throw new Error("Year " + (start.year + t) + ": holdings sum to " + sum + " but debt is " + debt);
     }
 
-    // The money supply (M2). It grows at the chosen rate, plus the money
-    // the central bank creates when its holdings rise as a share of GDP.
-    // `money` is a share of GDP, so the rise in holdings divided by it is
-    // a percent of the money supply.
-    // Money is destroyed only when the central bank's holdings fall in
-    // money terms. After a burst of inflation they can fall as a share of
-    // GDP while the central bank has sold nothing; that destroys no money.
-    var money = null;
-    var moneyGrowth = null;
-    if (monetary) {
-      var rise = centralBank - prev.centralBank;
-      if (rise < 0) {
-        // The change in money terms, as a share of last year's GDP.
-        rise = Math.min(centralBank * (1 + nominalGrowth) - prev.centralBank, 0);
-      }
-      moneyGrowth = controls.moneyGrowth + moneyShare * rise / prev.money;
-      moneyGrowth = Math.max(moneyGrowth, -0.9);   // money cannot fall below zero
-      money = prev.money * (1 + moneyGrowth) / (1 + nominalGrowth);
-    }
-
-    // Debt that comes due this year, as a share of this year's GDP.
-    var maturing = prev.debt / m / (1 + nominalGrowth);
+    // 10. M2 grows at the chosen rate, plus moneyShare times the rise in
+    // central bank holdings (as a share of M2). Money is destroyed only when
+    // the holdings fall in money terms: after a burst of inflation they can
+    // fall as a share of GDP while the central bank has sold nothing.
+    var rise = centralBank - prev.centralBank;
+    if (rise < 0) rise = Math.min(centralBank * (1 + nominalGrowth) - prev.centralBank, 0);
+    var moneyGrowth = Math.max(controls.moneyGrowth + controls.moneyShare * rise / prev.money, -0.9);
+    var money = prev.money * (1 + moneyGrowth) / (1 + nominalGrowth);
 
     rows.push({
       year: start.year + t,
@@ -338,68 +249,42 @@ function runModel(start, controls) {
       marketYield: marketYield,
       averageRate: averageRate,
       inflation: inflation,
-      purchases: purchases,   // bought to hold the cap
-      // The rise in holdings as a share of GDP, for whatever reason:
-      // keeping its share of a growing debt, or holding the cap.
-      buying: centralBank - prev.centralBank,
-      selloffOverhang: overhang,
+      priceLevel: prev.priceLevel * (1 + inflation),
       money: money,
       moneyGrowth: moneyGrowth,
-      growth: growth,
       nominalGrowth: nominalGrowth,
-      primaryBalance: primaryBalance,
+      primaryBalance: pb,
       stabilizingBalance: stabilizingBalance,
       interest: interest,
       interestToRevenue: interestToRevenue,
-      financingNeed: interest - primaryBalance + maturing,
-      priceLevel: prev.priceLevel * (1 + inflation),
-      realReturn: prev.realReturn * (1 + averageRate) / (1 + inflation),
-      exchangeRate: prev.exchangeRate * (1 + piF) / (1 + inflation),
+      purchases: purchases,     // bought to hold the cap
+      selloffOverhang: overhang,
       cap: cap,
-      stress: stress,
+      stress: stressFromBalance || stressFromInterest,
       stressFromBalance: stressFromBalance,
       stressFromInterest: stressFromInterest,
       // Fiscal dominance: the central bank is buying to hold the cap, or
       // has reached its limit and can no longer hold it.
       dominance: purchases > 0 || capBroken,
-      capBroken: capBroken,
-      debtRepaid: debtRepaid
+      capBroken: capBroken
     });
   }
 
   return { rows: rows, headline: headlineFigures(rows) };
 }
 
-// The primary balance for year t.
-function primaryBalanceFor(controls, t, lastDebt, startDebt, stabilizingBalance) {
-  var pb = controls.primaryBalance;
-  // A function is given the year number and the debt-stabilizing balance.
-  // The tests use this to hold debt steady.
-  if (typeof pb === "function") {
-    return pb(t, stabilizingBalance);
-  }
-  var base = valueForYear(pb, t);
-  if (controls.primaryBalanceMode === "reactive") {
-    return base + controls.gamma * (lastDebt - startDebt);
-  }
-  return base;
-}
-
-// A control is either one number for every year or a list with one per year.
-function valueForYear(value, t) {
-  if (Array.isArray(value)) {
-    return t <= value.length ? value[t - 1] : value[value.length - 1];
-  }
-  return value;
+// The yield at which interest would equal the chosen share of revenue once
+// the whole debt pays that yield: yield x debt = share x revenue. Revenue
+// keeps its starting share of GDP.
+function stressYield(start, controls, debt) {
+  return controls.stressInterestShare * start.revenue / debt;
 }
 
 // How much of GDP a group has sold by year t, across all selloffs.
 function selloffSoFar(selloffs, group, t) {
   var sold = 0;
   (selloffs || []).forEach(function (s) {
-    if (s.group === group) {
-      sold += s.total * Math.min(t / Math.max(s.years, 1), 1);
-    }
+    if (s.group === group) sold += s.total * Math.min(t / Math.max(s.years, 1), 1);
   });
   return sold;
 }
@@ -419,14 +304,15 @@ function scaleToFit(holdings, target) {
   return scaled;
 }
 
-// The figures shown above the chart.
+// The figures shown above the charts.
 function headlineFigures(rows) {
   var last = rows[rows.length - 1];
   var years = rows.length - 1;
   var firstStress = null;
   var firstDominance = null;
   var firstCapBroken = null;
-  var peakShare = rows[0].debt > 0 ? rows[0].centralBank / rows[0].debt : 0;
+  var peakShare = rows[0].centralBank / rows[0].debt;
+  var moneyTimes = 1;
 
   rows.forEach(function (row, t) {
     if (t === 0) return;
@@ -434,52 +320,33 @@ function headlineFigures(rows) {
     if (row.dominance && firstDominance === null) firstDominance = row.year;
     if (row.capBroken && firstCapBroken === null) firstCapBroken = row.year;
     if (row.debt > 0) peakShare = Math.max(peakShare, row.centralBank / row.debt);
+    moneyTimes *= 1 + row.moneyGrowth;
   });
 
-  // The money supply's growth in money terms as a steady yearly rate.
-  var moneyTimes = null;
-  if (rows[0].money !== null && years > 0) {
-    moneyTimes = 1;
-    rows.forEach(function (row, t) { if (t > 0) moneyTimes *= 1 + row.moneyGrowth; });
-  }
-
   return {
-    moneyTimes: moneyTimes,                // null when no money supply was given
-    annualMoneyGrowth: moneyTimes === null ? null : Math.pow(moneyTimes, 1 / years) - 1,
+    moneyTimes: moneyTimes,                       // M2 at the end over M2 at the start
+    annualMoneyGrowth: Math.pow(moneyTimes, 1 / years) - 1,
     finalDebt: last.debt,
-    firstStressYear: firstStress,         // null means "not reached"
-    firstDominanceYear: firstDominance,   // null means "not reached"
-    firstCapBrokenYear: firstCapBroken,   // null means the cap always held
+    firstStressYear: firstStress,                 // null means "not reached"
+    firstDominanceYear: firstDominance,           // null means "not reached"
+    firstCapBrokenYear: firstCapBroken,           // null means the cap always held
     peakCentralBankShare: peakShare,
-    purchasingPowerLoss: 1 - 1 / last.priceLevel,
-    annualRealReturn: years > 0 ? Math.pow(last.realReturn, 1 / years) - 1 : 0
+    purchasingPowerLoss: 1 - 1 / last.priceLevel
   };
-}
-
-// True when inflation is to follow the money supply.
-function usesMoney(start, controls) {
-  return isNumber(start.money) && isNumber(controls.moneyGrowth);
 }
 
 // Stops with a clear message if an input is missing or not a number.
 function checkInputs(start, controls) {
-  var startNumbers = ["year", "debt", "centralBank", "yield", "averageRate",
-    "inflation", "revenue"];
-  var controlNumbers = ["years", "yieldResponse", "persistence", "foreignInflation", "maturity", "runoff"];
-  if (usesMoney(start, controls)) {
-    if (!(start.money > 0)) throw new Error("start.money must be above zero");
-  } else {
-    controlNumbers.push("passThrough", "baselineInflation");
-  }
-
-  startNumbers.forEach(function (name) {
+  ["year", "debt", "centralBank", "yield", "averageRate", "inflation", "revenue", "money"].forEach(function (name) {
     if (!isNumber(start[name])) throw new Error("start." + name + " must be a number");
   });
-  controlNumbers.forEach(function (name) {
+  ["years", "growth", "primaryBalance", "moneyGrowth", "moneyTrend", "moneyShare", "persistence",
+    "yieldResponse", "maturity", "runoff"].forEach(function (name) {
     if (!isNumber(controls[name])) throw new Error("controls." + name + " must be a number");
   });
   if (!(start.debt > 0)) throw new Error("start.debt must be above zero");
   if (!(start.revenue > 0)) throw new Error("start.revenue must be above zero");
+  if (!(start.money > 0)) throw new Error("start.money must be above zero");
   if (!(controls.maturity >= 1)) throw new Error("controls.maturity must be at least 1");
 
   if (!start.holdings || Object.keys(start.holdings).length === 0) {
@@ -493,26 +360,15 @@ function checkInputs(start, controls) {
     }
   });
 
-  if (["stress", "fixed", "off"].indexOf(controls.capMode) === -1) {
-    throw new Error('controls.capMode must be "stress", "fixed" or "off"');
-  }
-  if (controls.capMode === "stress" && !(isNumber(controls.stressInterestShare) && isNumber(start.revenue))) {
-    throw new Error("capMode stress needs controls.stressInterestShare and start.revenue");
+  if (["fixed", "stress", "off"].indexOf(controls.capMode) === -1) {
+    throw new Error('controls.capMode must be "fixed", "stress" or "off"');
   }
   if (controls.capMode === "fixed" && !isNumber(controls.capLevel)) {
     throw new Error("controls.capLevel must be a number when capMode is fixed");
   }
-  if (controls.primaryBalanceMode === "reactive" && !isNumber(controls.gamma)) {
-    throw new Error("controls.gamma must be a number in reactive mode");
+  if (controls.capMode === "stress" && !isNumber(controls.stressInterestShare)) {
+    throw new Error("capMode stress needs controls.stressInterestShare");
   }
-}
-
-// The yield at which interest on a debt would equal the chosen share of
-// revenue once the whole debt pays that yield: yield x debt = share x
-// revenue. Debt and revenue are shares of GDP, and revenue is taken to keep
-// its starting share.
-function stressYield(start, controls, debt) {
-  return controls.stressInterestShare * start.revenue / debt;
 }
 
 function isNumber(x) {
