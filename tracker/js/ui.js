@@ -182,9 +182,9 @@ function presetFor(control, country) {
   }
   var preset = Object.assign({}, page.presets.controls[control.preset || control.key] || {});
   var start = country.start;
-  // Growth, the primary balance and baseline inflation all start at the
-  // country's historical average. The data file says which years.
-  var averages = { growth: "baselineGrowth", primaryBalance: "baselinePrimaryBalance" };
+  // Real growth starts at the IMF's projection for the next five years; the
+  // primary balance at its recent average. The data file says which years.
+  var averages = { growth: "growth", primaryBalance: "baselinePrimaryBalance" };
   if (averages[control.key]) {
     preset.default = start[averages[control.key]].value;
     preset.basis = "Default: " + start[averages[control.key]].note + ".";

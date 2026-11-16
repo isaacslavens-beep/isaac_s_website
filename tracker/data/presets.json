@@ -7,7 +7,7 @@
     "growth": {
       "min": -0.01, "max": 0.04, "step": 0.001, "default": null,
       "showBasis": true,
-      "basis": "The country's average real growth since 1972."
+      "basis": "The average of the IMF's projections for the next five years."
     },
     "primaryBalance": {
       "min": -0.08, "max": 0.04, "step": 0.001, "default": null,

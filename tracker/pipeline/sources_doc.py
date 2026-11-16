@@ -176,12 +176,12 @@ def defaults(countries, presets, estimates):
         ("Revenue", lambda s: percent(s["revenue"]["value"]) + " of GDP"),
         ("Money supply (M2)", lambda s: percent(s["money"]["value"], 0) + " of GDP"),
         ("Default: primary balance", lambda s: percent(s["baselinePrimaryBalance"]["value"])),
-        ("Default: real growth", lambda s: percent(s["baselineGrowth"]["value"])),
+        ("Default: real growth (IMF projection)", lambda s: percent(s["growth"]["value"])),
         ("Base money growth", lambda s: percent(s["moneyGrowth"]["value"])),
         ("Money drift", lambda s: percent(s["moneyTrend"]["value"])),
         ("Implied inflation", lambda s: percent(
             (1 + s["moneyGrowth"]["value"])
-            / ((1 + s["baselineGrowth"]["value"]) * (1 + s["moneyTrend"]["value"])) - 1)),
+            / ((1 + s["growth"]["value"]) * (1 + s["moneyTrend"]["value"])) - 1)),
         ("Average inflation since 1972, for comparison", lambda s: percent(s["baselineInflation"]["value"])),
         ("Stress threshold (balance test)", lambda s: "not used" if s["stressThreshold"]["value"] is None
             else percent(s["stressThreshold"]["value"])),
@@ -201,7 +201,7 @@ def defaults(countries, presets, estimates):
         lines.append("**" + countries[key]["name"] + "** (" + countries[key]["yearBasis"] + " "
                      + countries[key]["governmentCovered"] + ")")
         lines.append("")
-        for name in ("baselinePrimaryBalance", "baselineGrowth", "moneyGrowth", "moneyTrend", "stressThreshold"):
+        for name in ("baselinePrimaryBalance", "growth", "moneyGrowth", "moneyTrend", "stressThreshold"):
             lines.append("- " + start[name]["note"] + ". Sources: " + ", ".join(start[name]["source"]) + ".")
         for note in countries[key].get("notes") or []:
             lines.append("- Note on the page: " + note)
@@ -262,8 +262,8 @@ def differences():
         "- A central bank that is not intervening keeps its share of the debt, not its share of GDP.",
         "- The central bank stops buying at a set share of the debt. Yields cannot go below zero.",
         "- A foreign selloff covers all foreign holders and has its own yield response.",
-        "- Defaults: primary balance is the 2022 to 2026 average; real growth and money growth are "
-        "averages from 1972.",
+        "- Defaults: primary balance is the 2022 to 2026 average; real growth is the IMF's projection "
+        "for the next five years; money growth is the average from 1972.",
         "- Canada's primary balance comes from the IMF, not Statistics Canada.",
         "- Japan uses the interest test alone for fiscal stress.",
         "- The page shows the United States, Japan and Canada only.",
