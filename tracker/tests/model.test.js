@@ -211,26 +211,21 @@ test("when purchases use up price-sensitive holdings, the rest comes from captiv
   assert.ok(row.centralBank < row.debt);
 });
 
-test("the stress cap sits at the yield where interest on the starting debt takes the chosen share of revenue", function () {
+test("the stress cap is each year the yield where interest on that year's debt takes the chosen share of revenue", function () {
   const controls = controlsWith({ capMode: "stress", stressInterestShare: 0.2, primaryBalance: -0.08, growth: 0 });
-  const level = stressYield(start, controls);
-  close(level * start.debt / start.revenue, 0.2, 1e-15);
+  close(stressYield(start, controls, start.debt) * start.debt / start.revenue, 0.2, 1e-15);
 
   const result = run(start, controls);
   let bought = false;
   result.rows.forEach(function (row, t) {
     if (t === 0) return;
-    assert.strictEqual(row.cap, level, "the cap is the same level every year");
-    if (!row.capBroken) assert.ok(row.yield <= level + 1e-12);
+    close(row.cap * row.debt / start.revenue, 0.2, 1e-12, "cap in " + row.year + ":");
+    if (!row.capBroken) assert.ok(row.yield <= row.cap + 1e-12);
     if (row.purchases > 0) bought = true;
   });
   assert.ok(bought, "the scenario should reach the cap");
-
-  // The stress cap is the fixed cap at that level.
-  const fixed = run(start, controlsWith({
-    capMode: "fixed", capLevel: level, stressInterestShare: 0.2, primaryBalance: -0.08, growth: 0
-  }));
-  assert.deepStrictEqual(result.rows, fixed.rows);
+  // Debt grows in this scenario, so the cap falls.
+  assert.ok(result.rows[controls.years].cap < result.rows[1].cap);
 
   // It needs the share it is worked out from.
   assert.throws(function () { runModel(start, controlsWith({ capMode: "stress" })); });

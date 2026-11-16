@@ -47,9 +47,10 @@
 //   stressInterestShare    optional: a year is also in fiscal stress when
 //                          interest is more than this share of revenue
 //   capMode                "stress", "fixed" or "off". "stress" puts the cap
-//                          at the yield where interest on the starting
-//                          debt equals stressInterestShare of revenue
-//                          (see stressYield)
+//                          each year at the yield where interest on that
+//                          year's debt equals stressInterestShare of
+//                          revenue (see stressYield), so it falls as debt
+//                          grows
 //   capLevel               the cap when capMode is "fixed"
 //   priceSensitive    w_k  share of each group's holdings that is
 //                          price-sensitive, with the same keys as holdings
@@ -108,10 +109,9 @@ function runModel(start, controls) {
   var totalH0 = 0;
   groups.forEach(function (k) { totalH0 += h0[k]; });
 
-  // The cap: one level for the whole projection, or none.
-  var cap = null;
-  if (controls.capMode === "fixed") cap = controls.capLevel;
-  if (controls.capMode === "stress") cap = stressYield(start, controls);
+  // The cap. A fixed cap is one level for the whole projection. A stress
+  // cap is worked out again each year from that year's debt.
+  var cap = controls.capMode === "fixed" ? controls.capLevel : null;
 
   // Year 0 is the starting year, taken straight from the data.
   var rows = [{
@@ -198,6 +198,12 @@ function runModel(start, controls) {
     var stressFromInterest = isNumber(controls.stressInterestShare) &&
       interestToRevenue > controls.stressInterestShare;
     var stress = stressFromBalance || stressFromInterest;
+
+    // Stress cap: the yield at which interest on this year's debt would
+    // take the chosen share of revenue. No debt, no cap.
+    if (controls.capMode === "stress") {
+      cap = debt > 0 ? stressYield(start, controls, debt) : null;
+    }
 
     // 4. Captive holdings: the part of each group that is not
     // price-sensitive keeps its share of the debt, less any selloff. A
@@ -493,10 +499,11 @@ function checkInputs(start, controls) {
   }
 }
 
-// The yield at which interest on the starting debt would equal the chosen
-// share of revenue: yield x debt = share x revenue.
-function stressYield(start, controls) {
-  return controls.stressInterestShare * start.revenue / start.debt;
+// The yield at which interest on a debt would equal the chosen share of
+// revenue: yield x debt = share x revenue. Debt and revenue are shares of
+// GDP, and revenue is taken to keep its starting share.
+function stressYield(start, controls, debt) {
+  return controls.stressInterestShare * start.revenue / debt;
 }
 
 function isNumber(x) {

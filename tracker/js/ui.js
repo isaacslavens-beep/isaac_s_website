@@ -76,7 +76,7 @@ function controlList(country) {
       help: "Yearly growth of the economy, after inflation." },
     { key: "capMode", section: "main", type: "choice",
       label: "Yield cap",
-      help: "The highest yield the central bank allows. When lenders ask for more, it buys debt to hold the yield there. Stress level: the yield at which interest on the starting debt takes the fiscal stress threshold's share of revenue. Fixed: a level you choose. Off: the central bank never buys.",
+      help: "The highest yield the central bank allows. When lenders ask for more, it buys debt to hold the yield there. Stress level: each year, the yield at which interest on that year's debt takes the fiscal stress threshold's share of revenue. It falls as debt grows. Fixed: a level you choose. Off: the central bank never buys.",
       options: [
         ["stress", "Stress level"],
         ["fixed", "Fixed"],
@@ -87,8 +87,16 @@ function controlList(country) {
         var s = country.start;
         if (c.capMode === "off") return "No cap. The central bank never buys to hold the yield down.";
         if (c.capMode === "fixed") return "Capped at " + FORMATS.percent1(c.capLevel) + ".";
-        return "Capped at " + FORMATS.percent1(c.stressInterestShare * s.revenue.value / s.debt.value) +
-          ". At that yield, interest on the " + s.year + " debt takes " +
+        // The level moves with the debt, so it is read from the projection.
+        var rows = page.result ? page.result.rows : [];
+        var first = rows[1];
+        var last = rows[rows.length - 1];
+        if (!first || first.cap === null || last.cap === null) return "";
+        var a = FORMATS.percent1(first.cap);
+        var b = FORMATS.percent1(last.cap);
+        return "Capped at " + a + " in " + first.year +
+          (a === b ? ", and still " + b + " in " : last.cap > first.cap ? ", rising to " + b + " by " : ", falling to " + b + " by ") +
+          last.year + ". Each year it is the yield at which interest on that year's debt takes " +
           FORMATS.percent0(c.stressInterestShare) + " of revenue, the fiscal stress threshold.";
       } },
     { key: "capLevel", section: "main", type: "range", format: "percent1", indent: true,
@@ -624,8 +632,8 @@ function fillText() {
     document.getElementById("warning-more").textContent =
       "A central bank holds interest rates down by buying government debt. " +
       (firstBought && firstBought.year < h.firstCapBrokenYear
-        ? "In this scenario it starts buying in " + firstBought.year + " to keep the yield at " +
-          FORMATS.percent1(broken.cap) + ". Lenders want more than that, so it has to keep buying. By " +
+        ? "In this scenario it starts buying in " + firstBought.year + " to keep the yield at its cap (" +
+          FORMATS.percent1(broken.cap) + " in " + h.firstCapBrokenYear + "). Lenders want more than that, so it has to keep buying. By " +
           h.firstCapBrokenYear + " it owns " + share + " of the debt, which is the most it will hold " +
           "(the central bank limit in the settings), and it stops buying. "
         : "In this scenario, keeping the yield at " + FORMATS.percent1(broken.cap) + " in " +
