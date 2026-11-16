@@ -46,7 +46,10 @@
 //                          buying creates (1 means one for one)
 //   stressInterestShare    optional: a year is also in fiscal stress when
 //                          interest is more than this share of revenue
-//   capMode                "automatic", "fixed" or "off"
+//   capMode                "stress", "fixed" or "off". "stress" puts the cap
+//                          at the yield where interest on the starting
+//                          debt equals stressInterestShare of revenue
+//                          (see stressYield)
 //   capLevel               the cap when capMode is "fixed"
 //   priceSensitive    w_k  share of each group's holdings that is
 //                          price-sensitive, with the same keys as holdings
@@ -105,8 +108,10 @@ function runModel(start, controls) {
   var totalH0 = 0;
   groups.forEach(function (k) { totalH0 += h0[k]; });
 
-  // The cap. In automatic mode it stays null until the first stress year.
-  var cap = controls.capMode === "fixed" ? controls.capLevel : null;
+  // The cap: one level for the whole projection, or none.
+  var cap = null;
+  if (controls.capMode === "fixed") cap = controls.capLevel;
+  if (controls.capMode === "stress") cap = stressYield(start, controls);
 
   // Year 0 is the starting year, taken straight from the data.
   var rows = [{
@@ -193,12 +198,6 @@ function runModel(start, controls) {
     var stressFromInterest = isNumber(controls.stressInterestShare) &&
       interestToRevenue > controls.stressInterestShare;
     var stress = stressFromBalance || stressFromInterest;
-
-    // Automatic cap: switched on in the first stress year, at last year's
-    // yield, and kept from then on.
-    if (controls.capMode === "automatic" && cap === null && stress) {
-      cap = prev.yield;
-    }
 
     // 4. Captive holdings: the part of each group that is not
     // price-sensitive keeps its share of the debt, less any selloff. A
@@ -480,8 +479,11 @@ function checkInputs(start, controls) {
     }
   });
 
-  if (["automatic", "fixed", "off"].indexOf(controls.capMode) === -1) {
-    throw new Error('controls.capMode must be "automatic", "fixed" or "off"');
+  if (["stress", "fixed", "off"].indexOf(controls.capMode) === -1) {
+    throw new Error('controls.capMode must be "stress", "fixed" or "off"');
+  }
+  if (controls.capMode === "stress" && !(isNumber(controls.stressInterestShare) && isNumber(start.revenue))) {
+    throw new Error("capMode stress needs controls.stressInterestShare and start.revenue");
   }
   if (controls.capMode === "fixed" && !isNumber(controls.capLevel)) {
     throw new Error("controls.capLevel must be a number when capMode is fixed");
@@ -491,6 +493,12 @@ function checkInputs(start, controls) {
   }
 }
 
+// The yield at which interest on the starting debt would equal the chosen
+// share of revenue: yield x debt = share x revenue.
+function stressYield(start, controls) {
+  return controls.stressInterestShare * start.revenue / start.debt;
+}
+
 function isNumber(x) {
   return typeof x === "number" && isFinite(x);
 }
@@ -498,5 +506,5 @@ function isNumber(x) {
 // Lets the tests load this file with require(). In the browser, runModel
 // is simply a global function.
 if (typeof module !== "undefined") {
-  module.exports = { runModel: runModel };
+  module.exports = { runModel: runModel, stressYield: stressYield };
 }

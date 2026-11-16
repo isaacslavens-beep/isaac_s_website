@@ -641,6 +641,14 @@ button.quiet:hover:not(:disabled) {
   font-size: 11.5px;
 }
 
+/* Under a row of buttons: what the choice means with the current settings */
+.control-note {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
 /* The setting that matters most, set apart from the others */
 .control.key-control {
   padding: 12px 12px 10px;

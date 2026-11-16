@@ -106,8 +106,9 @@ def method(presets, estimates):
         "- Interest test: interest, `average rate x debt[t-1] / (1 + nominal growth)`, is more than a set "
         "share of government revenue (default " + percent(controls["stressInterestShare"]["default"], 0) + ").",
         "",
-        "**6. Yield cap.** In automatic mode the central bank sets a cap in the first stress year, at the "
-        "yield of the year before, and keeps it. The other modes are a fixed level and off.",
+        "**6. Yield cap.** By default the cap is the yield at which interest on the starting debt equals "
+        "the interest test's share of revenue: `share x revenue / debt`. It applies in every year. The "
+        "other modes are a fixed level and off.",
         "",
         "**7. Holders.** Each holder group has a captive part, which keeps its share of the debt, and a "
         "price-sensitive part. The central bank, when not intervening, keeps the share of the debt it held "

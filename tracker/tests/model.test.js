@@ -7,7 +7,7 @@
 
 const test = require("node:test");
 const assert = require("node:assert");
-const { runModel } = require("../js/model.js");
+const { runModel, stressYield } = require("../js/model.js");
 const invented = require("./invented-country.json");
 
 const start = invented.start;
@@ -211,26 +211,29 @@ test("when purchases use up price-sensitive holdings, the rest comes from captiv
   assert.ok(row.centralBank < row.debt);
 });
 
-test("the automatic cap switches on in the first stress year at the previous year's yield", function () {
-  // A large deficit and slow growth push the country into fiscal stress.
-  const controls = controlsWith({ capMode: "automatic", primaryBalance: -0.08, growth: 0 });
-  const result = run(start, controls);
-  const first = result.headline.firstStressYear;
-  assert.notStrictEqual(first, null, "the scenario should reach fiscal stress");
-  const t = first - start.year;
-  assert.ok(t > 1, "stress should not start in the first year of this scenario");
+test("the stress cap sits at the yield where interest on the starting debt takes the chosen share of revenue", function () {
+  const controls = controlsWith({ capMode: "stress", stressInterestShare: 0.2, primaryBalance: -0.08, growth: 0 });
+  const level = stressYield(start, controls);
+  close(level * start.debt / start.revenue, 0.2, 1e-15);
 
-  for (let s = 1; s < t; s++) {
-    assert.strictEqual(result.rows[s].cap, null);
-    assert.strictEqual(result.rows[s].purchases, 0);
-  }
-  assert.strictEqual(result.rows[t].cap, result.rows[t - 1].yield);
-  for (let s = t; s <= controls.years; s++) {
-    assert.strictEqual(result.rows[s].cap, result.rows[t].cap, "the cap stays at the same level");
-    if (!result.rows[s].capBroken) {
-      assert.ok(result.rows[s].yield <= result.rows[s].cap + 1e-12);
-    }
-  }
+  const result = run(start, controls);
+  let bought = false;
+  result.rows.forEach(function (row, t) {
+    if (t === 0) return;
+    assert.strictEqual(row.cap, level, "the cap is the same level every year");
+    if (!row.capBroken) assert.ok(row.yield <= level + 1e-12);
+    if (row.purchases > 0) bought = true;
+  });
+  assert.ok(bought, "the scenario should reach the cap");
+
+  // The stress cap is the fixed cap at that level.
+  const fixed = run(start, controlsWith({
+    capMode: "fixed", capLevel: level, stressInterestShare: 0.2, primaryBalance: -0.08, growth: 0
+  }));
+  assert.deepStrictEqual(result.rows, fixed.rows);
+
+  // It needs the share it is worked out from.
+  assert.throws(function () { runModel(start, controlsWith({ capMode: "stress" })); });
 });
 
 test("the stress zone marks years when the stabilizing balance is above the threshold", function () {
@@ -241,7 +244,7 @@ test("the stress zone marks years when the stabilizing balance is above the thre
   });
 });
 
-test("interest above the chosen share of revenue is fiscal stress, and switches on the automatic cap", function () {
+test("interest above the chosen share of revenue is fiscal stress", function () {
   // The invented country pays about 18% of its revenue in interest in the
   // first year, and never reaches stress by the balance test alone here.
   const without = run(start, controlsWith({ stressThreshold: 1 }));
@@ -253,7 +256,6 @@ test("interest above the chosen share of revenue is fiscal stress, and switches 
   assert.strictEqual(low.rows[1].stress, true);
   assert.strictEqual(low.rows[1].stressFromInterest, true);
   assert.strictEqual(low.rows[1].stressFromBalance, false);
-  assert.strictEqual(low.rows[1].cap, start.yield);
   assert.strictEqual(low.headline.firstStressYear, start.year + 1);
 
   const high = run(calm, controlsWith({ stressInterestShare: first.interestToRevenue + 0.01 }));

@@ -21,7 +21,7 @@
     "primaryBalance": -0.03,
     "primaryBalanceMode": "fixed",
     "gamma": 0.03,
-    "capMode": "automatic",
+    "capMode": "off",
     "capLevel": 0.04,
     "priceSensitive": {
       "domesticPrivate": 0.50,

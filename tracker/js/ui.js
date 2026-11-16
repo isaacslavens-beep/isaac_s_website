@@ -76,12 +76,21 @@ function controlList(country) {
       help: "Yearly growth of the economy, after inflation." },
     { key: "capMode", section: "main", type: "choice",
       label: "Yield cap",
-      help: "The highest yield the central bank allows before it buys debt. Automatic: set in the first year of fiscal stress, at the yield of the year before. Fixed: a level you choose. Off: the central bank never buys.",
+      help: "The highest yield the central bank allows. When lenders ask for more, it buys debt to hold the yield there. Stress level: the yield at which interest on the starting debt takes the fiscal stress threshold's share of revenue. Fixed: a level you choose. Off: the central bank never buys.",
       options: [
-        ["automatic", "Automatic"],
+        ["stress", "Stress level"],
         ["fixed", "Fixed"],
         ["off", "Off"]
-      ] },
+      ],
+      // Shown under the buttons, so the level in force is always stated.
+      note: function (c, country) {
+        var s = country.start;
+        if (c.capMode === "off") return "No cap. The central bank never buys to hold the yield down.";
+        if (c.capMode === "fixed") return "Capped at " + FORMATS.percent1(c.capLevel) + ".";
+        return "Capped at " + FORMATS.percent1(c.stressInterestShare * s.revenue.value / s.debt.value) +
+          ". At that yield, interest on the " + s.year + " debt takes " +
+          FORMATS.percent0(c.stressInterestShare) + " of revenue, the fiscal stress threshold.";
+      } },
     { key: "capLevel", section: "main", type: "range", format: "percent1", indent: true,
       showWhen: function (c) { return c.capMode === "fixed"; },
       label: "Cap level",
@@ -216,7 +225,7 @@ function presetFor(control, country) {
     preset.basis = preset.basis + " In " + start.year + " this central bank holds " +
       FORMATS.percent0(share) + ".";
   }
-  if (control.key === "capMode") preset.default = "automatic";
+  if (control.key === "capMode") preset.default = "stress";
   if (control.type === "check") preset.default = false;
   return preset;
 }
@@ -364,6 +373,12 @@ function buildControls() {
       name.textContent = control.label;
       head.append(name, info.button);
       box.append(group);
+      if (control.note) {
+        var note = document.createElement("p");
+        note.className = "control-note";
+        box.append(note);
+        box.note = function (current) { note.textContent = control.note(current, country); };
+      }
     } else {
       // An on-off switch.
       var check = document.createElement("input");
@@ -389,6 +404,7 @@ function showOrHideControls() {
   var values = page.controls[page.country];
   document.querySelectorAll(".control").forEach(function (box) {
     box.hidden = box.showWhen ? !box.showWhen(values) : false;
+    if (box.note) box.note(values);
   });
   // Reset has nothing to do while every setting is at its default.
   var defaults = defaultControls(page.data[page.country]);
@@ -655,12 +671,12 @@ function fillStats() {
 
   var stats = [
     { kind: "loss", label: "Currency debasement",
-      value: FORMATS.percent1(annualLoss(h.purchasingPowerLoss, rows.length - 1)), unit: "a year",
+      value: FORMATS.percent1(annualLoss(h.purchasingPowerLoss, rows.length - 1)), unit: "annually",
       note: FORMATS.percent0(h.purchasingPowerLoss) + " in total by " + last.year,
       tip: "The projected loss of the currency's purchasing power, " + span +
         ", as a steady yearly rate. It follows from the settings on this page." },
     { kind: "money", label: "Money supply expansion",
-      value: FORMATS.percent1(h.annualMoneyGrowth), unit: "a year",
+      value: FORMATS.percent1(h.annualMoneyGrowth), unit: "annually",
       note: "M2, " + span,
       tip: "The projected growth of the money supply (M2), " + span + ", as a steady yearly rate." },
     { label: "Debt in " + last.year,
@@ -752,9 +768,9 @@ function fillHow() {
       last.priceLevel.toFixed(2) + " = " + FORMATS.percent0(loss) + ". As a steady yearly rate that is " +
       FORMATS.percent1(lossPerYear) + " annually: 1 − (1 − " + FORMATS.percent0(loss) + ") ^ (1 ÷ " + years + ").",
     "2. The price level is each year's inflation compounded. Inflation averages " +
-      FORMATS.percent1(averageInflation) + " a year over the " + years + " years.",
+      FORMATS.percent1(averageInflation) + " annually over the " + years + " years.",
     "3. Inflation follows the money supply. Without central bank buying, money grows at " +
-      FORMATS.percent1(c.moneyGrowth) + " a year (the " + country.start.moneyGrowth.note +
+      FORMATS.percent1(c.moneyGrowth) + " annually (the " + country.start.moneyGrowth.note +
       "). Money growing at that rate, with real growth of " + FORMATS.percent1(c.growth) + " and " + FORMATS.percent1(c.moneyTrend) +
       " of money growth that does not raise prices, implies inflation of " + FORMATS.percent1(impliedInflation) +
       ": (1 + " + FORMATS.percent1(c.moneyGrowth) + ") ÷ ((1 + " + FORMATS.percent1(c.growth) + ") × (1 + " +
@@ -770,7 +786,7 @@ function fillHow() {
         : c.capMode === "off" ? ". The cap is off." : ". The cap is never reached."),
     "5. Each unit of debt the central bank adds to its holdings, as a share of GDP, creates " +
       c.moneyShare.toFixed(2) + " units of new money, on top of the " + FORMATS.percent1(c.moneyGrowth) +
-      " a year. Holdings that only shrink against a growing economy, with nothing sold, destroy no money. " +
+      " annually. Holdings that only shrink against a growing economy, with nothing sold, destroy no money. " +
       "If its buying created no money, the loss would be " + FORMATS.percent1(lossWithout) +
       " instead of " + FORMATS.percent1(loss) + ".",
     "6. Money supply expansion is the growth of M2. It is " + FORMATS.percent0(rows[0].money) +
