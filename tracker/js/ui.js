@@ -675,11 +675,11 @@ function fillStats() {
   var threshold = country.start.stressThreshold.value;
 
   var stats = [
-    { kind: "loss", label: "Currency debasement",
+    { label: "Currency debasement",
       value: FORMATS.percent1(annualLoss(h.purchasingPowerLoss, rows.length - 1)), unit: "annually",
       note: FORMATS.percent0(h.purchasingPowerLoss) + " in total by " + last.year,
       tip: "Loss of purchasing power, " + span + ", annualized: 1 − 1 ÷ price level." },
-    { kind: "money", label: "Money supply expansion",
+    { label: "Money supply expansion",
       value: FORMATS.percent1(h.annualMoneyGrowth), unit: "annually",
       note: "M2, " + span,
       tip: "M2 growth, " + span + ", annualized." },
@@ -687,7 +687,7 @@ function fillStats() {
       value: FORMATS.percent0(h.finalDebt), unit: "of GDP",
       note: FORMATS.percent0(first.debt) + " in " + first.year,
       tip: country.governmentCovered },
-    { label: "Fiscal stress",
+    { label: "Fiscal stress", kind: h.firstStressYear ? "alert" : "",
       value: h.firstStressYear || "Not reached",
       note: h.firstStressYear ? "first year" : "by " + last.year,
       tip: "First year interest exceeds " + FORMATS.percent0(c.stressInterestShare) + " of revenue" +
@@ -695,7 +695,7 @@ function fillStats() {
           ? ", or the debt-stabilizing primary balance exceeds " + FORMATS.percent1(threshold) +
             " of GDP, the " + country.start.stressThreshold.note + "."
           : ".") },
-    { label: "Fiscal dominance",
+    { label: "Fiscal dominance", kind: h.firstDominanceYear ? "alert" : "",
       value: h.firstDominanceYear || "Not reached",
       note: h.firstDominanceYear ? "first year" : "by " + last.year,
       tip: c.capMode === "off"

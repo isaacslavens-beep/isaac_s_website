@@ -65,7 +65,7 @@ function drawChart(container, chart) {
     var common = {
       scale: scale,
       stroke: stroke,
-      width: 2,
+      width: s.color === 1 ? 2.25 : 1.75,
       points: { show: false },
       fill: chart.stacked ? stroke : undefined
     };
@@ -85,7 +85,7 @@ function drawChart(container, chart) {
     };
   }
 
-  var font = "12px system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif";
+  var font = "11px " + color("--mono");
   var axes = [
     {
       font: font,
@@ -186,11 +186,11 @@ function drawChart(container, chart) {
     var y = u.valToPos(last, s.axis === "left" ? "left" : "right", true);
     var x = u.bbox.left + u.bbox.width + 2 * ratio;
     ctx.save();
-    ctx.font = "600 " + 12 * ratio + "px system-ui, sans-serif";
+    ctx.font = "600 " + 11 * ratio + "px " + color("--mono");
     var width = ctx.measureText(text).width + 10 * ratio;
     ctx.fillStyle = color("--line-" + s.color);
     ctx.beginPath();
-    if (ctx.roundRect) ctx.roundRect(x, y - 9 * ratio, width, 18 * ratio, 4 * ratio);
+    if (ctx.roundRect) ctx.roundRect(x, y - 9 * ratio, width, 18 * ratio, 3 * ratio);
     else ctx.rect(x, y - 9 * ratio, width, 18 * ratio);   // older browsers: square corners
     ctx.fill();
     ctx.fillStyle = color("--bg");
