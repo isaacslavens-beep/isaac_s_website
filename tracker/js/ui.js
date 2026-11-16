@@ -62,21 +62,21 @@ function controlList(country) {
   var list = [
     { key: "primaryBalance", section: "main", type: "range", format: "percent1", key_control: true,
       label: "Primary balance",
-      help: "The budget balance before interest, as a share of GDP." },
+      help: "Held constant for the whole projection." },
     // Not shown as a slider: the money supply reacts to what the central
     // bank buys, so its starting rate is fixed at the country's past average.
     { key: "moneyGrowth", section: "main", type: "range", format: "percent1", fixed: true,
       label: "Money supply growth",
-      help: "How fast the money supply (M2) grows each year, before any money the central bank creates by buying debt. Inflation follows it." },
+      help: "M2 growth before any money created by central bank purchases." },
     { key: "stressInterestShare", section: "main", type: "range", format: "percent0",
       label: "Fiscal stress threshold",
-      help: "A year is in fiscal stress when interest on the debt takes more than this share of government revenue." },
+      help: "Interest-to-revenue ratio above which a year counts as fiscal stress. Revenue is held at its starting share of GDP." },
     { key: "growth", section: "main", type: "range", format: "percent1",
       label: "Real growth",
-      help: "Yearly growth of the economy, after inflation." },
+      help: "Held constant for the whole projection." },
     { key: "capMode", section: "main", type: "choice",
       label: "Yield cap",
-      help: "The highest yield the central bank allows. When lenders ask for more, it buys debt to hold the yield there. Stress level: each year, the yield at which interest on that year's debt takes the fiscal stress threshold's share of revenue. It falls as debt grows. Fixed: a level you choose. Off: the central bank never buys.",
+      help: "The central bank buys whatever debt it takes to hold the yield at the cap, up to its limit. Stress level: the yield at which interest on that year's debt equals the fiscal stress threshold, recomputed annually, so it falls as debt grows. Fixed: a set level. Off: no purchases beyond keeping its share of the debt.",
       options: [
         ["stress", "Stress level"],
         ["fixed", "Fixed"],
@@ -102,11 +102,11 @@ function controlList(country) {
     { key: "capLevel", section: "main", type: "range", format: "percent1", indent: true,
       showWhen: function (c) { return c.capMode === "fixed"; },
       label: "Cap level",
-      help: "The yield the central bank holds." },
+      help: "" },
     { key: "centralBankLimit", section: "main", type: "range", format: "percent0", indent: true,
       showWhen: function (c) { return c.capMode !== "off"; },
       label: "Central bank limit",
-      help: "The largest share of the debt the central bank will own. Once there it stops buying, and the cap no longer holds." }
+      help: "Maximum central bank share of the debt. At the limit purchases stop and the cap no longer binds." }
   ];
 
   // A selloff by all holders abroad. Where the data separates foreign
@@ -114,27 +114,27 @@ function controlList(country) {
   list.push(
     { key: "selloffOn", section: "scenario", type: "check",
       label: "Foreign selloff",
-      help: "Holders abroad sell part of their holdings." },
+      help: "All foreign holders sell the same share of their holdings, spread evenly over the period." },
     { key: "selloffShare", section: "scenario", type: "range", format: "percent0", indent: true,
       showWhen: function (c) { return c.selloffOn; },
-      label: "Share sold", help: "The share of foreign holdings sold." },
+      label: "Share sold", help: "" },
     { key: "selloffYears", section: "scenario", type: "range", format: "years0", indent: true,
       showWhen: function (c) { return c.selloffOn; },
-      label: "Over", help: "The number of years the selling is spread over." }
+      label: "Over", help: "" }
   );
   if (country.start.japanHoldings) {
     list.push(
       { key: "japanOn", section: "scenario", type: "check",
         label: "Japanese repatriation",
-        help: "Holders in Japan sell part of their Treasuries and bring the money home." },
+        help: "Japan-resident holders sell Treasuries, spread evenly over the period." },
       { key: "japanShare", section: "scenario", type: "range", format: "percent0", indent: true,
         preset: "selloffShare",
         showWhen: function (c) { return c.japanOn; },
-        label: "Share sold", help: "The share of Japan-resident holdings sold." },
+        label: "Share sold", help: "" },
       { key: "japanYears", section: "scenario", type: "range", format: "years0", indent: true,
         preset: "selloffYears",
         showWhen: function (c) { return c.japanOn; },
-        label: "Over", help: "The number of years the selling is spread over." }
+        label: "Over", help: "" }
     );
   }
 
@@ -143,38 +143,38 @@ function controlList(country) {
     { key: "selloffResponse", section: "scenario", type: "range", format: "basisPoints",
       showWhen: function (c) { return c.selloffOn || c.japanOn; },
       label: "Yield rise from selling",
-      help: "Extra basis points of yield for each point of GDP of debt sold, until the central bank buys it. A sudden sale moves the yield more than slow new borrowing." }
+      help: "Extra basis points of yield per point of GDP sold and not yet bought by the central bank, on top of the yield response." }
   );
 
   // Advanced settings: these move the result less.
   list.push(
     { key: "persistence", section: "advanced", type: "range", format: "number2",
       label: "Inflation persistence",
-      help: "How slowly inflation catches up with money growth: the part of last year's gap that remains this year." },
+      help: "Share of last year's gap between inflation and the money-implied rate that carries into this year." },
     { key: "moneyShare", section: "advanced", type: "range", format: "number2",
       label: "New money from central bank buying",
-      help: "Units of new money for each unit of government debt the central bank adds to its holdings." },
+      help: "M2 created per unit of debt the central bank buys, both as shares of GDP." },
     { key: "moneyTrend", section: "advanced", type: "range", format: "percent1",
       label: "Money growth that does not raise prices",
-      help: "How much faster than the economy the money supply can grow each year without causing inflation." }
+      help: "Trend rise in M2 relative to GDP that does not raise prices (falling velocity)." }
   );
   // The controls marked `fixed` are not shown: they change the result
   // very little. The model still uses their default values.
   Object.keys(country.start.holdings).forEach(function (group) {
     list.push({ key: "w_" + group, section: "advanced", type: "range", format: "percent0", fixed: true,
       label: "Price-sensitive share: " + GROUP_LABELS[group].toLowerCase(),
-      help: "The share of these holders that asks for a higher yield to hold more debt." });
+      help: "Share of this group's holdings that demands a higher yield to absorb more debt." });
   });
   list.push(
     { key: "yieldResponse", section: "advanced", type: "range", format: "basisPoints",
       label: "Yield response",
-      help: "Basis points of yield for each point of GDP that price-sensitive holders must absorb." },
+      help: "Basis points of yield per point of GDP of debt that price-sensitive holders must absorb." },
     { key: "runoff", section: "advanced", type: "range", format: "percent1", fixed: true,
       label: "Central bank runoff",
-      help: "How much the central bank lets its holdings shrink each year, as a share of GDP." },
+      help: "Annual decline in central bank holdings, as a share of GDP." },
     { key: "maturity", section: "advanced", type: "range", format: "years1", fixed: true,
       label: "Average maturity",
-      help: "The average number of years until the debt is repaid. With a shorter maturity, a change in yields reaches the interest bill sooner." }
+      help: "One-over-maturity of the debt reprices at the current yield each year." }
   );
   return list;
 }
@@ -319,7 +319,7 @@ function buildControls() {
     label.htmlFor = id;
     // The explanation: what the control does, then where its default
     // comes from.
-    var info = infoButton(control.help + (preset.basis ? " " + preset.basis : ""), control.label);
+    var info = infoButton([control.help, preset.basis].filter(Boolean).join(" "), control.label);
     box.append(head, info.tip);
 
     if (control.type === "range") {
@@ -630,16 +630,13 @@ function fillText() {
       "and can no longer hold interest rates down.";
     // The longer explanation, shown when the question mark is pressed.
     document.getElementById("warning-more").textContent =
-      "A central bank holds interest rates down by buying government debt. " +
       (firstBought && firstBought.year < h.firstCapBrokenYear
-        ? "In this scenario it starts buying in " + firstBought.year + " to keep the yield at its cap (" +
-          FORMATS.percent1(broken.cap) + " in " + h.firstCapBrokenYear + "). Lenders want more than that, so it has to keep buying. By " +
-          h.firstCapBrokenYear + " it owns " + share + " of the debt, which is the most it will hold " +
-          "(the central bank limit in the settings), and it stops buying. "
-        : "In this scenario, keeping the yield at " + FORMATS.percent1(broken.cap) + " in " +
-          h.firstCapBrokenYear + " would take more buying than it will do: it stops at " + share +
-          " of the debt, the most it will hold (the central bank limit in the settings). ") +
-      "From then on the cap has no effect, and the yield in the chart is the rate lenders ask for.";
+        ? "Purchases to hold the cap start in " + firstBought.year + ". By " + h.firstCapBrokenYear +
+          " the central bank reaches its limit of " + share + " of the debt with the market yield still above the cap (" +
+          FORMATS.percent1(broken.cap) + "), and stops buying. "
+        : "Holding the cap (" + FORMATS.percent1(broken.cap) + ") in " + h.firstCapBrokenYear +
+          " would take the central bank past its limit of " + share + " of the debt, so it stops there. ") +
+      "From then on the cap does not bind and the chart shows the market yield.";
   }
 
   // The source line names the publisher and series behind the history of
@@ -681,12 +678,11 @@ function fillStats() {
     { kind: "loss", label: "Currency debasement",
       value: FORMATS.percent1(annualLoss(h.purchasingPowerLoss, rows.length - 1)), unit: "annually",
       note: FORMATS.percent0(h.purchasingPowerLoss) + " in total by " + last.year,
-      tip: "The projected loss of the currency's purchasing power, " + span +
-        ", as a steady yearly rate. It follows from the settings on this page." },
+      tip: "Loss of purchasing power, " + span + ", annualized: 1 − 1 ÷ price level." },
     { kind: "money", label: "Money supply expansion",
       value: FORMATS.percent1(h.annualMoneyGrowth), unit: "annually",
       note: "M2, " + span,
-      tip: "The projected growth of the money supply (M2), " + span + ", as a steady yearly rate." },
+      tip: "M2 growth, " + span + ", annualized." },
     { label: "Debt in " + last.year,
       value: FORMATS.percent0(h.finalDebt), unit: "of GDP",
       note: FORMATS.percent0(first.debt) + " in " + first.year,
@@ -694,22 +690,21 @@ function fillStats() {
     { label: "Fiscal stress",
       value: h.firstStressYear || "Not reached",
       note: h.firstStressYear ? "first year" : "by " + last.year,
-      tip: "The first year in which interest takes more than " + FORMATS.percent0(c.stressInterestShare) +
-        " of government revenue" +
+      tip: "First year interest exceeds " + FORMATS.percent0(c.stressInterestShare) + " of revenue" +
         (typeof threshold === "number"
-          ? ", or the primary balance needed to hold the debt steady is above " + FORMATS.percent1(threshold) +
+          ? ", or the debt-stabilizing primary balance exceeds " + FORMATS.percent1(threshold) +
             " of GDP, the " + country.start.stressThreshold.note + "."
           : ".") },
     { label: "Fiscal dominance",
       value: h.firstDominanceYear || "Not reached",
       note: h.firstDominanceYear ? "first year" : "by " + last.year,
       tip: c.capMode === "off"
-        ? "The first year the central bank buys debt to hold the yield at its cap. The cap is off, so it never does."
-        : "The first year the central bank buys debt to hold the yield at its cap." },
+        ? "First year the central bank buys debt to hold the yield at its cap. The cap is off."
+        : "First year the central bank buys debt to hold the yield at its cap." },
     { label: "Central bank share",
       value: FORMATS.percent0(h.peakCentralBankShare), unit: "at its peak",
       note: FORMATS.percent0(first.centralBank / first.debt) + " in " + first.year,
-      tip: "The largest share of the government's debt the central bank holds in any year, " + span + "." }
+      tip: "Peak central bank share of the debt, " + span + "." }
   ];
 
   var box = document.getElementById("stats");
@@ -775,7 +770,7 @@ function fillHow() {
       last.priceLevel.toFixed(2) + " times its " + startYear + " level, so the loss is 1 − 1 ÷ " +
       last.priceLevel.toFixed(2) + " = " + FORMATS.percent0(loss) + ". As a steady yearly rate that is " +
       FORMATS.percent1(lossPerYear) + " annually: 1 − (1 − " + FORMATS.percent0(loss) + ") ^ (1 ÷ " + years + ").",
-    "2. The price level is each year's inflation compounded. Inflation averages " +
+    "2. Inflation averages " +
       FORMATS.percent1(averageInflation) + " annually over the " + years + " years.",
     "3. Inflation follows the money supply. Without central bank buying, money grows at " +
       FORMATS.percent1(c.moneyGrowth) + " annually (the " + country.start.moneyGrowth.note +
@@ -797,7 +792,7 @@ function fillHow() {
       " annually. Holdings that only shrink against a growing economy, with nothing sold, destroy no money. " +
       "If its buying created no money, the loss would be " + FORMATS.percent1(lossWithout) +
       " instead of " + FORMATS.percent1(loss) + ".",
-    "6. Money supply expansion is the growth of M2. It is " + FORMATS.percent0(rows[0].money) +
+    "6. M2 is " + FORMATS.percent0(rows[0].money) +
       " of GDP in " + startYear + " and " + FORMATS.percent0(last.money) + " of GDP in " + last.year +
       ". Over the " + years + " years it becomes " + moneyTimes.toFixed(1) + " times as large: " +
       FORMATS.percent1(moneyPerYear) + " annually."
