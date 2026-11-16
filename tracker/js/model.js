@@ -46,7 +46,9 @@
 //                          the central bank keeps its share of the debt.
 //   capMode                "fixed", "stress" or "off". "stress" puts the cap
 //                          each year at the yield where interest would take
-//                          stressInterestShare of revenue (see stressYield)
+//                          stressInterestShare of revenue (see stressYield).
+//                          Either cap applies only from the first year of
+//                          fiscal stress on.
 //   capLevel               the cap when capMode is "fixed"
 //   stressInterestShare    optional: a year is also in fiscal stress when
 //                          interest is more than this share of revenue
@@ -85,9 +87,9 @@ function runModel(start, controls) {
   var totalH0 = 0;
   groups.forEach(function (k) { totalH0 += h0[k]; });
 
-  // A fixed cap is one level for the whole projection. A stress cap is
-  // worked out again each year from that year's debt.
-  var cap = controls.capMode === "fixed" ? controls.capLevel : null;
+  // The central bank holds a cap only once the country is in fiscal
+  // stress, and from then on.
+  var capActive = false;
 
   // Year 0 is the starting year, taken straight from the data.
   var rows = [{
@@ -146,9 +148,14 @@ function runModel(start, controls) {
     var stressFromInterest = isNumber(controls.stressInterestShare) &&
       interestToRevenue > controls.stressInterestShare;
 
-    if (controls.capMode === "stress") {
-      cap = debt > 0 ? stressYield(start, controls, debt) : null;
-    }
+    var stress = stressFromBalance || stressFromInterest;
+
+    // A fixed cap is one level. A stress cap is worked out again each year
+    // from that year's debt. Neither applies before fiscal stress.
+    if (stress) capActive = true;
+    var cap = null;
+    if (capActive && controls.capMode === "fixed") cap = controls.capLevel;
+    if (capActive && controls.capMode === "stress" && debt > 0) cap = stressYield(start, controls, debt);
 
     // 5. Captive holdings: the part of each group that is not
     // price-sensitive keeps its share of the debt, less anything sold. A
@@ -260,7 +267,7 @@ function runModel(start, controls) {
       purchases: purchases,     // bought to hold the cap
       selloffOverhang: overhang,
       cap: cap,
-      stress: stressFromBalance || stressFromInterest,
+      stress: stress,
       stressFromBalance: stressFromBalance,
       stressFromInterest: stressFromInterest,
       // Fiscal dominance: the central bank is buying to hold the cap, or

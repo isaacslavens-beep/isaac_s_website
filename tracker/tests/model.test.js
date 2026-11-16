@@ -11,6 +11,9 @@ const { runModel, stressYield } = require("../js/model.js");
 const invented = require("./invented-country.json");
 
 const start = invented.start;
+// The same country in fiscal stress every year, so a cap applies from the
+// first year: any stabilizing balance is above a threshold of -100% of GDP.
+const stressed = Object.assign({}, start, { stressThreshold: -1 });
 
 // The default controls with some values replaced.
 function controlsWith(changes) {
@@ -44,6 +47,23 @@ test("debt follows the debt equation, and the stabilizing balance would hold it 
   });
 });
 
+test("a cap applies only from the first year of fiscal stress", function () {
+  // The invented country is not in stress at first, so a cap far below the
+  // market yield changes nothing until stress begins.
+  const result = run(start, controlsWith({ capMode: "fixed", capLevel: 0.001, primaryBalance: -0.08, growth: 0 }));
+  const firstStress = result.headline.firstStressYear;
+  assert.ok(firstStress > start.year + 1, "the test needs some years before stress");
+  result.rows.forEach(function (row) {
+    if (row.year < firstStress) {
+      assert.strictEqual(row.cap, null);
+      assert.strictEqual(row.purchases, 0);
+    } else {
+      assert.strictEqual(row.cap, 0.001);
+    }
+  });
+  assert.ok(result.headline.firstDominanceYear >= firstStress);
+});
+
 test("with the cap off, the central bank never buys to hold a cap", function () {
   const result = run(start, controlsWith({ capMode: "off" }));
   result.rows.forEach(function (row) {
@@ -68,7 +88,7 @@ test("runoff lowers the central bank's holdings below its share of the debt", fu
 });
 
 test("with the cap below the market yield, the yield equals the cap and purchases are positive", function () {
-  const result = run(start, controlsWith({ capMode: "fixed", capLevel: 0.03 }));
+  const result = run(stressed, controlsWith({ capMode: "fixed", capLevel: 0.03 }));
   const row = result.rows[1];
   assert.ok(row.marketYield > 0.03, "the market yield should be above the cap");
   assert.strictEqual(row.yield, 0.03);
@@ -81,7 +101,7 @@ test("with the cap below the market yield, the yield equals the cap and purchase
 });
 
 test("when buying creates no money, purchases leave inflation unchanged", function () {
-  const capped = run(start, controlsWith({ capMode: "fixed", capLevel: 0.03, moneyShare: 0 }));
+  const capped = run(stressed, controlsWith({ capMode: "fixed", capLevel: 0.03, moneyShare: 0 }));
   const uncapped = run(start, controlsWith({ capMode: "off", moneyShare: 0 }));
   assert.ok(capped.rows[1].purchases > 0, "the capped run should have purchases");
   capped.rows.forEach(function (row, t) {
@@ -91,8 +111,8 @@ test("when buying creates no money, purchases leave inflation unchanged", functi
 
 test("when buying creates money, purchases raise next year's inflation", function () {
   const controls = controlsWith({ capMode: "fixed", capLevel: 0.03 });
-  const capped = run(start, controls);
-  const uncapped = run(start, controlsWith({ capMode: "off" }));
+  const capped = run(stressed, controls);
+  const uncapped = run(stressed, controlsWith({ capMode: "off" }));
   // The purchases add moneyShare x purchases / M2 to money growth, and
   // (1 - persistence) of the inflation that implies arrives the next year.
   const extraMoneyGrowth = controls.moneyShare * capped.rows[1].purchases / start.money;
@@ -168,7 +188,7 @@ test("a selloff by fully price-sensitive holders raises the yield by the same am
 });
 
 test("when the central bank would need more than the whole debt, the warning is raised and the yield exceeds the cap", function () {
-  const result = run(start, controlsWith({ capMode: "fixed", capLevel: -0.05 }));
+  const result = run(stressed, controlsWith({ capMode: "fixed", capLevel: -0.05 }));
   const row = result.rows[1];
   assert.strictEqual(row.capBroken, true);
   assert.ok(row.yield > -0.05, "the yield should be above the cap");
@@ -183,7 +203,7 @@ test("when the central bank would need more than the whole debt, the warning is 
 test("when purchases use up price-sensitive holdings, the rest comes from captive holders in proportion", function () {
   // A cap low enough to need more than price-sensitive holders have, but
   // not the whole debt.
-  const result = run(start, controlsWith({ capMode: "fixed", capLevel: 0.018 }));
+  const result = run(stressed, controlsWith({ capMode: "fixed", capLevel: 0.018 }));
   const row = result.rows[1];
   assert.strictEqual(row.capBroken, false);
   assert.strictEqual(row.yield, 0.018);
@@ -199,7 +219,7 @@ test("the stress cap is each year the yield where interest on that year's debt t
   const controls = controlsWith({ capMode: "stress", stressInterestShare: 0.2, primaryBalance: -0.08, growth: 0 });
   close(stressYield(start, controls, start.debt) * start.debt / start.revenue, 0.2, 1e-15);
 
-  const result = run(start, controls);
+  const result = run(stressed, controls);
   let bought = false;
   result.rows.forEach(function (row, t) {
     if (t === 0) return;
@@ -212,7 +232,7 @@ test("the stress cap is each year the yield where interest on that year's debt t
   assert.ok(result.rows[controls.years].cap < result.rows[1].cap);
 
   // It needs the share it is worked out from.
-  assert.throws(function () { runModel(start, controlsWith({ capMode: "stress" })); });
+  assert.throws(function () { runModel(stressed, controlsWith({ capMode: "stress" })); });
 });
 
 test("the stress zone marks years when the stabilizing balance is above the threshold", function () {
@@ -269,7 +289,7 @@ test("with a money supply, inflation settles at money growth less real growth le
 
 test("central bank buying creates money, and the money raises inflation the next year", function () {
   const controls = controlsWith({ capMode: "fixed", capLevel: 0.01, moneyGrowth: 0.07, moneyTrend: 0.01, moneyShare: 1 });
-  const result = run(start, controls);
+  const result = run(stressed, controls);
   let times = 1;
   result.rows.slice(1).forEach(function (row, index) {
     const prev = result.rows[index];
@@ -287,7 +307,7 @@ test("central bank buying creates money, and the money raises inflation the next
   close(result.headline.moneyTimes, times, 1e-9);
 
   // With no money created by the buying, inflation is lower.
-  const none = run(start, Object.assign({}, controls, { moneyShare: 0 }));
+  const none = run(stressed, Object.assign({}, controls, { moneyShare: 0 }));
   assert.ok(none.headline.purchasingPowerLoss < result.headline.purchasingPowerLoss);
 });
 
@@ -331,7 +351,7 @@ test("a selloff adds its own premium to the yield, which fades as the market abs
   // With a cap a little under that yield: the central bank buys, the
   // yield is held at the cap, and what it buys comes off the overhang.
   const capLevel = shock.rows[1].marketYield - 0.002;
-  const capped = run(start, controlsWith({
+  const capped = run(stressed, controlsWith({
     capMode: "fixed", capLevel: capLevel, selloffs: selloffs, selloffResponse: 0.2
   }));
   const row = capped.rows[1];
@@ -342,7 +362,7 @@ test("a selloff adds its own premium to the yield, which fades as the market abs
 
   // A cap far under it: the central bank buys all of the overhang, and
   // beyond that each unit bought lowers the yield by theta alone.
-  const deep = run(start, controlsWith({
+  const deep = run(stressed, controlsWith({
     capMode: "fixed", capLevel: shock.rows[1].marketYield - 0.006, selloffs: selloffs, selloffResponse: 0.2
   })).rows[1];
   close(deep.purchases, 0.02 + (0.006 - (theta + 0.2) * 0.02) / theta, 1e-12);
@@ -351,7 +371,7 @@ test("a selloff adds its own premium to the yield, which fades as the market abs
 
 test("the central bank stops buying at its limit, and the cap then fails", function () {
   const controls = controlsWith({ capMode: "fixed", capLevel: 0.001, centralBankLimit: 0.4 });
-  const result = run(start, controls);
+  const result = run(stressed, controls);
   result.rows.slice(1).forEach(function (row) {
     assert.ok(row.centralBank <= 0.4 * row.debt + 1e-12);
     assert.ok(row.yield >= 0);
@@ -363,7 +383,7 @@ test("the central bank stops buying at its limit, and the cap then fails", funct
   assert.strictEqual(result.headline.firstCapBrokenYear, start.year + 1);
 
   // With no limit it buys more.
-  const free = run(start, controlsWith({ capMode: "fixed", capLevel: 0.001 }));
+  const free = run(stressed, controlsWith({ capMode: "fixed", capLevel: 0.001 }));
   assert.ok(free.rows[1].centralBank > first.centralBank);
 });
 

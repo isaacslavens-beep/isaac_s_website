@@ -77,7 +77,7 @@ function controlList(country) {
       help: "Interest-to-revenue ratio above which a year counts as fiscal stress. Revenue is held at its starting share of GDP." },
     { key: "capMode", section: "main", type: "choice",
       label: "Yield cap",
-      help: "The central bank buys whatever debt it takes to hold the 10-year yield at the cap, up to its limit. Stress level: the yield at which interest would equal the fiscal stress threshold once the whole debt pays that yield, recomputed annually from that year's debt, so it falls as debt grows. Fixed: a set level. Off: no purchases beyond keeping its share of the debt.",
+      help: "Once the country is in fiscal stress, the central bank buys whatever debt it takes to hold the 10-year yield at the cap, up to its limit. Stress level: the yield at which interest would equal the fiscal stress threshold once the whole debt pays that yield, recomputed annually from that year's debt, so it falls as debt grows. Fixed: a set level. Off: no purchases beyond keeping its share of the debt.",
       options: [
         ["stress", "Stress level"],
         ["fixed", "Fixed"],
@@ -86,18 +86,24 @@ function controlList(country) {
       // Shown under the buttons, so the level in force is always stated.
       note: function (c) {
         if (c.capMode === "off") return "No cap. The central bank never buys to hold the yield down.";
-        if (c.capMode === "fixed") return "Capped at " + FORMATS.percent1(c.capLevel) + ".";
-        // The level moves with the debt, so it is read from the projection.
+        // The cap starts in the first year of fiscal stress, and a stress
+        // cap moves with the debt, so both are read from the projection.
         var rows = page.result ? page.result.rows : [];
-        var first = rows[1];
-        var last = rows[rows.length - 1];
-        if (!first || first.cap === null || last.cap === null) return "";
+        var capped = rows.filter(function (row) { return row.cap !== null; });
+        if (!capped.length) {
+          return "Applies from the first year of fiscal stress, which is not reached" +
+            (rows.length ? " by " + rows[rows.length - 1].year : "") + ".";
+        }
+        var first = capped[0];
+        var last = capped[capped.length - 1];
+        var from = "From " + first.year + ", the first year of fiscal stress, ";
+        if (c.capMode === "fixed") return from + "capped at " + FORMATS.percent1(c.capLevel) + ".";
         var a = FORMATS.percent1(first.cap);
         var b = FORMATS.percent1(last.cap);
-        return "Capped at " + a + " in " + first.year +
+        return from + "capped at " + a +
           (a === b ? ", and still " + b + " in " : last.cap > first.cap ? ", rising to " + b + " by " : ", falling to " + b + " by ") +
           last.year + ". Each year it is the yield at which interest would take " +
-          FORMATS.percent0(c.stressInterestShare) + " of revenue, the fiscal stress threshold, once the whole debt pays that yield.";
+          FORMATS.percent0(c.stressInterestShare) + " of revenue once the whole debt pays that yield.";
       } },
     { key: "capLevel", section: "main", type: "range", format: "percent1", indent: true,
       showWhen: function (c) { return c.capMode === "fixed"; },
@@ -752,13 +758,13 @@ function fillHow() {
       FORMATS.percent1(c.moneyTrend) + ")) − 1. Each year inflation moves toward the rate that last year's money growth implies, and " +
       "persistence (" + c.persistence.toFixed(2) + ") is the part of the gap that remains.",
     "4. The central bank keeps its share of the debt, so its holdings rise when debt grows faster than " +
-      "the economy. It buys more in years when the yield would otherwise rise above its cap, up to its limit. " +
+      "the economy. Once the country is in fiscal stress, it buys more in years when the yield would otherwise rise above its cap, up to its limit. " +
       "In this scenario its holdings " + (totalRise >= 0 ? "rise" : "fall") + " by " +
       FORMATS.percent0(Math.abs(totalRise)) + " of GDP over the " + years + " years" +
       (capYears.length
         ? ", of which " + FORMATS.percent0(capPurchases) + " of GDP is bought to hold the cap, starting in " +
           capYears[0].year + "."
-        : c.capMode === "off" ? ". The cap is off." : ". The cap is never reached."),
+        : c.capMode === "off" ? ". The cap is off." : ". It never needs to buy to hold the cap."),
     "5. Each unit of debt the central bank adds to its holdings, as a share of GDP, creates " +
       c.moneyShare.toFixed(2) + " units of new money, on top of the " + FORMATS.percent1(c.moneyGrowth) +
       " annually. Holdings that only shrink against a growing economy, with nothing sold, destroy no money. " +
@@ -781,12 +787,12 @@ function fillHow() {
       (c.selloffOn ? " A selloff adds " + (c.selloffResponse * 100).toFixed(0) + " basis points for each point of GDP sold and not yet absorbed." : ""),
     "10. " + (c.capMode === "off"
       ? "The yield cap is off, so the yield is always the rate lenders ask for."
-      : "When the yield lenders ask for is above the cap, the central bank buys debt until the yield is back at the cap, up to its limit of " +
+      : "From the first year of fiscal stress, when the yield lenders ask for is above the cap, the central bank buys debt until the yield is back at the cap, up to its limit of " +
         FORMATS.percent0(c.centralBankLimit) + " of the debt. Its purchases create money (step 5), which raises inflation and so the yield " +
         "lenders ask for: holding a cap gets harder the longer it lasts." +
         (page.result.headline.firstCapBrokenYear
           ? " In this scenario it reaches its limit in " + page.result.headline.firstCapBrokenYear + ", and the cap no longer holds."
-          : capYears.length ? " In this scenario the cap holds throughout." : " In this scenario the cap is never reached."))
+          : capYears.length ? " In this scenario the cap holds throughout." : " In this scenario it never needs to buy."))
   ];
 
   var body = document.getElementById("how-body");

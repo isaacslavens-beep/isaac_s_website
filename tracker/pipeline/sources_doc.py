@@ -103,11 +103,11 @@ def method(presets, estimates):
         "",
         "- **Persistence** " + f"{controls['persistence']['default']:.2f}" + ", hidden. **Trend**: the "
         "country's average rise in M2 against GDP (falling velocity).",
-        "- **Cap.** Default: stress level, each year `share x revenue / debt`, the yield at which interest "
+        "- **Cap.** Applies only from the first year of fiscal stress. Default: stress level, each year `share x revenue / debt`, the yield at which interest "
         "would hit the stress share once the whole debt pays it. Fixed: a set level (default "
         + percent(controls["capLevel"]["default"], 0) + "). Off: no buying beyond keeping its share. **Limit** "
         + percent(controls["centralBankLimit"]["default"], 0) + " of the debt; beyond it the cap fails. "
-        "**Fiscal dominance**: any year it buys to hold the cap, or the cap has failed.",
+        "**Fiscal dominance** (not shown on the page): any year it buys to hold the cap, or the cap has failed.",
         "- **New-money share** " + f"{share['value']:.2f}" + ": " + share["note"] + " ("
         + ", ".join(f"{key} {item['value']:.2f}" for key, item in share["byCountry"].items()) + "). Money "
         "is destroyed only when holdings fall in money terms, not merely against GDP.",
