@@ -322,6 +322,27 @@ button.quiet:hover:not(:disabled) {
   font-size: 12.5px;
 }
 
+/* The line under the title, the same for every country */
+.intro {
+  margin-bottom: 12px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.narrow-only {
+  display: none;
+}
+
+@media (max-width: 900px) {
+  .wide-only {
+    display: none;
+  }
+
+  .narrow-only {
+    display: inline;
+  }
+}
+
 .error {
   margin-bottom: 12px;
   padding: 10px 14px;
