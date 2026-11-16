@@ -438,13 +438,14 @@ button.quiet:hover:not(:disabled) {
 
 /* ---------- Headline figures ---------- */
 
+/* One row of six on a wide screen, two rows of three, then three of two */
 .stats {
   display: grid;
   grid-template-columns: repeat(6, minmax(0, 1fr));
-  gap: 12px;
+  gap: 8px;
 }
 
-@media (max-width: 1560px) {
+@media (max-width: 1150px) {
   .stats {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
@@ -453,7 +454,6 @@ button.quiet:hover:not(:disabled) {
 @media (max-width: 560px) {
   .stats {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 8px;
   }
 }
 
@@ -463,14 +463,14 @@ button.quiet:hover:not(:disabled) {
   position: relative;
   display: flex;
   flex-direction: column;
-  padding: 10px 14px;
+  padding: 9px 12px;
 }
 
 .stat-label {
-  padding-bottom: 6px;
+  padding-bottom: 4px;
   color: var(--muted);
   font-family: var(--mono);
-  font-size: 11px;
+  font-size: 10.5px;
   text-transform: uppercase;
   letter-spacing: 0.08em;
 }
@@ -486,35 +486,35 @@ button.quiet:hover:not(:disabled) {
 
 .stat-value {
   margin-top: auto;
-  font-size: 28px;
+  font-size: 22px;
   font-weight: 600;
   line-height: 1.15;
   letter-spacing: -0.03em;
 }
 
 .stat-value small {
-  margin-left: 4px;
+  margin-left: 3px;
   color: var(--muted);
-  font-size: 13px;
+  font-size: 11.5px;
   font-weight: 500;
   letter-spacing: 0;
 }
 
 .stat-note {
-  margin-top: 2px;
+  margin-top: 1px;
   color: var(--muted);
-  font-size: 12.5px;
+  font-size: 11.5px;
 }
 
 .stat-value.words {
-  font-size: 21px;
+  font-size: 17px;
   line-height: 1.5;
   letter-spacing: -0.01em;
 }
 
 /* Fiscal stress and fiscal dominance, once reached */
 .stat.alert {
-  border-top: 3px solid var(--down);
+  border-top: 2px solid var(--down);
 }
 
 .stat.alert .stat-value {
@@ -542,10 +542,22 @@ button.quiet:hover:not(:disabled) {
   color: var(--text);
 }
 
-/* Cards at the right edge open their explanation leftward. */
-.stat:nth-child(3n) .tip {
+/* Cards on the right open their explanation leftward. */
+.stat:nth-child(n+4) .tip {
   left: auto;
   right: 0;
+}
+
+@media (max-width: 1150px) {
+  .stat:nth-child(n+4) .tip {
+    left: 0;
+    right: auto;
+  }
+
+  .stat:nth-child(3n) .tip {
+    left: auto;
+    right: 0;
+  }
 }
 
 @media (max-width: 560px) {
@@ -672,6 +684,14 @@ button.quiet:hover:not(:disabled) {
 
 .key > span {
   white-space: nowrap;
+}
+
+/* How to use the charts: one quiet line */
+.chart-hint {
+  flex-basis: 100%;
+  order: 3;
+  color: var(--muted);
+  font-size: 12px;
 }
 
 .chart-tools {
@@ -988,6 +1008,10 @@ details.card[open] summary {
 
 /* The country buttons take a row of their own. */
 @media (max-width: 700px) {
+  .chart-hint {
+    display: none;
+  }
+
   .topbar {
     flex-wrap: wrap;
   }
@@ -1008,6 +1032,6 @@ details.card[open] summary {
   }
 
   .stat-value {
-    font-size: 23px;
+    font-size: 20px;
   }
 }
