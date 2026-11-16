@@ -154,7 +154,7 @@ function controlList(country) {
   list.push(
     { key: "yieldResponse", section: "advanced", type: "range", format: "basisPoints",
       label: "Yield response",
-      help: "Basis points of yield per point of GDP of debt that price-sensitive holders must absorb." },
+      help: "Basis points of yield per point of GDP of debt that price-sensitive holders must absorb. It works both ways: debt the central bank takes off the market lowers the yield at the same rate, so with the yield cap on, a higher value can mean lower yields." },
     { key: "runoff", section: "advanced", type: "range", format: "percent1", fixed: true,
       label: "Central bank runoff",
       help: "Annual decline in central bank holdings, as a share of GDP." },
