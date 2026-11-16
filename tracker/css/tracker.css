@@ -367,7 +367,7 @@ button.quiet:hover:not(:disabled) {
 /* What the tool does: the first thing on the page */
 .intro {
   grid-area: intro;
-  padding: 26px 30px;
+  padding: 16px 22px;
   border: 1px solid var(--border);
   border-left: 4px solid var(--text);
   border-radius: 8px;
@@ -375,30 +375,38 @@ button.quiet:hover:not(:disabled) {
 }
 
 .intro-lead {
-  max-width: 58em;
-  font-size: 24px;
+  max-width: 62em;
+  font-size: 18px;
   font-weight: 600;
-  line-height: 1.3;
-  letter-spacing: -0.02em;
+  line-height: 1.35;
+  letter-spacing: -0.015em;
   color: var(--text);
 }
 
 .intro-action {
-  margin-top: 10px;
-  font-family: var(--mono);
-  font-size: 12px;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--muted);
+  margin-top: 6px;
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--text);
+}
+
+/* An arrow toward the settings */
+.intro-action::after {
+  content: " \2192";
+  font-weight: 600;
 }
 
 @media (max-width: 560px) {
   .intro {
-    padding: 16px 18px;
+    padding: 14px 16px;
   }
 
   .intro-lead {
-    font-size: 18px;
+    font-size: 16px;
+  }
+
+  .intro-action {
+    font-size: 15px;
   }
 }
 
@@ -409,6 +417,10 @@ button.quiet:hover:not(:disabled) {
 @media (max-width: 900px) {
   .wide-only {
     display: none;
+  }
+
+  .intro-action::after {
+    content: " \2193";
   }
 
   .narrow-only {
