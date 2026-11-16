@@ -77,10 +77,10 @@ function controlList(country) {
       help: "Interest-to-revenue ratio above which a year counts as fiscal stress. Revenue is held at its starting share of GDP." },
     { key: "capMode", section: "main", type: "choice",
       label: "Yield cap",
-      help: "The central bank buys whatever debt it takes to hold the 10-year yield at the cap, up to its limit. Fixed: a set level. Stress level: the yield at which interest would equal the fiscal stress threshold once the whole debt pays that yield, recomputed annually from that year's debt, so it falls as debt grows. Off: no purchases beyond keeping its share of the debt.",
+      help: "The central bank buys whatever debt it takes to hold the 10-year yield at the cap, up to its limit. Stress level: the yield at which interest would equal the fiscal stress threshold once the whole debt pays that yield, recomputed annually from that year's debt, so it falls as debt grows. Fixed: a set level. Off: no purchases beyond keeping its share of the debt.",
       options: [
-        ["fixed", "Fixed"],
         ["stress", "Stress level"],
+        ["fixed", "Fixed"],
         ["off", "Off"]
       ],
       // Shown under the buttons, so the level in force is always stated.

@@ -19,7 +19,7 @@
       "basis": "Illustrative assumption. The highest in this data is the Bank of Japan's 47% in 2024."
     },
     "capMode": {
-      "default": "fixed"
+      "default": "stress"
     },
     "capLevel": {
       "min": 0, "max": 0.2, "step": 0.005, "default": 0.1, "illustrative": true,
