@@ -834,8 +834,9 @@ button.quiet:hover:not(:disabled) {
   line-height: 1.4;
 }
 
-/* The setting that matters most, set apart from the others */
+/* The two settings that matter most, set apart from the others */
 .control.key-control {
+  margin-bottom: 10px;
   padding: 12px 12px 10px;
   border: 1px solid var(--text);
   border-radius: 6px;
@@ -848,6 +849,55 @@ button.quiet:hover:not(:disabled) {
 
 .control.key-control output {
   font-size: 18px;
+}
+
+.key-control input[type="range"] {
+  height: 28px;
+}
+
+.key-control input[type="range"]::-webkit-slider-runnable-track {
+  height: 6px;
+  border-radius: 3px;
+}
+
+.key-control input[type="range"]::-webkit-slider-thumb {
+  width: 20px;
+  height: 20px;
+  margin-top: -7px;
+}
+
+/* Every other setting: smaller and quieter */
+.control:not(.key-control) label,
+.control:not(.key-control) output {
+  font-size: 12.5px;
+  color: #3f3f46;
+}
+
+.control:not(.key-control) output {
+  font-weight: 500;
+}
+
+.control:not(.key-control) {
+  margin-bottom: 11px;
+}
+
+.control:not(.key-control) input[type="range"] {
+  height: 20px;
+}
+
+.control:not(.key-control) input[type="range"]::-webkit-slider-runnable-track {
+  height: 3px;
+}
+
+.control:not(.key-control) input[type="range"]::-webkit-slider-thumb {
+  width: 13px;
+  height: 13px;
+  margin-top: -5px;
+}
+
+.control:not(.key-control) .segmented button {
+  padding: 4px 10px;
+  font-size: 12.5px;
 }
 
 /* Settings that belong to the one above */

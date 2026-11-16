@@ -58,8 +58,8 @@ var FORMATS = {
 // under each label.
 function controlList(country) {
   // The main controls. The primary balance comes first and is marked
-  // `key_control`, which sets it apart on the page: it is the setting that
-  // matters most.
+  // `key_control`, which sets it apart on the page: the two settings that
+  // matter most come first, boxed; the rest follow under "Other settings".
   var list = [
     { key: "primaryBalance", section: "main", type: "range", format: "percent1", key_control: true,
       label: "Primary balance",
@@ -69,12 +69,12 @@ function controlList(country) {
     { key: "moneyGrowth", section: "main", type: "range", format: "percent1", fixed: true,
       label: "Money supply growth",
       help: "M2 growth before any money created by central bank purchases." },
+    { key: "growth", section: "main", type: "range", format: "percent1", key_control: true,
+      label: "Real growth",
+      help: "Held constant for the whole projection." },
     { key: "stressInterestShare", section: "main", type: "range", format: "percent0",
       label: "Fiscal stress threshold",
       help: "Interest-to-revenue ratio above which a year counts as fiscal stress. Revenue is held at its starting share of GDP." },
-    { key: "growth", section: "main", type: "range", format: "percent1",
-      label: "Real growth",
-      help: "Held constant for the whole projection." },
     { key: "capMode", section: "main", type: "choice",
       label: "Yield cap",
       help: "The central bank buys whatever debt it takes to hold the yield at the cap, up to its limit. Stress level: the yield at which interest on that year's debt equals the fiscal stress threshold, recomputed annually, so it falls as debt grows. Fixed: a set level. Off: no purchases beyond keeping its share of the debt.",
@@ -388,6 +388,12 @@ function buildControls() {
     }
 
     box.showWhen = control.showWhen;
+    // A heading between the key settings and the rest.
+    if (control.section === "main" && !control.key_control && !sections.main.querySelector("h3")) {
+      var heading = document.createElement("h3");
+      heading.textContent = "Other settings";
+      sections.main.append(heading);
+    }
     sections[control.section].append(box);
   });
   showOrHideControls();
