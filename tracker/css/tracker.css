@@ -22,7 +22,7 @@
   --line-2: #8e8e97;
   --line-3: #b4b4bb;
   --line-4: #d4d4d8;
-  --stress: rgba(200, 30, 30, 0.06);
+  --stress: rgba(200, 30, 30, 0.09);
   --dominance: rgba(200, 30, 30, 0.15);
   --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
   --shadow: none;
@@ -662,7 +662,17 @@ button.quiet:hover:not(:disabled) {
 
 .charts .card-head {
   padding-right: 8px;
-  margin-bottom: 2px;
+  margin-bottom: 6px;
+}
+
+/* Chart titles: plain and larger than the other section titles */
+.charts .card h2 {
+  font-family: inherit;
+  font-size: 17px;
+  font-weight: 650;
+  text-transform: none;
+  letter-spacing: -0.01em;
+  color: var(--text);
 }
 
 .chart {
@@ -769,10 +779,7 @@ button.quiet:hover:not(:disabled) {
   box-shadow: 0 0 0 1px var(--down-border);
 }
 
-.swatch-dominance {
-  background: var(--dominance);
-  box-shadow: 0 0 0 1px var(--down-border);
-}
+
 
 /* ---------- Settings ---------- */
 

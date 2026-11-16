@@ -562,8 +562,8 @@ function draw() {
   var zones = [];
   page.result.rows.forEach(function (row, t) {
     if (t === 0) return;
-    if (row.dominance) zones.push({ year: row.year, type: "dominance" });
-    else if (row.stress) zones.push({ year: row.year, type: "stress" });
+    // Only fiscal stress is shaded; fiscal dominance has its own card.
+    if (row.stress) zones.push({ year: row.year, type: "stress" });
   });
 
   page.plots.forEach(function (plot) { plot.destroy(); });
