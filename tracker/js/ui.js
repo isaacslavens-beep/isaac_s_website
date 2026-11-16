@@ -540,8 +540,7 @@ function chartTable(definition) {
   return { years: years, startIndex: startIndex, series: series };
 }
 
-// Draws both charts, each in its own box. Only fiscal stress is shaded;
-// fiscal dominance has its own card.
+// Draws both charts, each in its own box, with fiscal stress shaded.
 function draw() {
   var stressYears = page.result.rows.filter(function (row) { return row.stress; }).map(function (row) {
     return row.year;
@@ -674,12 +673,6 @@ function fillStats() {
           ? ", or the debt-stabilizing primary balance exceeds " + FORMATS.percent1(threshold) +
             " of GDP, the " + country.start.stressThreshold.note + "."
           : ".") },
-    { label: "Fiscal dominance", kind: h.firstDominanceYear ? "alert" : "",
-      value: h.firstDominanceYear || "Not reached",
-      note: h.firstDominanceYear ? "first year" : "by " + last.year,
-      tip: c.capMode === "off"
-        ? "First year the central bank buys debt to hold the 10-year yield at its cap. The cap is off."
-        : "First year the central bank buys debt to hold the 10-year yield at its cap." },
     { label: "Central bank share",
       value: FORMATS.percent0(h.peakCentralBankShare), unit: "at its peak",
       note: FORMATS.percent0(first.centralBank / first.debt) + " in " + first.year,

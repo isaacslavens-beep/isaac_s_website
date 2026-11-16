@@ -3,7 +3,7 @@
 
 :root {
   /* Black and white. Blue marks what can be used; red marks fiscal
-     stress and fiscal dominance. */
+     stress. */
   --page: #fafafa;      /* behind the cards */
   --bg: #ffffff;        /* the cards */
   --raised: #ffffff;    /* the selected button in a group */
@@ -14,7 +14,7 @@
   --grid: #f0f0f2;
   --accent: #1d4ed8;    /* interactive only */
   --accent-soft: #eef2ff;
-  --down: #c81e1e;      /* fiscal stress and dominance, errors */
+  --down: #c81e1e;      /* fiscal stress, warnings, errors */
   --down-soft: #fef2f2;
   --down-border: #f5c2c2;
   --line-1: #0a0a0a;
@@ -469,10 +469,10 @@ button.quiet:hover:not(:disabled) {
 
 /* ---------- Headline figures ---------- */
 
-/* One row of six on a wide screen, two rows of three, then three of two */
+/* One row of five on a wide screen, then rows of three, then of two */
 .stats {
   display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 8px;
 }
 
@@ -543,7 +543,7 @@ button.quiet:hover:not(:disabled) {
   letter-spacing: -0.01em;
 }
 
-/* Fiscal stress and fiscal dominance, once reached */
+/* Fiscal stress, once reached */
 .stat.alert {
   border-top: 2px solid var(--down);
 }
