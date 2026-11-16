@@ -146,8 +146,7 @@ def method(presets, estimates):
         "**11. Foreign selloff (scenario).** Every foreign group sells the chosen share of its holdings, "
         "evenly over the chosen years. Price-sensitive holders must absorb what is sold. Debt sold that the "
         "central bank has not bought (the overhang) adds the selloff response to the yield (default "
-        + f"{controls['selloffResponse']['default'] * 100:.0f}" + " basis points for each point of GDP). "
-        "For the United States, a Japanese repatriation works the same way on Japan-resident holdings.",
+        + f"{controls['selloffResponse']['default'] * 100:.0f}" + " basis points for each point of GDP).",
         "",
         "**Headline figures.**",
         "",

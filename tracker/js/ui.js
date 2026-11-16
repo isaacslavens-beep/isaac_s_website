@@ -123,33 +123,18 @@ function controlList(country) {
       showWhen: function (c) { return c.selloffOn; },
       label: "Over", help: "" }
   );
-  if (country.start.japanHoldings) {
-    list.push(
-      { key: "japanOn", section: "scenario", type: "check",
-        label: "Japanese repatriation",
-        help: "Japan-resident holders sell Treasuries, spread evenly over the period." },
-      { key: "japanShare", section: "scenario", type: "range", format: "percent0", indent: true,
-        preset: "selloffShare",
-        showWhen: function (c) { return c.japanOn; },
-        label: "Share sold", help: "" },
-      { key: "japanYears", section: "scenario", type: "range", format: "years0", indent: true,
-        preset: "selloffYears",
-        showWhen: function (c) { return c.japanOn; },
-        label: "Over", help: "" }
-    );
-  }
-
-  // Applies to either kind of selling, so it comes after both.
   list.push(
-    { key: "selloffResponse", section: "scenario", type: "range", format: "basisPoints",
-      showWhen: function (c) { return c.selloffOn || c.japanOn; },
+    { key: "selloffResponse", section: "scenario", type: "range", format: "basisPoints", indent: true,
+      showWhen: function (c) { return c.selloffOn; },
       label: "Yield rise from selling",
       help: "Extra basis points of yield per point of GDP sold and not yet bought by the central bank, on top of the yield response." }
   );
 
   // Advanced settings: these move the result less.
   list.push(
-    { key: "persistence", section: "advanced", type: "range", format: "number2",
+    // Not shown: it changes how quickly inflation reaches the rate money
+    // growth implies, which barely moves a 30-year result.
+    { key: "persistence", section: "advanced", type: "range", format: "number2", fixed: true,
       label: "Inflation persistence",
       help: "Share of last year's gap between inflation and the money-implied rate that carries into this year." },
     { key: "moneyShare", section: "advanced", type: "range", format: "number2",
@@ -445,15 +430,6 @@ function modelInputs(country, c) {
       if (group.indexOf("foreign") === 0) {
         selloffs.push({ group: group, total: c.selloffShare * holdings[group], years: c.selloffYears });
       }
-    });
-  }
-  if (c.japanOn) {
-    Object.keys(s.japanHoldings.split).forEach(function (group) {
-      selloffs.push({
-        group: group,
-        total: c.japanShare * s.japanHoldings.value * s.japanHoldings.split[group],
-        years: c.japanYears
-      });
     });
   }
 

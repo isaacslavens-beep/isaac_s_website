@@ -46,15 +46,6 @@
       <!-- The headline figures, one card each. ui.js fills them in. -->
       <div class="stats" id="stats"></div>
 
-      <div class="warning" id="warning" role="status" hidden>
-        <p>
-          <span id="warning-text"></span>
-          <button type="button" class="info" id="warning-why" aria-expanded="false"
-                  aria-controls="warning-more" aria-label="What does this mean?">?</button>
-        </p>
-        <p id="warning-more" hidden></p>
-      </div>
-
       <!-- The two charts, side by side -->
       <div class="charts">
         <section class="card">
@@ -85,6 +76,15 @@
           <button type="button" id="zoom-reset" hidden>Show all years</button>
           <button type="button" id="copy-link" hidden>Copy link to this scenario</button>
         </div>
+      </div>
+
+      <div class="warning" id="warning" role="status" hidden>
+        <p>
+          <span id="warning-text"></span>
+          <button type="button" class="info" id="warning-why" aria-expanded="false"
+                  aria-controls="warning-more" aria-label="What does this mean?">?</button>
+        </p>
+        <p id="warning-more" hidden></p>
       </div>
     </main>
 
