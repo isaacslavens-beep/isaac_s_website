@@ -682,6 +682,11 @@ button.quiet:hover:not(:disabled) {
   display: none;
 }
 
+/* Legend entries are labels only: clicking them does nothing. */
+.u-legend .u-series {
+  pointer-events: none;
+}
+
 .u-legend .u-series > * {
   padding: 2px 4px;
 }

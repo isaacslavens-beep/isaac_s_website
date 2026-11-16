@@ -32,7 +32,6 @@ var page = {
   controls: {},    // country key -> that country's current control values
   country: null,   // the country being shown
   plots: [],       // the uPlot objects on screen, one per chart
-  zoom: null,      // the years shown when the reader has zoomed in: { min, max }
   result: null     // the latest model result
 };
 
@@ -561,25 +560,8 @@ function draw() {
       // Half as many years of history as years projected
       xMin: Math.max(table.years[0], startYear - page.presets.years / 2),
       xMax: startYear + page.presets.years,
-      zoom: page.zoom,
-      syncKey: "tracker",   // one crosshair across both charts
-      onZoom: zoomTo
+      syncKey: "tracker"    // one crosshair across both charts
     }));
-  });
-}
-
-// Both charts show the same years. A zoom in one is copied to the other,
-// and kept while settings change. Nulls show the whole period again.
-function zoomTo(min, max) {
-  var wasZoomed = page.zoom !== null;
-  page.zoom = min === null ? null : { min: min, max: max };
-  document.getElementById("zoom-reset").hidden = page.zoom === null;
-  if (page.zoom === null) {
-    if (wasZoomed) draw();
-    return;
-  }
-  page.plots.forEach(function (plot) {
-    if (plot.scales.x.min !== min || plot.scales.x.max !== max) plot.setScale("x", { min: min, max: max });
   });
 }
 
@@ -906,8 +888,6 @@ function update() {
 
 function showCountry(key) {
   page.country = key;
-  page.zoom = null;
-  document.getElementById("zoom-reset").hidden = true;
   document.querySelectorAll("#country-tabs button").forEach(function (button) {
     button.setAttribute("aria-pressed", button.dataset.country === key ? "true" : "false");
   });
@@ -1002,7 +982,6 @@ function startPage() {
       update();
     });
 
-    document.getElementById("zoom-reset").addEventListener("click", function () { zoomTo(null, null); });
 
     var waiting = false;
     window.addEventListener("resize", function () {

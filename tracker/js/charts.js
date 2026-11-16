@@ -15,9 +15,6 @@
 //   unit, decimals  for the value axis on the right
 //   stressYears  the years to shade as fiscal stress
 //   xMin, xMax   the first and last year shown
-//   zoom         optional { min, max }: the years to show, when zoomed in
-//   onZoom       optional: called with (min, max) when the reader drags
-//                across the chart, or with nulls on a double-click
 //   syncKey      optional: charts with the same key share one crosshair
 
 function drawChart(container, chart) {
@@ -42,7 +39,7 @@ function drawChart(container, chart) {
       points: { show: false },
       cap: s.dotted ? "round" : undefined
     };
-    // History: listed nowhere, hidden and shown together with its projection.
+    // History: not listed in the legend.
     data.push(s.values.map(function (v, i) { return i <= start ? v : null; }));
     uSeries.push(Object.assign({}, common, {
       label: s.label,
@@ -120,14 +117,12 @@ function drawChart(container, chart) {
     ctx.restore();
   }
 
-  // A tag on the axis with the first line's last value in view.
+  // A tag on the axis with the first line's last value.
   function drawLastValueTag(u) {
-    if (!u.series[2].show) return;   // the first line is hidden
-    var lastYear = Math.min(chart.xMax, u.scales.x.max);
     var s = chart.series[0];
     var last = null;
     for (var i = 0; i < chart.years.length; i++) {
-      if (chart.years[i] <= lastYear && s.values[i] !== null) last = s.values[i];
+      if (s.values[i] !== null) last = s.values[i];
     }
     if (last === null) return;
     var ctx = u.ctx;
@@ -150,22 +145,11 @@ function drawChart(container, chart) {
     ctx.restore();
   }
 
-  // While the chart is being built, its first scale does not count as a
-  // zoom by the reader.
-  var building = true;
-
-  var plot = new uPlot({
+  return new uPlot({
     width: container.clientWidth,
     height: Math.max(320, Math.min(540, Math.round(window.innerHeight * 0.56))),
     scales: {
-      // The years shown are always set here: the whole period, or a zoom.
-      x: {
-        time: false,
-        auto: false,
-        range: function (u, min, max) {
-          return min === null || min === undefined ? [chart.xMin, chart.xMax] : [min, max];
-        }
-      },
+      x: { time: false, range: [chart.xMin, chart.xMax] },
       y: {}
     },
     series: uSeries,
@@ -173,25 +157,10 @@ function drawChart(container, chart) {
     cursor: {
       x: true, y: true, points: { show: true },   // the crosshair
       sync: chart.syncKey ? { key: chart.syncKey } : undefined,
-      drag: { x: true, y: false, setScale: true },  // drag across to zoom
-      bind: { dblclick: function () { return function () { return null; }; } }   // handled below
+      drag: { x: false, y: false }                   // no zooming
     },
     legend: { show: true, live: true },
     hooks: {
-      // The whole period is reported as no zoom.
-      setScale: [function (u, key) {
-        if (key !== "x" || building || !chart.onZoom) return;
-        var min = u.scales.x.min;
-        var max = u.scales.x.max;
-        if (min <= chart.xMin && max >= chart.xMax) chart.onZoom(null, null);
-        else chart.onZoom(min, max);
-      }],
-      // Clicking a line's legend entry hides its history too: the
-      // projection is the listed series, its history the one before it.
-      setSeries: [function (u, i, opts) {
-        if (!opts || opts.show === undefined || i === 0 || i % 2 !== 0) return;
-        if (u.series[i - 1].show !== opts.show) u.setSeries(i - 1, { show: opts.show });
-      }],
       drawClear: [function (u) {
         drawStress(u);
         drawStartLine(u);
@@ -199,15 +168,4 @@ function drawChart(container, chart) {
       draw: [drawLastValueTag]
     }
   }, data, container);
-
-  var view = chart.zoom || { min: chart.xMin, max: chart.xMax };
-  plot.setScale("x", { min: view.min, max: view.max });
-  // uPlot applies scales a moment later, so zooms count from then on.
-  setTimeout(function () { building = false; }, 0);
-
-  // A double-click shows the whole period again.
-  plot.over.addEventListener("dblclick", function () {
-    if (chart.onZoom) chart.onZoom(null, null);
-  });
-  return plot;
 }
