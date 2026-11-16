@@ -525,18 +525,15 @@ function chartList(country) {
           history: history("debt", 100), projection: function (row) { return row.debt * 100; } }
       ] },
 
-    { key: "yields", title: "Yields and interest", units: "Percent",
+    { key: "yields", title: "Interest rates", units: "Percent",
       rightLabel: "Percent", rightUnit: "%", rightDecimals: 1,
-      leftLabel: "Percent of revenue", leftUnit: "%",
-      sources: ["yield", "averageRate", "interestToRevenue"],
+      sources: ["yield", "averageRate"],
       series: [
         { label: "Yield on new borrowing", color: 1, unit: "%", decimals: 2,
           history: history("yield", 100), projection: function (row) { return row.yield * 100; } },
-        { label: "Average interest rate", color: 2, unit: "%", decimals: 2,
-          history: history("averageRate", 100), projection: function (row) { return row.averageRate * 100; } },
-        { label: "Interest as a share of revenue (left axis)", color: 3, unit: "%", decimals: 1, axis: "left",
-          history: history("interestToRevenue", 100),
-          projection: function (row) { return row.interestToRevenue === null ? null : row.interestToRevenue * 100; } }
+        // Grey and dotted, so it cannot be mistaken for the black line.
+        { label: "Average interest rate", color: 2, unit: "%", decimals: 2, width: 2.5, dotted: true,
+          history: history("averageRate", 100), projection: function (row) { return row.averageRate * 100; } }
       ] }
   ];
 }

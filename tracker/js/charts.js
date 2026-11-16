@@ -8,9 +8,12 @@
 //   startIndex  the position of the starting year in `years`. Everything up
 //               to it is history (solid line); everything from it on is
 //               projection (dashed line).
-//   series      a list of { label, values, color, axis, decimals, unit }
+//   series      a list of { label, values, color, axis, decimals, unit,
+//               width, dotted }
 //               values are already in display units, with null where there
 //               is no data. color is 1 to 4. axis is "right" or "left".
+//               dotted: the whole line is dotted, history and projection,
+//               with a looser dot for the projection.
 //   stacked     true to stack the series as filled areas
 //   zones       a list of { year, type }, type "stress" or "dominance"
 //   xMin, xMax  the first and last year shown
@@ -65,16 +68,23 @@ function drawChart(container, chart) {
     var common = {
       scale: scale,
       stroke: stroke,
-      width: s.color === 1 ? 2.25 : 1.75,
+      width: s.width || (s.color === 1 ? 2.25 : 1.75),
       points: { show: false },
       fill: chart.stacked ? stroke : undefined
     };
     data.push(history);
-    uSeries.push(Object.assign({}, common, { label: s.label, class: "legend-hidden" }));
+    uSeries.push(Object.assign({}, common, {
+      label: s.label,
+      class: "legend-hidden",
+      dash: s.dotted ? [1, 4] : undefined,
+      cap: s.dotted ? "round" : undefined
+    }));
     data.push(projection);
     uSeries.push(Object.assign({}, common, {
       label: s.label,
-      dash: chart.stacked ? undefined : [10, 6],
+      class: s.dotted ? "legend-dotted" : undefined,
+      dash: chart.stacked ? undefined : s.dotted ? [1, 7] : [10, 6],
+      cap: s.dotted ? "round" : undefined,
       value: legendValue
     }));
   });
