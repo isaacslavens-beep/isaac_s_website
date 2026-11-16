@@ -337,7 +337,7 @@ test("holdings that shrink against GDP without any sale destroy no money", funct
   assert.ok(runoff.rows[1].moneyGrowth < 0.02);
 });
 
-test("a selloff adds its own premium to the yield until the central bank buys the debt", function () {
+test("a selloff adds its own premium to the yield, which fades as the market absorbs the sale or the central bank buys it", function () {
   const group = Object.keys(start.holdings)[0];
   const selloffs = [{ group: group, total: 0.04, years: 2 }];
 
@@ -346,8 +346,12 @@ test("a selloff adds its own premium to the yield until the central bank buys th
   const shock = run(start, controlsWith({ capMode: "off", selloffs: selloffs, selloffResponse: 0.2 }));
   close(shock.rows[1].selloffOverhang, 0.02, 1e-12);
   close(shock.rows[1].marketYield - plain.rows[1].marketYield, 0.2 * 0.02, 1e-12);
-  close(shock.rows[2].selloffOverhang, 0.04, 1e-12);
-  close(shock.rows[10].selloffOverhang, 0.04, 1e-12);
+  // Half of last year's overhang is absorbed each year by default.
+  close(shock.rows[2].selloffOverhang, 0.02 * 0.5 + 0.02, 1e-12);
+  close(shock.rows[10].selloffOverhang, 0.03 * Math.pow(0.5, 8), 1e-12);
+  // With no absorption the premium would last.
+  const lasting = run(start, controlsWith({ capMode: "off", selloffs: selloffs, selloffResponse: 0.2, selloffDecay: 0 }));
+  close(lasting.rows[10].selloffOverhang, 0.04, 1e-12);
 
   // With a cap a little under that yield: the central bank buys, the
   // yield is held at the cap, and what it buys comes off the overhang.

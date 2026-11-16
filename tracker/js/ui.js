@@ -77,7 +77,7 @@ function controlList(country) {
       help: "Interest-to-revenue ratio above which a year counts as fiscal stress. Revenue is held at its starting share of GDP." },
     { key: "capMode", section: "main", type: "choice",
       label: "Yield cap",
-      help: "The central bank buys whatever debt it takes to hold the yield at the cap, up to its limit. Stress level: the yield at which interest on that year's debt equals the fiscal stress threshold, recomputed annually, so it falls as debt grows. Fixed: a set level. Off: no purchases beyond keeping its share of the debt.",
+      help: "The central bank buys whatever debt it takes to hold the 10-year yield at the cap, up to its limit. Stress level: the yield at which interest would equal the fiscal stress threshold once the whole debt pays that yield, recomputed annually from that year's debt, so it falls as debt grows. Fixed: a set level. Off: no purchases beyond keeping its share of the debt.",
       options: [
         ["stress", "Stress level"],
         ["fixed", "Fixed"],
@@ -97,8 +97,8 @@ function controlList(country) {
         var b = FORMATS.percent1(last.cap);
         return "Capped at " + a + " in " + first.year +
           (a === b ? ", and still " + b + " in " : last.cap > first.cap ? ", rising to " + b + " by " : ", falling to " + b + " by ") +
-          last.year + ". Each year it is the yield at which interest on that year's debt takes " +
-          FORMATS.percent0(c.stressInterestShare) + " of revenue, the fiscal stress threshold.";
+          last.year + ". Each year it is the yield at which interest would take " +
+          FORMATS.percent0(c.stressInterestShare) + " of revenue, the fiscal stress threshold, once the whole debt pays that yield.";
       } },
     { key: "capLevel", section: "main", type: "range", format: "percent1", indent: true,
       showWhen: function (c) { return c.capMode === "fixed"; },
@@ -127,7 +127,7 @@ function controlList(country) {
     { key: "selloffResponse", section: "scenario", type: "range", format: "basisPoints", indent: true,
       showWhen: function (c) { return c.selloffOn; },
       label: "Yield rise from selling",
-      help: "Extra basis points of yield per point of GDP sold and not yet bought by the central bank, on top of the yield response." }
+      help: "Extra basis points of yield per point of GDP sold and not yet bought by the central bank, on top of the yield response. It fades as the market absorbs the sale: half of what is left each year." }
   );
 
   // Advanced settings: these move the result less.
@@ -512,10 +512,10 @@ function chartList(country) {
       rightLabel: "Percent", rightUnit: "%", rightDecimals: 1,
       sources: ["yield", "averageRate"],
       series: [
-        { label: "Yield on new borrowing", color: 1, unit: "%", decimals: 2,
+        { label: "10-year yield", color: 1, unit: "%", decimals: 2,
           history: history("yield", 100), projection: function (row) { return row.yield * 100; } },
         // Grey and dotted, so it cannot be mistaken for the black line.
-        { label: "Average interest rate", color: 2, unit: "%", decimals: 2, width: 2.5, dotted: true,
+        { label: "Average interest rate on the debt", color: 2, unit: "%", decimals: 2, width: 2.5, dotted: true,
           history: history("averageRate", 100), projection: function (row) { return row.averageRate * 100; } }
       ] }
   ];
@@ -697,8 +697,8 @@ function fillStats() {
       value: h.firstDominanceYear || "Not reached",
       note: h.firstDominanceYear ? "first year" : "by " + last.year,
       tip: c.capMode === "off"
-        ? "First year the central bank buys debt to hold the yield at its cap. The cap is off."
-        : "First year the central bank buys debt to hold the yield at its cap." },
+        ? "First year the central bank buys debt to hold the 10-year yield at its cap. The cap is off."
+        : "First year the central bank buys debt to hold the 10-year yield at its cap." },
     { label: "Central bank share",
       value: FORMATS.percent0(h.peakCentralBankShare), unit: "at its peak",
       note: FORMATS.percent0(first.centralBank / first.debt) + " in " + first.year,
@@ -793,7 +793,26 @@ function fillHow() {
     "6. M2 is " + FORMATS.percent0(rows[0].money) +
       " of GDP in " + startYear + " and " + FORMATS.percent0(last.money) + " of GDP in " + last.year +
       ". Over the " + years + " years it becomes " + moneyTimes.toFixed(1) + " times as large: " +
-      FORMATS.percent1(moneyPerYear) + " annually."
+      FORMATS.percent1(moneyPerYear) + " annually.",
+    "7. Debt, as a share of GDP: debt = last year's debt × (1 + average interest rate) ÷ (1 + nominal growth) − primary balance. " +
+      "It goes from " + FORMATS.percent0(rows[0].debt) + " of GDP in " + startYear + " to " + FORMATS.percent0(last.debt) +
+      " in " + last.year + ", with a primary balance of " + FORMATS.percent1(c.primaryBalance) + " of GDP.",
+    "8. The average interest rate follows the 10-year yield as the debt rolls over: each year 1 ÷ " +
+      c.maturity.toFixed(1) + " of the debt (the average maturity in years) reprices at last year's 10-year yield. " +
+      "It goes from " + FORMATS.percent1(rows[0].averageRate) + " in " + startYear + " to " + FORMATS.percent1(last.averageRate) +
+      " in " + last.year + ".",
+    "9. The 10-year yield starts at " + FORMATS.percent1(rows[0].yield) + " and moves one for one with the change in inflation. " +
+      "It also rises " + (c.yieldResponse * 100).toFixed(1) + " basis points for each point of GDP of debt that price-sensitive holders " +
+      "must hold beyond their " + startYear + " holdings, and falls the same way when the central bank takes debt off the market." +
+      (c.selloffOn ? " A selloff adds " + (c.selloffResponse * 100).toFixed(0) + " basis points for each point of GDP sold and not yet absorbed." : ""),
+    "10. " + (c.capMode === "off"
+      ? "The yield cap is off, so the yield is always the rate lenders ask for."
+      : "When the yield lenders ask for is above the cap, the central bank buys debt until the yield is back at the cap, up to its limit of " +
+        FORMATS.percent0(c.centralBankLimit) + " of the debt. Its purchases create money (step 5), which raises inflation and so the yield " +
+        "lenders ask for: holding a cap gets harder the longer it lasts." +
+        (page.result.headline.firstCapBrokenYear
+          ? " In this scenario it reaches its limit in " + page.result.headline.firstCapBrokenYear + ", and the cap no longer holds."
+          : capYears.length ? " In this scenario the cap holds throughout." : " In this scenario the cap is never reached."))
   ];
 
   var body = document.getElementById("how-body");

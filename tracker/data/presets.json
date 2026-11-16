@@ -64,7 +64,7 @@
     },
     "yieldResponse": {
       "min": 0.005, "max": 0.1, "step": 0.005, "default": 0.03, "illustrative": true,
-      "basis": "Illustrative assumption: about 3 basis points of yield for each point of GDP of debt, one value for every country."
+      "basis": "Illustrative assumption, one value for every country: about 3 basis points of yield for each point of GDP, in the range of published estimates of the effect of government debt on long-term yields (about 2 to 4 basis points; Engen and Hubbard 2004, Laubach 2009)."
     },
     "maturity": {
       "min": 1, "max": 20, "step": 0.1, "default": null,

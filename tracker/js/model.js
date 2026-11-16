@@ -77,6 +77,11 @@
 //                          bought, on top of yieldResponse. A selloff is a
 //                          sudden supply of debt, which moves the yield
 //                          more than the same amount of slow new borrowing.
+//   selloffDecay           optional: the share of that unbought debt the
+//                          market absorbs each year, so the extra yield
+//                          fades (0.5, half a year, when left out). The
+//                          debt itself stays with price-sensitive holders
+//                          and keeps its yieldResponse effect.
 
 function runModel(start, controls) {
   checkInputs(start, controls);
@@ -100,6 +105,7 @@ function runModel(start, controls) {
   var moneyTrend = monetary && isNumber(controls.moneyTrend) ? controls.moneyTrend : 0;
   var moneyShare = monetary && isNumber(controls.moneyShare) ? controls.moneyShare : 1;
   var phi = isNumber(controls.selloffResponse) ? controls.selloffResponse : 0;
+  var decay = isNumber(controls.selloffDecay) ? controls.selloffDecay : 0.5;
   var limit = isNumber(controls.centralBankLimit) ? controls.centralBankLimit : 1;
 
   // Starting holdings. The data may be off from the debt by a rounding gap
@@ -233,8 +239,10 @@ function runModel(start, controls) {
     var passiveAbsorb = debt - passiveCentralBank - totalCaptive - W;
 
     // The selloff overhang: debt sold in selloffs that the central bank
-    // has not bought to hold its cap. Each unit of it adds phi to the yield.
-    var overhang = prev.selloffOverhang + soldThisYear;
+    // has not bought and the market has not yet absorbed. Each unit of it
+    // adds phi to the yield. Part of last year's overhang is absorbed each
+    // year, so the extra yield from a one-off sale fades.
+    var overhang = prev.selloffOverhang * (1 - decay) + soldThisYear;
 
     // 6. The market yield, then intervention.
     var inflationChange = inflation - pi0;
@@ -352,7 +360,7 @@ function runModel(start, controls) {
       stressFromBalance: stressFromBalance,
       stressFromInterest: stressFromInterest,
       // Fiscal dominance: the central bank is buying to hold the cap, or
-      // already holds all the debt and still cannot hold it.
+      // has reached its limit and can no longer hold it.
       dominance: purchases > 0 || capBroken,
       capBroken: capBroken,
       debtRepaid: debtRepaid
@@ -500,8 +508,9 @@ function checkInputs(start, controls) {
 }
 
 // The yield at which interest on a debt would equal the chosen share of
-// revenue: yield x debt = share x revenue. Debt and revenue are shares of
-// GDP, and revenue is taken to keep its starting share.
+// revenue once the whole debt pays that yield: yield x debt = share x
+// revenue. Debt and revenue are shares of GDP, and revenue is taken to keep
+// its starting share.
 function stressYield(start, controls, debt) {
   return controls.stressInterestShare * start.revenue / debt;
 }

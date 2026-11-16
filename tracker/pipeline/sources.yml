@@ -297,9 +297,8 @@ sources:
         For the sectors that rule does not cover, Isaac decided on
         2026-11-11: price-sensitive, except governments, which are
         captive; money market funds count as investment funds.
-        Government-sponsored enterprises are treated as price-sensitive
-        because they are companies, not governments (to confirm with
-        Isaac).
+        Government-sponsored enterprises fall under that rule: they are
+        companies, not governments, so they are price-sensitive.
       lines:
         - {code: LM153061105.Q, sector: Households and nonprofit organizations, group: price-sensitive, basis: specification}
         - {code: LM103061103.Q, sector: Nonfinancial corporate business, group: price-sensitive, basis: Isaac}
@@ -320,7 +319,7 @@ sources:
         - {code: LM553061103.Q, sector: Closed-end funds, group: price-sensitive, basis: specification}
         - {code: LM563061103.Q, sector: Exchange-traded funds, group: price-sensitive, basis: specification}
         - {code: LM623061103.Q, sector: Hedge funds (domestic), group: price-sensitive, basis: Isaac}
-        - {code: LM403061105.Q, sector: Government-sponsored enterprises, group: price-sensitive, basis: to confirm with Isaac}
+        - {code: LM403061105.Q, sector: Government-sponsored enterprises, group: price-sensitive, basis: Isaac (sectors not covered are price-sensitive unless governments)}
         - {code: FL673061103.Q, sector: Issuers of asset-backed securities, group: price-sensitive, basis: Isaac}
         - {code: LM663061105.Q, sector: Security brokers and dealers, group: price-sensitive, basis: Isaac}
         - {code: LM733061103.Q, sector: Holding companies, group: price-sensitive, basis: Isaac}
@@ -344,7 +343,11 @@ sources:
     used_for: The money supply (M2) at the starting year, and how fast it has grown compared with GDP.
     series_or_tables:
       - "FRED series M2SL, M2"
-    definition_notes: Definition of M2 to confirm against the H.6 release (it changed in May 2020).
+    definition_notes: >
+      M2 is M1 plus small-denomination time deposits and retail money market
+      fund balances. In May 2020 the Federal Reserve moved savings deposits
+      from the non-M1 part of M2 into M1; total M2 was not changed, so the
+      series is continuous.
     units_and_frequency: Published in billions of dollars, monthly, seasonally adjusted.
     transformations:
       - Take the value for the last month of each fiscal year and divide by that year's GDP.
@@ -353,7 +356,8 @@ sources:
     retrieval: automated, through FRED, which mirrors the Federal Reserve series
     reuse_terms: to confirm
     known_limits: >
-      The definition of M2 changed in May 2020, so growth across that date is not like for like. To confirm.
+      M2 grew about 27% in the year to February 2021, during the pandemic, which
+      raises the average growth rate taken from history.
 
   boj_money_stock:
     name: Money Stock

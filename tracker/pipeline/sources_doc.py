@@ -146,7 +146,9 @@ def method(presets, estimates):
         "**11. Foreign selloff (scenario).** Every foreign group sells the chosen share of its holdings, "
         "evenly over the chosen years. Price-sensitive holders must absorb what is sold. Debt sold that the "
         "central bank has not bought (the overhang) adds the selloff response to the yield (default "
-        + f"{controls['selloffResponse']['default'] * 100:.0f}" + " basis points for each point of GDP).",
+        + f"{controls['selloffResponse']['default'] * 100:.0f}" + " basis points for each point of GDP). Half of "
+        "what is left of that overhang is absorbed by the market each year, so the extra yield from a one-off "
+        "sale fades; the debt itself stays with price-sensitive holders.",
         "",
         "**Headline figures.**",
         "",
