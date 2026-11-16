@@ -13,3 +13,7 @@ tracker/pipeline/cache/
 tracker/pipeline/.venv/
 tracker/pipeline/__pycache__/
 tracker/pipeline/**/__pycache__/
+
+# Mac and R working files
+.DS_Store
+.Rhistory
