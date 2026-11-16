@@ -548,7 +548,7 @@ function lossWithoutNewMoney(country, c) {
   return runModel(inputs.start, inputs.controls).headline.purchasingPowerLoss;
 }
 
-// The years and values of one chart, ready to plot or download.
+// The years and values of one chart, ready to plot.
 function chartTable(definition) {
   var country = page.data[page.country];
   var rows = page.result.rows;
@@ -828,62 +828,6 @@ function fillHow() {
   body.append(scroll);
 }
 
-// ---------------------------------------------------------------- download
-
-// One file with every line of both charts.
-function downloadCsv() {
-  var country = page.data[page.country];
-  var values = page.controls[page.country];
-  var tables = chartList(country).map(chartTable);
-
-  function cell(text) {
-    text = String(text);
-    return /[",\n]/.test(text) ? '"' + text.replace(/"/g, '""') + '"' : text;
-  }
-
-  // The two charts can start their history in different years.
-  var startYear = country.start.year;
-  var firstYear = Math.min.apply(null, tables.map(function (table) { return table.years[0]; }));
-  var lastYear = tables[0].years[tables[0].years.length - 1];
-
-  var lines = [
-    "# Sovereign debt simulator. A scenario tool, not a forecast and not financial advice.",
-    "# " + country.name,
-    "# Control values that produced these series:"
-  ];
-  Object.keys(values).forEach(function (key) {
-    lines.push("# " + key + "," + values[key]);
-  });
-
-  var header = ["year", "history or projection"];
-  tables.forEach(function (table) {
-    table.series.forEach(function (s) {
-      header.push(s.label.replace(" (left axis)", "") + (s.unit === "%" ? " (%)" : ""));
-    });
-  });
-  lines.push(header.map(cell).join(","));
-
-  for (var year = firstYear; year <= lastYear; year++) {
-    var row = [year, year <= startYear ? "history" : "projection"];
-    tables.forEach(function (table) {
-      var i = year - table.years[0];
-      table.series.forEach(function (s) {
-        var v = i >= 0 ? s.values[i] : null;
-        row.push(v === null ? "" : v.toFixed(4));
-      });
-    });
-    lines.push(row.join(","));
-  }
-
-  var link = document.createElement("a");
-  link.href = URL.createObjectURL(new Blob([lines.join("\n") + "\n"], { type: "text/csv" }));
-  link.download = page.country + ".csv";
-  document.body.append(link);
-  link.click();
-  link.remove();
-  URL.revokeObjectURL(link.href);
-}
-
 // ---------------------------------------------------------------- the page address
 
 // The full set of control values is kept in the page address, so a
@@ -1022,8 +966,6 @@ function startPage() {
     page.country = first.key;
     readAddress();
     showCountry(page.country);
-
-    document.getElementById("download").addEventListener("click", downloadCsv);
 
     // Copies the page address, which holds every setting.
     var copy = document.getElementById("copy-link");
